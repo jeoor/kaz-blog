@@ -1,5 +1,8 @@
 import Link from "next/link";
 
+import BlogRightRail from "@/components/layout/blog-right-rail";
+import BlogShell from "@/components/layout/blog-shell";
+import BlogSidebar from "@/components/layout/blog-sidebar";
 import { SITE } from "@/app/site-config";
 import getFormattedDate from "@/lib/getFormattedDate";
 import { getSortedPostsData } from "@/lib/posts";
@@ -30,7 +33,10 @@ export default async function ArchivePage() {
     const groups = groupPostsByYear(posts);
 
     return (
-        <div className="mx-auto w-full max-w-[76rem] px-4 pb-28 pt-10 md:pt-16">
+        <BlogShell
+            sidebar={<BlogSidebar active="archive" />}
+            aside={<BlogRightRail posts={posts} title="Archive" note="按年份回看写作轨迹与更新节奏。" />}
+        >
             <header className="border-b border-black/10 pb-10 dark:border-white/10">
                 <div className="max-w-3xl">
                     <p className="eyebrow-label">
@@ -39,7 +45,7 @@ export default async function ArchivePage() {
                     <h1 className="mt-4 font-serif text-4xl font-semibold tracking-tight md:text-5xl">
                         {SITE.archive.title}
                     </h1>
-                    <p className="mt-4 max-w-2xl text-base leading-8 text-black/70 dark:text-white/68">
+                    <p className="mt-4 max-w-2xl text-base leading-8 text-black/82 dark:text-white/80">
                         {SITE.archive.description}
                     </p>
                 </div>
@@ -54,7 +60,7 @@ export default async function ArchivePage() {
                             <h2 className="pt-4 font-serif text-3xl font-semibold tracking-tight">{group.year}</h2>
                             <div>
                                 {group.posts.map((post) => (
-                                    <div key={post.id} className="flex flex-col gap-2 border-b border-black/8 py-5 first:pt-0 last:border-b-0 last:pb-0 dark:border-white/8 md:flex-row md:items-start md:justify-between md:gap-6">
+                                    <div key={post.id} className="mb-4 rounded-[1.15rem] border border-black/8 bg-black/[0.02] px-5 py-5 last:mb-0 dark:border-white/[0.05] dark:bg-white/[0.02] md:flex md:items-start md:justify-between md:gap-6">
                                         <div>
                                             <Link href={`/posts/${post.id}`} className="font-serif text-[1.3rem] font-semibold tracking-tight hover:opacity-70">
                                                 {post.title}
@@ -73,6 +79,6 @@ export default async function ArchivePage() {
                     ))}
                 </div>
             )}
-        </div>
+        </BlogShell>
     );
 }

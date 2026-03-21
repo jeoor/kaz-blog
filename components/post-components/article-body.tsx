@@ -13,11 +13,101 @@ type Props = {
     contentHtml: string;
 };
 
+const COPY_ICON = `
+    <svg aria-hidden="true" viewBox="0 0 20 20" class="code-copy-icon" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+        <rect x="7" y="4" width="9" height="11" rx="2"></rect>
+        <path d="M5 7.5H4a1 1 0 0 0-1 1v7a2 2 0 0 0 2 2h6.5a1 1 0 0 0 1-1v-1"></path>
+    </svg>
+`;
+
+const CHECK_ICON = `
+    <svg aria-hidden="true" viewBox="0 0 20 20" class="code-copy-icon" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M4.5 10.5l3.4 3.4L15.5 6.5"></path>
+    </svg>
+`;
+
 export default function ArticleBody({ contentHtml }: Props) {
     const containerRef = useRef<HTMLDivElement | null>(null);
     const copyResetTimersRef = useRef<Map<HTMLButtonElement, number>>(new Map());
     const [items, setItems] = useState<LightboxItem[]>([]);
     const [activeIndex, setActiveIndex] = useState<number | null>(null);
+
+    function clearCopyButtonTimer(button: HTMLButtonElement) {
+        const currentTimer = copyResetTimersRef.current.get(button);
+        if (currentTimer) {
+            window.clearTimeout(currentTimer);
+            copyResetTimersRef.current.delete(button);
+        }
+    }
+
+    function scheduleCopyButtonReset(button: HTMLButtonElement) {
+        clearCopyButtonTimer(button);
+
+        const timerId = window.setTimeout(() => {
+            setCopyButtonState(button, "idle");
+            copyResetTimersRef.current.delete(button);
+        }, 1800);
+
+        copyResetTimersRef.current.set(button, timerId);
+    }
+
+    function copyWithExecCommand(text: string) {
+        const textarea = document.createElement("textarea");
+        textarea.value = text;
+        textarea.setAttribute("readonly", "true");
+        textarea.style.position = "fixed";
+        textarea.style.top = "0";
+        textarea.style.left = "-9999px";
+        textarea.style.opacity = "0";
+        textarea.style.pointerEvents = "none";
+
+        const selection = window.getSelection();
+        const selectedRanges: Range[] = [];
+        if (selection) {
+            for (let index = 0; index < selection.rangeCount; index += 1) {
+                selectedRanges.push(selection.getRangeAt(index));
+            }
+        }
+
+        const activeElement = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+
+        document.body.appendChild(textarea);
+        textarea.focus({ preventScroll: true });
+        textarea.select();
+        textarea.setSelectionRange(0, textarea.value.length);
+
+        let copied = false;
+
+        try {
+            copied = document.execCommand("copy");
+        } finally {
+            textarea.remove();
+
+            if (selection) {
+                selection.removeAllRanges();
+                selectedRanges.forEach((range) => selection.addRange(range));
+            }
+
+            activeElement?.focus({ preventScroll: true });
+        }
+
+        if (!copied) {
+            throw new Error("execCommand copy failed");
+        }
+    }
+
+    async function writeTextToClipboard(text: string) {
+        if (window.isSecureContext && navigator.clipboard?.writeText) {
+            try {
+                await navigator.clipboard.writeText(text);
+                return;
+            } catch {
+                // Fall back to the legacy copy path when permissions or focus state block Async Clipboard.
+            }
+        }
+
+        copyWithExecCommand(text);
+    }
 
     useEffect(() => {
         const resetTimers = copyResetTimersRef.current;
@@ -70,6 +160,14 @@ export default function ArticleBody({ contentHtml }: Props) {
         const blocks = Array.from(root.querySelectorAll("pre"));
 
         blocks.forEach((block) => {
+            const code = block.querySelector(":scope > code");
+            if (code && !code.parentElement?.classList.contains("code-scroll-area")) {
+                const scrollArea = document.createElement("div");
+                scrollArea.className = "code-scroll-area";
+                block.insertBefore(scrollArea, code);
+                scrollArea.appendChild(code);
+            }
+
             if (block.querySelector(".code-copy-button")) return;
 
             const button = document.createElement("button");
@@ -77,12 +175,7 @@ export default function ArticleBody({ contentHtml }: Props) {
             button.className = "code-copy-button";
             button.setAttribute("aria-label", "复制代码");
             button.setAttribute("data-copy-code", "true");
-            button.innerHTML = `
-                <svg aria-hidden="true" viewBox="0 0 20 20" class="code-copy-icon" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
-                    <rect x="7" y="4" width="9" height="11" rx="2"></rect>
-                    <path d="M5 7.5H4a1 1 0 0 0-1 1v7a2 2 0 0 0 2 2h6.5a1 1 0 0 0 1-1v-1"></path>
-                </svg>
-            `;
+            button.innerHTML = COPY_ICON;
             block.prepend(button);
         });
     }, [contentHtml]);
@@ -90,6 +183,8 @@ export default function ArticleBody({ contentHtml }: Props) {
     function setCopyButtonState(button: HTMLButtonElement, state: "idle" | "success" | "error") {
         button.dataset.copied = state === "success" ? "true" : "false";
         button.dataset.state = state;
+        button.innerHTML = state === "success" ? CHECK_ICON : COPY_ICON;
+        button.setAttribute("aria-label", state === "success" ? "复制成功" : "复制代码");
     }
 
     async function copyCode(button: HTMLButtonElement) {
@@ -98,21 +193,10 @@ export default function ArticleBody({ contentHtml }: Props) {
         const text = code?.textContent;
         if (!text) return;
 
-        await navigator.clipboard.writeText(text);
-
-        const currentTimer = copyResetTimersRef.current.get(button);
-        if (currentTimer) {
-            window.clearTimeout(currentTimer);
-        }
+        await writeTextToClipboard(text);
 
         setCopyButtonState(button, "success");
-
-        const timerId = window.setTimeout(() => {
-            setCopyButtonState(button, "idle");
-            copyResetTimersRef.current.delete(button);
-        }, 1800);
-
-        copyResetTimersRef.current.set(button, timerId);
+        scheduleCopyButtonReset(button);
     }
 
     function openLightbox(target: HTMLImageElement) {
@@ -140,7 +224,7 @@ export default function ArticleBody({ contentHtml }: Props) {
                 className="markdown"
                 onClick={async (event) => {
                     const target = event.target;
-                    if (target instanceof HTMLElement) {
+                    if (target instanceof Element) {
                         const copyButton = target.closest("button[data-copy-code='true']");
                         if (copyButton instanceof HTMLButtonElement) {
                             event.preventDefault();
@@ -148,10 +232,9 @@ export default function ArticleBody({ contentHtml }: Props) {
                             try {
                                 await copyCode(copyButton);
                             } catch {
+                                clearCopyButtonTimer(copyButton);
                                 setCopyButtonState(copyButton, "error");
-                                window.setTimeout(() => {
-                                    setCopyButtonState(copyButton, "idle");
-                                }, 1800);
+                                scheduleCopyButtonReset(copyButton);
                             }
                             return;
                         }

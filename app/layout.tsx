@@ -3,6 +3,7 @@ import "./globals.css";
 import { Providers } from "./providers";
 import NavbarComponent from "@/components/navbar";
 import ScrollToTop from "@/components/scroll-to-top";
+import SiteFooter from "@/components/site-footer";
 import { SITE } from "@/app/site-config";
 
 const SITE_URL = process.env.NEXT_PUBLIC_URL || "http://localhost:3000";
@@ -28,6 +29,7 @@ export default function RootLayout({
         <Providers>
           <NavbarComponent />
           {children}
+          <SiteFooter />
           <ScrollToTop />
         </Providers>
       </body>

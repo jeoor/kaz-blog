@@ -6,35 +6,33 @@ type Props = {
 };
 
 export default function PostCard({ post }: Props) {
-  const { id, title, date, description, author, keywords } = post;
+  const { id, title, date, description, keywords } = post;
   const formattedDate = getFormattedDate(date);
 
   return (
-    <article className="grid gap-4 py-7 md:grid-cols-[9rem_minmax(0,1fr)] md:gap-8">
-      <div className="pt-2 text-sm text-black/46 dark:text-white/44">
+    <article className="rounded-[1.25rem] border border-black/8 bg-black/[0.02] px-6 py-6 transition-transform duration-200 hover:-translate-y-0.5 dark:border-white/[0.05] dark:bg-white/[0.02]">
+      <div className="text-xs text-black/44 dark:text-white/44">
         <div className="font-medium">{formattedDate}</div>
-        {author ? <div className="mt-3">{author}</div> : null}
       </div>
 
-      <div className="transition-transform duration-200 hover:-translate-y-0.5">
+      <div className="mt-3">
         <Link
           href={"/posts/" + id}
-          className="block font-serif text-[2rem] font-semibold leading-[1.15] tracking-tight hover:opacity-75 md:text-[2.3rem]"
+          className="block font-serif text-[1.8rem] font-semibold leading-[1.2] tracking-tight hover:opacity-75 md:text-[2.05rem]"
         >
           {title}
         </Link>
 
-        <p className="mt-4 max-w-3xl text-base leading-8 text-black/68 dark:text-white/66">
+        <p className="mt-3 max-w-3xl text-[0.98rem] leading-8 text-black/68 dark:text-white/66">
           {description.length > 220 ? description.slice(0, 220) + "..." : description}
         </p>
 
-        <div className="mt-5 flex flex-wrap items-center gap-3 text-xs text-black/46 dark:text-white/46">
-          <span>/posts/{id}</span>
+        <div className="mt-4 flex flex-wrap items-center gap-3 text-xs text-black/46 dark:text-white/46">
           {Array.isArray(keywords) && keywords.length > 0
             ? keywords.map((keyword) => (
               <span
                 key={keyword}
-                className="text-black/48 dark:text-white/48"
+                className="rounded-full border border-black/8 bg-white/72 px-2.5 py-1 text-black/48 dark:border-white/[0.05] dark:bg-white/[0.02] dark:text-white/48"
               >
                 #{keyword}
               </span>

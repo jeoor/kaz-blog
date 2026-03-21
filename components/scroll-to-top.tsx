@@ -32,7 +32,7 @@ export default function ScrollToTop() {
       <button
         type="button"
         aria-label="回到顶部"
-        className="inline-flex h-11 w-11 items-center justify-center rounded-full border border-black/10 bg-[rgba(244,239,231,0.9)] text-current shadow-lg dark:border-white/10 dark:bg-[rgba(20,22,26,0.9)]"
+        className="inline-flex h-11 w-11 items-center justify-center rounded-full border border-black/10 bg-[var(--page-bg)] text-current dark:border-white/10 dark:bg-[var(--page-bg)]"
         onClick={scrollToTop}
       >
         <UpArrowIcon />

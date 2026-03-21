@@ -1,9 +1,18 @@
+import BlogRightRail from "@/components/layout/blog-right-rail";
+import BlogShell from "@/components/layout/blog-shell";
+import BlogSidebar from "@/components/layout/blog-sidebar";
 import { SITE } from "@/app/site-config";
 import { FRIEND_LINKS } from "@/app/links.config";
+import { getSortedPostsData } from "@/lib/posts";
 
-export default function LinksPage() {
+export default async function LinksPage() {
+    const posts = await getSortedPostsData();
+
     return (
-        <div className="mx-auto w-full max-w-[76rem] px-4 pb-28 pt-10 md:pt-16">
+        <BlogShell
+            sidebar={<BlogSidebar active="links" />}
+            aside={<BlogRightRail posts={posts} title="Links" note="保留长期值得访问的站点和入口。" />}
+        >
             <header className="border-b border-black/10 pb-10 dark:border-white/10">
                 <div className="max-w-3xl">
                     <p className="eyebrow-label">
@@ -12,7 +21,7 @@ export default function LinksPage() {
                     <h1 className="mt-4 font-serif text-4xl font-semibold tracking-tight md:text-5xl">
                         {SITE.links.title}
                     </h1>
-                    <p className="mt-4 max-w-2xl text-base leading-8 text-black/70 dark:text-white/68">
+                    <p className="mt-4 max-w-2xl text-base leading-8 text-black/82 dark:text-white/80">
                         {SITE.links.description}
                     </p>
                 </div>
@@ -23,7 +32,7 @@ export default function LinksPage() {
             ) : (
                 <div className="grid grid-cols-1 gap-6 pt-10 md:grid-cols-2">
                     {FRIEND_LINKS.map((item) => (
-                        <article key={item.url} className="space-y-3 border-b border-black/10 pb-6 dark:border-white/10">
+                        <article key={item.url} className="space-y-3 rounded-[1.25rem] border border-black/8 bg-black/[0.02] px-5 py-5 dark:border-white/[0.05] dark:bg-white/[0.02]">
                             <div className="text-[11px] font-semibold uppercase tracking-[0.28em] text-black/40 dark:text-white/40">
                                 External Link
                             </div>
@@ -35,6 +44,6 @@ export default function LinksPage() {
                     ))}
                 </div>
             )}
-        </div>
+        </BlogShell>
     );
 }

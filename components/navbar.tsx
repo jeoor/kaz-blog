@@ -9,7 +9,7 @@ const NavbarComponent = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   return (
-    <header className="border-b border-black/10 bg-[rgba(246,241,232,0.58)] backdrop-blur-xl dark:border-white/10 dark:bg-[rgba(17,19,21,0.58)]">
+    <header className="border-b border-black/10 bg-[var(--page-bg)] backdrop-blur-xl dark:border-white/10 xl:hidden">
       <div className="mx-auto flex max-w-[80rem] items-center justify-between gap-4 px-4 py-3">
         <div className="flex items-center gap-3 md:hidden">
           <button
@@ -51,11 +51,11 @@ const NavbarComponent = () => {
           </button>
         </div>
 
-        <Link href="/" className="flex items-end gap-3 text-current no-underline">
+        <Link href="/" className="flex items-center gap-2.5 text-current no-underline">
           <span className="px-0 py-1 text-[10px] font-semibold uppercase tracking-[0.36em] text-black/75 dark:text-white/75">
             {SITE.shortTitle}
           </span>
-          <span className="hidden text-sm text-black/60 lg:block dark:text-white/60">{SITE.tagline}</span>
+          <span className="hidden leading-none text-sm text-black/60 lg:block dark:text-white/60">{SITE.tagline}</span>
         </Link>
 
         <nav aria-label="主导航" className="hidden md:block">
@@ -82,7 +82,7 @@ const NavbarComponent = () => {
       </div>
 
       {isMenuOpen ? (
-        <nav aria-label="移动端导航" className="border-t border-black/10 bg-[rgba(246,241,232,0.94)] px-4 py-5 dark:border-white/10 dark:bg-[rgba(17,19,21,0.94)] md:hidden">
+        <nav aria-label="移动端导航" className="border-t border-black/10 bg-[var(--page-bg)] px-4 py-5 dark:border-white/10 md:hidden">
           <div className="mx-auto max-w-[80rem]">
             <div className="mb-4 text-xs font-semibold uppercase tracking-[0.28em] text-black/45 dark:text-white/45">
               Navigation

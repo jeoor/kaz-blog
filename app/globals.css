@@ -7,15 +7,30 @@
         color-scheme: light;
         --font-sans: "Segoe UI", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "Noto Sans CJK SC", system-ui, sans-serif;
         --font-serif: "Songti SC", "STSong", "Noto Serif CJK SC", "Source Han Serif SC", "SimSun", serif;
-        --page-bg: #f6f1e8;
-        --page-bg-soft: rgba(255, 255, 255, 0.58);
-        --panel-bg: rgba(255, 252, 247, 0.72);
-        --panel-strong: rgba(255, 252, 247, 0.9);
-        --line-color: rgba(45, 35, 20, 0.1);
+        --page-bg: #ffffff;
+        --page-bg-soft: rgba(255, 255, 255, 0.92);
+        --panel-bg: rgba(255, 255, 255, 0.82);
+        --panel-strong: rgba(255, 255, 255, 0.96);
+        --line-color: rgba(17, 24, 39, 0.1);
         --text-main: #1d1a16;
         --text-soft: rgba(29, 26, 22, 0.68);
         --accent: #8d6740;
         --accent-soft: rgba(141, 103, 64, 0.14);
+        --code-bg: #f5f7fb;
+        --code-border: rgba(17, 24, 39, 0.14);
+        --code-shadow: none;
+        --code-text: #2a241d;
+        --code-label: rgba(42, 36, 29, 0.52);
+        --code-icon: rgba(42, 36, 29, 0.58);
+        --code-icon-hover: rgba(42, 36, 29, 0.9);
+        --code-scrollbar: rgba(42, 36, 29, 0.22);
+        --code-success: #708b39;
+        --code-error: #c45f5f;
+        --code-token-keyword: #a15c1b;
+        --code-token-string: #4f7f49;
+        --code-token-comment: #8a8176;
+        --code-token-number: #2f8a86;
+        --code-token-builtin: #8a6820;
     }
 
     .dark {
@@ -29,6 +44,21 @@
         --text-soft: rgba(255, 255, 255, 0.68);
         --accent: #c59a69;
         --accent-soft: rgba(197, 154, 105, 0.16);
+        --code-bg: #16181b;
+        --code-border: rgba(255, 255, 255, 0.08);
+        --code-shadow: 0 18px 40px rgba(15, 23, 42, 0.18);
+        --code-text: #f5efe6;
+        --code-label: rgba(255, 255, 255, 0.4);
+        --code-icon: rgba(255, 255, 255, 0.72);
+        --code-icon-hover: rgba(255, 255, 255, 0.96);
+        --code-scrollbar: rgba(255, 255, 255, 0.16);
+        --code-success: #c9d79f;
+        --code-error: #f4a6a6;
+        --code-token-keyword: #f4b67e;
+        --code-token-string: #c9d79f;
+        --code-token-comment: #7d8590;
+        --code-token-number: #7fc9c3;
+        --code-token-builtin: #f2d6a2;
     }
 
     html {
@@ -127,10 +157,32 @@
     }
 
     .markdown pre {
-        @apply relative my-10 overflow-x-auto rounded-[1.75rem] border px-5 pb-5 pt-[3.8rem] text-sm leading-7 text-white;
-        border-color: rgba(255, 255, 255, 0.08);
-        background: #16181b;
-        box-shadow: 0 18px 40px rgba(15, 23, 42, 0.18);
+        @apply relative my-10 overflow-hidden rounded-[1.1rem] border px-5 pb-5 pt-[3.8rem] text-sm leading-7;
+        border-color: var(--code-border);
+        background: var(--code-bg);
+        box-shadow: var(--code-shadow);
+        color: var(--code-text);
+    }
+
+    .code-scroll-area {
+        @apply overflow-x-auto;
+        scrollbar-width: thin;
+        scrollbar-color: var(--code-scrollbar) transparent;
+    }
+
+    .code-scroll-area::-webkit-scrollbar {
+        height: 10px;
+    }
+
+    .code-scroll-area::-webkit-scrollbar-track {
+        background: transparent;
+    }
+
+    .code-scroll-area::-webkit-scrollbar-thumb {
+        border: 2px solid transparent;
+        border-radius: 9999px;
+        background: var(--code-scrollbar);
+        background-clip: padding-box;
     }
 
     .markdown code {
@@ -140,13 +192,13 @@
     }
 
     .markdown pre code {
-        @apply bg-transparent p-0;
+        @apply block min-w-max bg-transparent p-0;
         color: inherit;
     }
 
     .hljs {
         display: block;
-        color: #f5efe6;
+        color: var(--code-text);
         background: transparent;
     }
 
@@ -285,34 +337,31 @@
 
     .markdown pre::before {
         content: attr(data-language);
-        @apply absolute left-5 top-4 text-[11px] font-semibold uppercase tracking-[0.28em] text-white/40;
+        @apply absolute left-5 top-4 text-[11px] font-semibold uppercase tracking-[0.28em];
+        color: var(--code-label);
     }
 
     .code-copy-button {
-        @apply absolute right-4 top-3.5 inline-flex h-9 w-9 items-center justify-center rounded-full border transition;
-        border-color: rgba(255, 255, 255, 0.14);
-        background: rgba(255, 255, 255, 0.04);
-        color: rgba(255, 255, 255, 0.72);
+        @apply absolute right-2 top-2 inline-flex h-11 w-11 items-center justify-center transition;
+        color: var(--code-icon);
     }
 
     .code-copy-icon {
-        height: 1rem;
-        width: 1rem;
+        height: 1.05rem;
+        width: 1.05rem;
+        pointer-events: none;
     }
 
     .code-copy-button:hover {
-        background: rgba(255, 255, 255, 0.1);
-        color: rgba(255, 255, 255, 0.96);
+        color: var(--code-icon-hover);
     }
 
     .code-copy-button[data-copied="true"] {
-        border-color: rgba(201, 215, 159, 0.4);
-        color: #c9d79f;
+        color: var(--code-success);
     }
 
     .code-copy-button[data-state="error"] {
-        border-color: rgba(244, 132, 132, 0.4);
-        color: #f4a6a6;
+        color: var(--code-error);
     }
 
 }
@@ -322,7 +371,7 @@
 .markdown pre .hljs-literal,
 .markdown pre .hljs-section,
 .markdown pre .hljs-link {
-    color: #f4b67e;
+    color: var(--code-token-keyword);
 }
 
 .markdown pre .hljs-string,
@@ -332,13 +381,13 @@
 .markdown pre .hljs-symbol,
 .markdown pre .hljs-bullet,
 .markdown pre .hljs-addition {
-    color: #c9d79f;
+    color: var(--code-token-string);
 }
 
 .markdown pre .hljs-comment,
 .markdown pre .hljs-quote,
 .markdown pre .hljs-meta {
-    color: #7d8590;
+    color: var(--code-token-comment);
 }
 
 .markdown pre .hljs-number,
@@ -348,7 +397,7 @@
 .markdown pre .hljs-tag .hljs-attr,
 .markdown pre .hljs-attr,
 .markdown pre .hljs-property {
-    color: #7fc9c3;
+    color: var(--code-token-number);
 }
 
 .markdown pre .hljs-built_in,
@@ -356,5 +405,5 @@
 .markdown pre .hljs-class .hljs-title,
 .markdown pre .hljs-function .hljs-title,
 .markdown pre .hljs-title.class_ {
-    color: #f2d6a2;
+    color: var(--code-token-builtin);
 }

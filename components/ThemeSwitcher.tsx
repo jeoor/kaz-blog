@@ -15,7 +15,7 @@ export function ThemeSwitcher() {
       <button
         type="button"
         aria-label="切换主题"
-        className="pointer-events-none rounded-full border border-black/10 opacity-0 dark:border-white/10"
+        className="pointer-events-none inline-flex h-10 w-10 items-center justify-center opacity-0"
       >
         <SunIcon />
       </button>
@@ -29,7 +29,7 @@ export function ThemeSwitcher() {
     <button
       type="button"
       aria-label="切换主题"
-      className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-black/15 bg-transparent text-current dark:border-white/15"
+      className="inline-flex h-10 w-10 items-center justify-center text-current"
       onClick={() => setTheme(isDark ? "light" : "dark")}
     >
       {isDark ? <SunIcon /> : <MoonIcon />}

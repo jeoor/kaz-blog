@@ -1,6 +1,6 @@
-﻿# 纸舟笔记
+﻿# Kaz-Blog
 
-纸舟笔记是一套以写作为中心的个人博客实现。
+Kaz-Blog 是一套以写作为中心的个人博客实现。
 
 内容主源是 Notion Database，前端使用 Next.js App Router 渲染；如果本地没有配置 Notion 环境变量，则自动回退到 `posts` 里的 Markdown 文章，保证本地开发和演示都能直接启动。
 

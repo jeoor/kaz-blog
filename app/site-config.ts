@@ -1,10 +1,9 @@
 export const SITE = {
-  title: "纸舟笔记",
-  shortTitle: "纸舟",
+  title: "Kaz-Blog",
+  shortTitle: "Kaz",
   description: "一个以文章为主的简洁博客，记录技术、项目与长期思考。",
   tagline: "写作优先，结构克制。",
-  location: "Remote / CN",
-  author: "纸舟",
+  author: "Kaz",
   nav: [
     { href: "/archive", label: "归档" },
     { href: "/links", label: "友链" },
@@ -12,9 +11,7 @@ export const SITE = {
     { href: "/write", label: "写作台" },
   ],
   home: {
-    eyebrow: "Notion-Powered Journal",
     intro: "围绕文章阅读重新整理的信息结构。内容从 Notion 进入，前端保持克制、安静、可长期阅读。",
-    note: "支持 Notion，也支持本地 Markdown。",
   },
   archive: {
     title: "文章归档",
@@ -26,7 +23,7 @@ export const SITE = {
     intro:
       "这里更像个人工作台和公开笔记，不追求面面俱到，只保留我会长期维护的栏目：文章、归档、友链和关于。",
     profile: {
-      name: "纸舟",
+      name: "Kaz",
       role: "开发者 / 写作者",
       note: "关注写作体验、界面结构和内容系统，偏爱把复杂问题拆成稳定、可长期维护的模块。",
     },
@@ -60,5 +57,29 @@ export const SITE = {
     title: "写作台",
     description: "在这里编辑 Markdown，并将内容同步进 Notion 数据库。",
     hint: "写作流程保持简单：整理结构、生成 slug、发布、校对。",
+  },
+  footer: {
+    copyrightName: "Kaz-Blog",
+    poweredBy: {
+      label: "Next.js",
+      href: "https://nextjs.org",
+    },
+    filings: [
+      {
+        enabled: false,
+        label: "",
+        href: "",
+      },
+      {
+        enabled: false,
+        label: "",
+        href: "",
+      },
+      {
+        enabled: false,
+        label: "",
+        href: "",
+      },
+    ],
   },
 };
