@@ -1,0 +1,360 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+    :root {
+        color-scheme: light;
+        --font-sans: "Segoe UI", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "Noto Sans CJK SC", system-ui, sans-serif;
+        --font-serif: "Songti SC", "STSong", "Noto Serif CJK SC", "Source Han Serif SC", "SimSun", serif;
+        --page-bg: #f6f1e8;
+        --page-bg-soft: rgba(255, 255, 255, 0.58);
+        --panel-bg: rgba(255, 252, 247, 0.72);
+        --panel-strong: rgba(255, 252, 247, 0.9);
+        --line-color: rgba(45, 35, 20, 0.1);
+        --text-main: #1d1a16;
+        --text-soft: rgba(29, 26, 22, 0.68);
+        --accent: #8d6740;
+        --accent-soft: rgba(141, 103, 64, 0.14);
+    }
+
+    .dark {
+        color-scheme: dark;
+        --page-bg: #111315;
+        --page-bg-soft: rgba(255, 255, 255, 0.03);
+        --panel-bg: rgba(255, 255, 255, 0.04);
+        --panel-strong: rgba(255, 255, 255, 0.06);
+        --line-color: rgba(255, 255, 255, 0.1);
+        --text-main: rgba(255, 255, 255, 0.94);
+        --text-soft: rgba(255, 255, 255, 0.68);
+        --accent: #c59a69;
+        --accent-soft: rgba(197, 154, 105, 0.16);
+    }
+
+    html {
+        background: var(--page-bg);
+    }
+
+    html.dark {
+        background: var(--page-bg);
+    }
+
+    body {
+        font-family: var(--font-sans);
+        background: transparent;
+        color: var(--text-main);
+        position: relative;
+        min-height: 100vh;
+        text-rendering: optimizeLegibility;
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+    }
+
+    html {
+        scroll-behavior: smooth;
+    }
+
+    ::selection {
+        background: var(--accent-soft);
+        color: var(--text-main);
+    }
+
+    h1,
+    h2,
+    h3,
+    h4,
+    h5,
+    h6 {
+        font-family: var(--font-serif);
+    }
+
+    a {
+        transition: color 180ms ease, opacity 180ms ease, border-color 180ms ease, background-color 180ms ease, transform 180ms ease;
+    }
+}
+
+@layer components {
+    .markdown {
+        @apply text-[1.02rem] leading-9;
+        color: var(--text-soft);
+    }
+
+    .markdown h1 {
+        @apply mt-14 mb-5 text-4xl font-semibold tracking-tight md:text-[2.8rem];
+        color: var(--text-main);
+    }
+
+    .markdown h2 {
+        @apply mt-14 mb-5 text-[2rem] font-semibold tracking-tight md:text-[2.2rem];
+        color: var(--text-main);
+    }
+
+    .markdown h3 {
+        @apply mt-10 mb-4 text-[1.45rem] font-semibold tracking-tight md:text-[1.6rem];
+        color: var(--text-main);
+    }
+
+    .markdown p {
+        @apply my-5;
+    }
+
+    .markdown a {
+        color: var(--text-main);
+        @apply underline decoration-[color:var(--accent)] underline-offset-4 decoration-1;
+    }
+
+    .markdown ul {
+        @apply my-5 ml-6 list-disc space-y-2;
+    }
+
+    .markdown ol {
+        @apply my-5 ml-6 list-decimal space-y-2;
+    }
+
+    .markdown li {
+        @apply pl-1;
+    }
+
+    .markdown blockquote {
+        background: linear-gradient(180deg, var(--accent-soft), transparent);
+        border-color: var(--accent);
+        @apply my-10 rounded-[1.75rem] border-l-[3px] px-6 py-5;
+    }
+
+    .markdown hr {
+        border-color: var(--line-color);
+        @apply my-14;
+    }
+
+    .markdown pre {
+        @apply relative my-10 overflow-x-auto rounded-[1.75rem] border px-5 pb-5 pt-[3.8rem] text-sm leading-7 text-white;
+        border-color: rgba(255, 255, 255, 0.08);
+        background: #16181b;
+        box-shadow: 0 18px 40px rgba(15, 23, 42, 0.18);
+    }
+
+    .markdown code {
+        background: var(--accent-soft);
+        color: var(--text-main);
+        @apply rounded-md px-1.5 py-0.5 text-[0.92em];
+    }
+
+    .markdown pre code {
+        @apply bg-transparent p-0;
+        color: inherit;
+    }
+
+    .hljs {
+        display: block;
+        color: #f5efe6;
+        background: transparent;
+    }
+
+    .markdown img {
+        @apply my-8 rounded-[1.5rem];
+        box-shadow: 0 20px 48px rgba(15, 23, 42, 0.08);
+    }
+
+    .markdown table {
+        @apply my-8 w-full overflow-hidden rounded-[1.25rem] text-sm;
+    }
+
+    .markdown th,
+    .markdown td {
+        border-color: var(--line-color);
+        @apply border px-4 py-3;
+    }
+
+    .reading-shell {
+        background: var(--panel-bg);
+        border: 1px solid transparent;
+    }
+
+    .reading-shell-strong {
+        background: transparent;
+        border: 1px solid transparent;
+    }
+
+    .eyebrow-label {
+        @apply text-[11px] font-semibold uppercase tracking-[0.3em];
+        color: rgba(29, 26, 22, 0.64);
+    }
+
+    .dark .eyebrow-label {
+        color: rgba(255, 255, 255, 0.66);
+    }
+
+    .article-layout {
+        @apply grid gap-10;
+    }
+
+    @media (min-width: 1280px) {
+        .article-layout {
+            grid-template-columns: minmax(0, 1fr) 14rem;
+            gap: 3rem;
+        }
+    }
+
+    .article-meta {
+        @apply text-sm leading-7 text-black/50 dark:text-white/50;
+    }
+
+    .article-meta-section+.article-meta-section {
+        @apply mt-8 border-t border-black/10 pt-8 dark:border-white/10;
+    }
+
+    .article-content {
+        @apply min-w-0;
+    }
+
+    .article-column {
+        @apply hidden xl:block;
+    }
+
+    .article-toc {
+        @apply sticky top-24 text-sm;
+    }
+
+    .article-toc-label {
+        @apply text-[11px] font-semibold uppercase tracking-[0.28em] text-black/40 dark:text-white/40;
+    }
+
+    .article-toc-list {
+        @apply mt-4 space-y-3 border-l border-black/10 pl-4 dark:border-white/10;
+    }
+
+    .article-toc-list li {
+        @apply leading-6 text-black/50 dark:text-white/50;
+    }
+
+    .article-toc-list li.is-sub {
+        @apply pl-3 text-black/40 dark:text-white/40;
+    }
+
+    .article-toc-list li.is-active {
+        color: var(--text-main);
+    }
+
+    .article-toc-list li.is-active a {
+        color: var(--text-main);
+    }
+
+    .article-toc-list li {
+        position: relative;
+    }
+
+    .article-toc-list a:hover {
+        color: var(--text-main);
+    }
+
+    .article-toc-mobile {
+        position: static;
+    }
+
+    .article-toc-mobile .article-toc-list {
+        margin-top: 0;
+        border-left-color: rgba(255, 255, 255, 0.08);
+        padding-left: 1rem;
+    }
+
+    .article-toc-mobile .article-toc-list li {
+        color: rgba(255, 255, 255, 0.72);
+    }
+
+    .article-toc-mobile .article-toc-list li.is-sub {
+        color: rgba(255, 255, 255, 0.5);
+    }
+
+    .article-toc-mobile .article-toc-list li.is-active,
+    .article-toc-mobile .article-toc-list li.is-active a,
+    .article-toc-mobile .article-toc-list a:hover {
+        color: rgba(255, 255, 255, 0.96);
+    }
+
+    .article-image {
+        cursor: zoom-in;
+    }
+
+    .markdown figure {
+        @apply my-10;
+    }
+
+    .markdown figcaption {
+        @apply mt-3 text-center text-sm leading-7 text-black/50 dark:text-white/50;
+    }
+
+    .markdown pre::before {
+        content: attr(data-language);
+        @apply absolute left-5 top-4 text-[11px] font-semibold uppercase tracking-[0.28em] text-white/40;
+    }
+
+    .code-copy-button {
+        @apply absolute right-4 top-3.5 inline-flex h-9 w-9 items-center justify-center rounded-full border transition;
+        border-color: rgba(255, 255, 255, 0.14);
+        background: rgba(255, 255, 255, 0.04);
+        color: rgba(255, 255, 255, 0.72);
+    }
+
+    .code-copy-icon {
+        height: 1rem;
+        width: 1rem;
+    }
+
+    .code-copy-button:hover {
+        background: rgba(255, 255, 255, 0.1);
+        color: rgba(255, 255, 255, 0.96);
+    }
+
+    .code-copy-button[data-copied="true"] {
+        border-color: rgba(201, 215, 159, 0.4);
+        color: #c9d79f;
+    }
+
+    .code-copy-button[data-state="error"] {
+        border-color: rgba(244, 132, 132, 0.4);
+        color: #f4a6a6;
+    }
+
+}
+
+.markdown pre .hljs-keyword,
+.markdown pre .hljs-selector-tag,
+.markdown pre .hljs-literal,
+.markdown pre .hljs-section,
+.markdown pre .hljs-link {
+    color: #f4b67e;
+}
+
+.markdown pre .hljs-string,
+.markdown pre .hljs-title,
+.markdown pre .hljs-name,
+.markdown pre .hljs-attribute,
+.markdown pre .hljs-symbol,
+.markdown pre .hljs-bullet,
+.markdown pre .hljs-addition {
+    color: #c9d79f;
+}
+
+.markdown pre .hljs-comment,
+.markdown pre .hljs-quote,
+.markdown pre .hljs-meta {
+    color: #7d8590;
+}
+
+.markdown pre .hljs-number,
+.markdown pre .hljs-regexp,
+.markdown pre .hljs-variable,
+.markdown pre .hljs-template-variable,
+.markdown pre .hljs-tag .hljs-attr,
+.markdown pre .hljs-attr,
+.markdown pre .hljs-property {
+    color: #7fc9c3;
+}
+
+.markdown pre .hljs-built_in,
+.markdown pre .hljs-type,
+.markdown pre .hljs-class .hljs-title,
+.markdown pre .hljs-function .hljs-title,
+.markdown pre .hljs-title.class_ {
+    color: #f2d6a2;
+}

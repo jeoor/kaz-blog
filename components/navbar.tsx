@@ -1,0 +1,87 @@
+"use client";
+
+import Link from "next/link";
+import { useState } from "react";
+import { ThemeSwitcher } from "./ThemeSwitcher";
+import { SITE } from "@/app/site-config";
+
+const NavbarComponent = () => {
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+
+  return (
+    <header className="border-b border-black/10 bg-[rgba(246,241,232,0.58)] backdrop-blur-xl dark:border-white/10 dark:bg-[rgba(17,19,21,0.58)]">
+      <div className="mx-auto flex max-w-[80rem] items-center justify-between gap-4 px-4 py-3">
+        <div className="flex items-center gap-3 md:hidden">
+          <button
+            type="button"
+            aria-label={isMenuOpen ? "关闭导航菜单" : "打开导航菜单"}
+            aria-expanded={isMenuOpen}
+            onClick={() => setIsMenuOpen((open) => !open)}
+            className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-black/10 bg-white/50 dark:border-white/10 dark:bg-white/[0.03]"
+          >
+            <span className="sr-only">菜单</span>
+            <span className="relative block h-4 w-4">
+              <span className={`absolute left-0 top-[2px] h-px w-4 bg-current transition ${isMenuOpen ? "translate-y-[5px] rotate-45" : ""}`} />
+              <span className={`absolute left-0 top-[7px] h-px w-4 bg-current transition ${isMenuOpen ? "opacity-0" : ""}`} />
+              <span className={`absolute left-0 top-[12px] h-px w-4 bg-current transition ${isMenuOpen ? "-translate-y-[5px] -rotate-45" : ""}`} />
+            </span>
+          </button>
+        </div>
+
+        <Link href="/" className="flex items-end gap-3 text-current no-underline">
+          <span className="px-0 py-1 text-[10px] font-semibold uppercase tracking-[0.36em] text-black/75 dark:text-white/75">
+            {SITE.shortTitle}
+          </span>
+          <span className="hidden text-sm text-black/60 lg:block dark:text-white/60">{SITE.tagline}</span>
+        </Link>
+
+        <nav aria-label="主导航" className="hidden md:block">
+          <ul className="flex items-center gap-4">
+            {SITE.nav.map((item) => (
+              <li key={item.href}>
+                <Link
+                  href={item.href}
+                  className="px-2 py-2 text-sm font-medium text-black/64 transition-all hover:text-black dark:text-white/64 dark:hover:text-white"
+                >
+                  {item.label}
+                </Link>
+              </li>
+            ))}
+            <li>
+              <ThemeSwitcher />
+            </li>
+          </ul>
+        </nav>
+
+        <div className="md:hidden">
+          <ThemeSwitcher />
+        </div>
+      </div>
+
+      {isMenuOpen ? (
+        <nav aria-label="移动端导航" className="border-t border-black/10 bg-[rgba(246,241,232,0.94)] px-4 py-5 dark:border-white/10 dark:bg-[rgba(17,19,21,0.94)] md:hidden">
+          <div className="mx-auto max-w-[80rem]">
+            <div className="mb-4 text-xs font-semibold uppercase tracking-[0.28em] text-black/45 dark:text-white/45">
+              Navigation
+            </div>
+            <ul className="space-y-3">
+              {SITE.nav.map((item) => (
+                <li key={item.href}>
+                  <Link
+                    href={item.href}
+                    className="block rounded-[1.25rem] border border-black/10 bg-white/65 px-4 py-3 text-base font-medium text-current dark:border-white/10 dark:bg-white/[0.04]"
+                    onClick={() => setIsMenuOpen(false)}
+                  >
+                    {item.label}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </div>
+        </nav>
+      ) : null}
+    </header>
+  );
+};
+
+export default NavbarComponent;
