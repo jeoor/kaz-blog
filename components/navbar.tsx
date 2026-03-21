@@ -20,11 +20,34 @@ const NavbarComponent = () => {
             className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-black/10 bg-white/50 dark:border-white/10 dark:bg-white/[0.03]"
           >
             <span className="sr-only">菜单</span>
-            <span className="relative block h-4 w-4">
-              <span className={`absolute left-0 top-[2px] h-px w-4 bg-current transition ${isMenuOpen ? "translate-y-[5px] rotate-45" : ""}`} />
-              <span className={`absolute left-0 top-[7px] h-px w-4 bg-current transition ${isMenuOpen ? "opacity-0" : ""}`} />
-              <span className={`absolute left-0 top-[12px] h-px w-4 bg-current transition ${isMenuOpen ? "-translate-y-[5px] -rotate-45" : ""}`} />
-            </span>
+            {isMenuOpen ? (
+              <svg
+                aria-hidden="true"
+                viewBox="0 0 20 20"
+                className="h-4 w-4"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.8"
+                strokeLinecap="round"
+              >
+                <path d="M5 5l10 10" />
+                <path d="M15 5L5 15" />
+              </svg>
+            ) : (
+              <svg
+                aria-hidden="true"
+                viewBox="0 0 20 20"
+                className="h-4 w-4"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.8"
+                strokeLinecap="round"
+              >
+                <path d="M3.5 5.5h13" />
+                <path d="M3.5 10h13" />
+                <path d="M3.5 14.5h13" />
+              </svg>
+            )}
           </button>
         </div>
 
