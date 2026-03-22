@@ -1,39 +1,51 @@
+import Link from "next/link";
+
 import { SITE } from "@/app/site-config";
 import BlogRightRail from "@/components/layout/blog-right-rail";
 import BlogShell from "@/components/layout/blog-shell";
 import BlogSidebar from "@/components/layout/blog-sidebar";
+import Pagination from "@/components/pagination";
 import RenderPosts from "@/components/post-components/render-posts";
 import { getSortedPostsData } from "@/lib/posts";
 
-export default async function Home() {
+function toPositiveInteger(value: string | string[] | undefined) {
+  const normalized = Array.isArray(value) ? value[0] : value;
+  const parsed = Number.parseInt(normalized || "1", 10);
+  return Number.isFinite(parsed) && parsed > 0 ? parsed : 1;
+}
+
+function getPageHref(page: number) {
+  return page <= 1 ? "/" : `/?page=${page}`;
+}
+
+export default async function Home({
+  searchParams,
+}: {
+  searchParams?: { page?: string | string[] };
+}) {
   const posts = await getSortedPostsData();
+  const pageSize = Math.max(1, SITE.home.pageSize || 6);
+  const totalPages = Math.max(1, Math.ceil(posts.length / pageSize));
+  const currentPage = Math.min(toPositiveInteger(searchParams?.page), totalPages);
+  const startIndex = (currentPage - 1) * pageSize;
+  const visiblePosts = posts.slice(startIndex, startIndex + pageSize);
+  const startLabel = posts.length === 0 ? 0 : startIndex + 1;
+  const endLabel = Math.min(startIndex + visiblePosts.length, posts.length);
 
   return (
     <BlogShell
       sidebar={<BlogSidebar active="home" />}
       aside={<BlogRightRail posts={posts} title="Writing" note="以文章为主，按时间缓慢积累。" />}
     >
-      <header className="border-b border-black/10 pb-8 dark:border-white/10 md:pb-10">
-        <div className="max-w-4xl">
-          <p className="eyebrow-label">Journal</p>
-          <h1 className="mt-4 max-w-4xl font-serif text-[2.7rem] font-semibold leading-[1.06] tracking-[-0.04em] md:text-[4.5rem]">
-            {SITE.title}
-          </h1>
-          <p className="mt-5 max-w-3xl text-[1rem] leading-8 text-black/64 dark:text-white/64">
-            {SITE.home.intro}
-          </p>
-        </div>
-      </header>
+      <section>
+        <RenderPosts posts={visiblePosts} />
 
-      <section className="pt-8">
-        <div className="mb-6 flex items-end justify-between gap-4 border-b border-black/8 pb-4 dark:border-white/8">
-          <div>
-            <h2 className="font-serif text-[2rem] font-semibold tracking-tight md:text-[2.4rem]">最新文章</h2>
-          </div>
-          <div className="text-sm text-black/46 dark:text-white/46">共 {posts.length} 篇</div>
-        </div>
-
-        <RenderPosts posts={posts} />
+        <Pagination
+          ariaLabel="首页分页"
+          currentPage={currentPage}
+          totalPages={totalPages}
+          getPageHref={getPageHref}
+        />
       </section>
     </BlogShell>
   );

@@ -5,6 +5,9 @@ import BlogShell from "@/components/layout/blog-shell";
 import BlogSidebar from "@/components/layout/blog-sidebar";
 import ArticleBody from "@/components/post-components/article-body";
 import ArticleToc from "@/components/post-components/article-toc";
+import TwikooComments from "@/components/comments/twikoo-comments";
+import { getTagHref } from "@/lib/tags";
+import Link from "next/link";
 
 export async function generateStaticParams() {
   const posts = await getSortedPostsData();
@@ -61,7 +64,13 @@ export default async function Post({ params }: { params: { postId: string } }) {
             {Array.isArray(page.keywords) && page.keywords.length > 0 ? (
               <div className="mt-5 flex max-w-3xl flex-wrap gap-3 text-xs text-black/48 dark:text-white/48">
                 {page.keywords.map((keyword) => (
-                  <span key={keyword}>#{keyword}</span>
+                  <Link
+                    key={keyword}
+                    href={getTagHref(keyword)}
+                    className="rounded-full border border-black/8 bg-black/[0.02] px-2.5 py-1 transition hover:border-black/14 hover:text-black dark:border-white/[0.05] dark:bg-white/[0.02] dark:hover:border-white/[0.1] dark:hover:text-white"
+                  >
+                    #{keyword}
+                  </Link>
                 ))}
               </div>
             ) : null}
@@ -71,6 +80,7 @@ export default async function Post({ params }: { params: { postId: string } }) {
             <ArticleToc items={toc} mode="mobile-sheet" className="md:hidden" />
             <ArticleToc items={toc} className="mb-10 hidden border-b border-black/10 pb-8 md:block xl:hidden dark:border-white/10" />
             <ArticleBody contentHtml={contentHtml} />
+            <TwikooComments />
           </div>
         </div>
       </article>

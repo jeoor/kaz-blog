@@ -32,6 +32,30 @@ export default function ArticleBody({ contentHtml }: Props) {
     const [items, setItems] = useState<LightboxItem[]>([]);
     const [activeIndex, setActiveIndex] = useState<number | null>(null);
 
+    function enhanceCodeBlocks(root: HTMLElement) {
+        const blocks = Array.from(root.querySelectorAll("pre"));
+
+        blocks.forEach((block) => {
+            const code = block.querySelector(":scope > code");
+            if (code && !code.parentElement?.classList.contains("code-scroll-area")) {
+                const scrollArea = document.createElement("div");
+                scrollArea.className = "code-scroll-area";
+                block.insertBefore(scrollArea, code);
+                scrollArea.appendChild(code);
+            }
+
+            if (block.querySelector(".code-copy-button")) return;
+
+            const button = document.createElement("button");
+            button.type = "button";
+            button.className = "code-copy-button";
+            button.setAttribute("aria-label", "复制代码");
+            button.setAttribute("data-copy-code", "true");
+            button.innerHTML = COPY_ICON;
+            block.prepend(button);
+        });
+    }
+
     function clearCopyButtonTimer(button: HTMLButtonElement) {
         const currentTimer = copyResetTimersRef.current.get(button);
         if (currentTimer) {
@@ -157,27 +181,20 @@ export default function ArticleBody({ contentHtml }: Props) {
         const root = containerRef.current;
         if (!root) return;
 
-        const blocks = Array.from(root.querySelectorAll("pre"));
+        enhanceCodeBlocks(root);
 
-        blocks.forEach((block) => {
-            const code = block.querySelector(":scope > code");
-            if (code && !code.parentElement?.classList.contains("code-scroll-area")) {
-                const scrollArea = document.createElement("div");
-                scrollArea.className = "code-scroll-area";
-                block.insertBefore(scrollArea, code);
-                scrollArea.appendChild(code);
-            }
-
-            if (block.querySelector(".code-copy-button")) return;
-
-            const button = document.createElement("button");
-            button.type = "button";
-            button.className = "code-copy-button";
-            button.setAttribute("aria-label", "复制代码");
-            button.setAttribute("data-copy-code", "true");
-            button.innerHTML = COPY_ICON;
-            block.prepend(button);
+        const observer = new MutationObserver(() => {
+            enhanceCodeBlocks(root);
         });
+
+        observer.observe(root, {
+            childList: true,
+            subtree: true,
+        });
+
+        return () => {
+            observer.disconnect();
+        };
     }, [contentHtml]);
 
     function setCopyButtonState(button: HTMLButtonElement, state: "idle" | "success" | "error") {

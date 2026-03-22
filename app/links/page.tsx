@@ -4,6 +4,7 @@ import BlogSidebar from "@/components/layout/blog-sidebar";
 import { SITE } from "@/app/site-config";
 import { FRIEND_LINKS } from "@/app/links.config";
 import { getSortedPostsData } from "@/lib/posts";
+import Image from "next/image";
 
 export default async function LinksPage() {
     const posts = await getSortedPostsData();
@@ -33,11 +34,32 @@ export default async function LinksPage() {
                 <div className="grid grid-cols-1 gap-6 pt-10 md:grid-cols-2">
                     {FRIEND_LINKS.map((item) => (
                         <article key={item.url} className="space-y-3 rounded-[1.25rem] border border-black/8 bg-black/[0.02] px-5 py-5 dark:border-white/[0.05] dark:bg-white/[0.02]">
-                            <div className="text-[11px] font-semibold uppercase tracking-[0.28em] text-black/40 dark:text-white/40">
-                                External Link
-                            </div>
-                            <a href={item.url} target="_blank" rel="noreferrer" className="font-serif text-[1.65rem] font-semibold leading-tight text-current underline-offset-4 hover:underline">
-                                {item.name}
+                            <a
+                                href={item.url}
+                                target="_blank"
+                                rel="noreferrer"
+                                className="flex items-center gap-3 text-current no-underline"
+                            >
+                                <div className="relative h-10 w-10 shrink-0 overflow-hidden rounded-full border border-black/8 bg-white/70 dark:border-white/[0.05] dark:bg-white/[0.02]">
+                                    {item.avatar ? (
+                                        <Image
+                                            src={item.avatar}
+                                            alt={item.name}
+                                            fill
+                                            sizes="40px"
+                                            className="object-cover"
+                                        />
+                                    ) : (
+                                        <div className="grid h-full w-full place-items-center text-sm font-semibold text-black/70 dark:text-white/70">
+                                            {item.name.trim().slice(0, 1).toUpperCase()}
+                                        </div>
+                                    )}
+                                </div>
+                                <div className="min-w-0">
+                                    <div className="font-serif text-[1.65rem] font-semibold leading-tight underline-offset-4 hover:underline">
+                                        {item.name}
+                                    </div>
+                                </div>
                             </a>
                             {item.description ? <div className="text-sm leading-7 opacity-80">{item.description}</div> : null}
                         </article>

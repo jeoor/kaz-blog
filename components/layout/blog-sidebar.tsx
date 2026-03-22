@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 
 import { SITE } from "@/app/site-config";
 import { ThemeSwitcher } from "@/components/ThemeSwitcher";
@@ -6,7 +7,7 @@ import { ThemeSwitcher } from "@/components/ThemeSwitcher";
 type SidebarKey = "home" | "archive" | "links" | "about" | "write";
 
 type Props = {
-    active: SidebarKey;
+    active?: SidebarKey;
 };
 
 const NAV_ITEMS: Array<{ key: SidebarKey; href: string; label: string }> = [
@@ -18,15 +19,22 @@ const NAV_ITEMS: Array<{ key: SidebarKey; href: string; label: string }> = [
 ];
 
 export default function BlogSidebar({ active }: Props) {
+    const avatarSrc = SITE.avatar?.src?.trim();
+    const avatarAlt = (SITE.avatar?.alt || SITE.author || SITE.title).trim();
+
     return (
-        <div className="sticky top-8 flex flex-col gap-5 pr-2">
+        <div className="flex min-h-full flex-col gap-5 pr-2">
             <div className="rounded-[1.4rem] border border-black/8 bg-black/[0.02] p-5 dark:border-white/[0.05] dark:bg-white/[0.02]">
                 <Link href="/" className="block text-current no-underline">
-                    <div className="text-[10px] font-semibold uppercase tracking-[0.38em] text-black/48 dark:text-white/48">
-                        {SITE.shortTitle}
-                    </div>
-                    <div className="mt-3 font-serif text-[2rem] font-semibold tracking-tight">
-                        {SITE.title}
+                    <div className="flex items-center gap-3">
+                        {avatarSrc ? (
+                            <div className="relative h-11 w-11 overflow-hidden rounded-full border border-black/8 bg-white/70 dark:border-white/[0.05] dark:bg-white/[0.02]">
+                                <Image src={avatarSrc} alt={avatarAlt} fill sizes="44px" className="object-cover" priority />
+                            </div>
+                        ) : null}
+                        <div className="font-serif text-[1.75rem] font-semibold tracking-tight">
+                            {SITE.title}
+                        </div>
                     </div>
                 </Link>
                 <p className="mt-3 text-sm leading-7 text-black/62 dark:text-white/60">
@@ -40,7 +48,7 @@ export default function BlogSidebar({ active }: Props) {
                 </div>
                 <ul className="space-y-1.5">
                     {NAV_ITEMS.map((item) => {
-                        const isActive = item.key === active;
+                        const isActive = active ? item.key === active : false;
                         return (
                             <li key={item.key}>
                                 <Link
@@ -64,7 +72,7 @@ export default function BlogSidebar({ active }: Props) {
                 </ul>
             </nav>
 
-            <div className="flex items-center justify-between rounded-full border border-black/8 bg-black/[0.02] px-4 py-2 dark:border-white/[0.05] dark:bg-white/[0.02]">
+            <div className="mt-auto flex items-center justify-between rounded-full border border-black/8 bg-black/[0.02] px-4 py-2 dark:border-white/[0.05] dark:bg-white/[0.02]">
                 <div className="text-[10px] font-semibold uppercase tracking-[0.3em] text-black/40 dark:text-white/40">
                     Theme
                 </div>

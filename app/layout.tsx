@@ -29,7 +29,7 @@ export default function RootLayout({
         <Providers>
           <NavbarComponent />
           {children}
-          <SiteFooter />
+          <SiteFooter className="xl:hidden" />
           <ScrollToTop />
         </Providers>
       </body>

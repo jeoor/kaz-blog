@@ -36,6 +36,7 @@ export default async function ArchivePage() {
         <BlogShell
             sidebar={<BlogSidebar active="archive" />}
             aside={<BlogRightRail posts={posts} title="Archive" note="按年份回看写作轨迹与更新节奏。" />}
+            mainClassName="desktop-blog-main-wide"
         >
             <header className="border-b border-black/10 pb-10 dark:border-white/10">
                 <div className="max-w-3xl">
@@ -56,8 +57,8 @@ export default async function ArchivePage() {
             ) : (
                 <div className="space-y-10 pt-10">
                     {groups.map((group) => (
-                        <section key={group.year} className="grid gap-4 lg:grid-cols-[9rem_minmax(0,1fr)] lg:gap-6">
-                            <h2 className="pt-4 font-serif text-3xl font-semibold tracking-tight">{group.year}</h2>
+                        <section key={group.year} className="grid gap-4 lg:grid-cols-[6.5rem_minmax(0,1fr)] lg:gap-5 xl:grid-cols-[7rem_minmax(0,1fr)] xl:gap-6">
+                            <h2 className="pt-4 font-serif text-3xl font-semibold tracking-tight lg:sticky lg:top-0 lg:self-start">{group.year}</h2>
                             <div>
                                 {group.posts.map((post) => (
                                     <div key={post.id} className="mb-4 rounded-[1.15rem] border border-black/8 bg-black/[0.02] px-5 py-5 last:mb-0 dark:border-white/[0.05] dark:bg-white/[0.02] md:flex md:items-start md:justify-between md:gap-6">

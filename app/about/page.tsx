@@ -1,5 +1,7 @@
 import BlogShell from "@/components/layout/blog-shell";
 import BlogSidebar from "@/components/layout/blog-sidebar";
+import RightRail from "@/components/layout/right-rail/right-rail";
+import WidgetCard from "@/components/layout/right-rail/widget-card";
 import { SITE } from "@/app/site-config";
 
 export default function AboutPage() {
@@ -7,34 +9,34 @@ export default function AboutPage() {
         <BlogShell
             sidebar={<BlogSidebar active="about" />}
             aside={
-                <div className="sticky top-8 space-y-4">
-                    <div className="rounded-[1.35rem] border border-black/8 bg-black/[0.02] p-5 dark:border-white/[0.05] dark:bg-white/[0.02]">
-                        <p className="eyebrow-label">
-                            Profile
-                        </p>
-                        <h2 className="mt-3 font-serif text-2xl font-semibold tracking-tight">
-                            {SITE.about.profile.name}
-                        </h2>
-                        <p className="mt-2 text-sm text-black/68 dark:text-white/68">
-                            {SITE.about.profile.role}
-                        </p>
-                        <p className="mt-4 text-sm leading-7 text-black/76 dark:text-white/74">
-                            {SITE.about.profile.note}
-                        </p>
-                    </div>
-
-                    <div className="rounded-[1.35rem] border border-black/8 bg-black/[0.02] p-5 dark:border-white/[0.05] dark:bg-white/[0.02]">
-                        <p className="eyebrow-label">
-                            Sections
-                        </p>
-                        <ul className="mt-4 space-y-3 text-sm text-black/74 dark:text-white/72">
-                            <li>文章：适合完整表达和长期更新</li>
-                            <li>归档：适合梳理时间线和回看内容</li>
-                            <li>友链：适合保留长期访问入口</li>
-                            <li>关于：适合说明站点定位和维护方式</li>
-                        </ul>
-                    </div>
-                </div>
+                <RightRail
+                    className="sticky top-8"
+                    widgets={[
+                        {
+                            key: "profile",
+                            node: (
+                                <WidgetCard title="Profile">
+                                    <h2 className="mt-3 font-serif text-2xl font-semibold tracking-tight">{SITE.about.profile.name}</h2>
+                                    <p className="mt-2 text-sm text-black/68 dark:text-white/68">{SITE.about.profile.role}</p>
+                                    <p className="mt-4 text-sm leading-7 text-black/76 dark:text-white/74">{SITE.about.profile.note}</p>
+                                </WidgetCard>
+                            ),
+                        },
+                        {
+                            key: "sections",
+                            node: (
+                                <WidgetCard title="Sections">
+                                    <ul className="mt-4 space-y-3 text-sm text-black/74 dark:text-white/72">
+                                        <li>文章：适合完整表达和长期更新</li>
+                                        <li>归档：适合梳理时间线和回看内容</li>
+                                        <li>友链：适合保留长期访问入口</li>
+                                        <li>关于：适合说明站点定位和维护方式</li>
+                                    </ul>
+                                </WidgetCard>
+                            ),
+                        },
+                    ]}
+                />
             }
         >
             <header className="border-b border-black/10 pb-10 dark:border-white/10">

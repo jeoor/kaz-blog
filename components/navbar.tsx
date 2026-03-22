@@ -52,8 +52,8 @@ const NavbarComponent = () => {
         </div>
 
         <Link href="/" className="flex items-center gap-2.5 text-current no-underline">
-          <span className="px-0 py-1 text-[10px] font-semibold uppercase tracking-[0.36em] text-black/75 dark:text-white/75">
-            {SITE.shortTitle}
+          <span className="px-0 py-1 text-[10px] font-semibold uppercase tracking-[0.26em] text-black/75 dark:text-white/75">
+            {SITE.title}
           </span>
           <span className="hidden leading-none text-sm text-black/60 lg:block dark:text-white/60">{SITE.tagline}</span>
         </Link>

@@ -4,7 +4,7 @@ import { SITE } from "@/app/site-config";
 export default function manifest(): MetadataRoute.Manifest {
   return {
     name: SITE.title,
-    short_name: SITE.shortTitle,
+    short_name: SITE.title,
     dir: "auto",
     description: SITE.description,
     categories: ["blog"],

@@ -1,9 +1,12 @@
 export const SITE = {
-  title: "Kaz-Blog",
-  shortTitle: "Kaz",
+  title: "KazZz",
   description: "一个以文章为主的简洁博客，记录技术、项目与长期思考。",
   tagline: "写作优先，结构克制。",
   author: "Kaz",
+  avatar: {
+    src: "/avatar.svg",
+    alt: "Kaz",
+  },
   nav: [
     { href: "/archive", label: "归档" },
     { href: "/links", label: "友链" },
@@ -12,6 +15,7 @@ export const SITE = {
   ],
   home: {
     intro: "围绕文章阅读重新整理的信息结构。内容从 Notion 进入，前端保持克制、安静、可长期阅读。",
+    pageSize: 6,
   },
   archive: {
     title: "文章归档",
@@ -66,9 +70,9 @@ export const SITE = {
     },
     filings: [
       {
-        enabled: false,
-        label: "",
-        href: "",
+        enabled: true,
+        label: "GitHub",
+        href: "https://github.com/jeoor/kaz-blog",
       },
       {
         enabled: false,
@@ -81,5 +85,12 @@ export const SITE = {
         href: "",
       },
     ],
+  },
+  comments: {
+    twikoo: {
+      enabled: true,
+      envId: "https://twikoo.kayro.cn/",
+      region: "",
+    },
   },
 };

@@ -2,14 +2,16 @@
 
 import type { TocItem } from "@/lib/content-html";
 import { useEffect, useState } from "react";
+import WidgetCard from "@/components/layout/right-rail/widget-card";
 
 type Props = {
     items: TocItem[];
     className?: string;
     mode?: "default" | "mobile-sheet";
+    variant?: "default" | "widget";
 };
 
-export default function ArticleToc({ items, className, mode = "default" }: Props) {
+export default function ArticleToc({ items, className, mode = "default", variant = "default" }: Props) {
     const [activeId, setActiveId] = useState<string>(items[0]?.id ?? "");
     const [mobileOpen, setMobileOpen] = useState(false);
 
@@ -18,60 +20,91 @@ export default function ArticleToc({ items, className, mode = "default" }: Props
 
         const headingElements = items
             .map((item) => document.getElementById(item.id))
-            .filter((element): element is HTMLElement => Boolean(element));
+            .filter((element): element is HTMLElement => Boolean(element))
+            .sort((left, right) => left.offsetTop - right.offsetTop);
 
         if (headingElements.length === 0) return;
 
-        const visibleHeadings = new Map<string, number>();
+        const TOP_OFFSET_PX = 180;
 
-        const updateFromHash = () => {
+        const findScrollParent = (element: HTMLElement): HTMLElement | null => {
+            let current: HTMLElement | null = element;
+            while (current && current !== document.body) {
+                const style = window.getComputedStyle(current);
+                const overflowY = style.overflowY;
+                const canScroll = (overflowY === "auto" || overflowY === "scroll") && current.scrollHeight > current.clientHeight;
+                if (canScroll) return current;
+                current = current.parentElement;
+            }
+            return null;
+        };
+
+        const scrollParent = findScrollParent(headingElements[0]);
+        const scrollingElement = document.scrollingElement as HTMLElement | null;
+        const scrollContainer = scrollParent ?? scrollingElement ?? document.documentElement;
+        const listenOnWindow = scrollContainer === document.documentElement || scrollContainer === document.body;
+
+        let rafId = 0;
+
+        const updateActiveId = () => {
+            rafId = 0;
+
+            const scrollTop = listenOnWindow ? window.scrollY : scrollContainer.scrollTop;
+            const clientHeight = listenOnWindow ? window.innerHeight : scrollContainer.clientHeight;
+            const scrollHeight = listenOnWindow ? document.documentElement.scrollHeight : scrollContainer.scrollHeight;
+
+            const scrolledToBottom = scrollTop + clientHeight >= scrollHeight - 2;
+            if (scrolledToBottom) {
+                setActiveId(headingElements[headingElements.length - 1]?.id ?? items[0].id);
+                return;
+            }
+
+            const containerTop = listenOnWindow ? 0 : scrollContainer.getBoundingClientRect().top;
+
+            let nextActive = headingElements[0];
+            for (const heading of headingElements) {
+                const topRelativeToContainer = heading.getBoundingClientRect().top - containerTop;
+                if (topRelativeToContainer - TOP_OFFSET_PX <= 0) {
+                    nextActive = heading;
+                }
+            }
+
+            setActiveId(nextActive?.id ?? items[0].id);
+        };
+
+        const requestUpdate = () => {
+            if (rafId) return;
+            rafId = window.requestAnimationFrame(updateActiveId);
+        };
+
+        const onHashChange = () => {
             const hash = window.location.hash.slice(1);
             if (hash && items.some((item) => item.id === hash)) {
                 setActiveId(hash);
             }
+            requestUpdate();
         };
 
-        const observer = new IntersectionObserver(
-            (entries) => {
-                entries.forEach((entry) => {
-                    const headingId = entry.target.id;
-                    if (entry.isIntersecting) {
-                        visibleHeadings.set(headingId, entry.boundingClientRect.top);
-                    } else {
-                        visibleHeadings.delete(headingId);
-                    }
-                });
-
-                if (visibleHeadings.size > 0) {
-                    const nextActiveId = Array.from(visibleHeadings.entries())
-                        .sort((left, right) => Math.abs(left[1]) - Math.abs(right[1]))[0]?.[0];
-
-                    if (nextActiveId) {
-                        setActiveId(nextActiveId);
-                        return;
-                    }
-                }
-
-                const scrollAnchor = window.scrollY + 180;
-                const fallbackHeading = headingElements
-                    .filter((heading) => heading.offsetTop <= scrollAnchor)
-                    .at(-1);
-
-                setActiveId(fallbackHeading?.id ?? items[0].id);
-            },
-            {
-                rootMargin: "-20% 0px -65% 0px",
-                threshold: [0, 0.2, 1],
-            }
-        );
-
-        headingElements.forEach((element) => observer.observe(element));
-        updateFromHash();
-        window.addEventListener("hashchange", updateFromHash);
+        if (listenOnWindow) {
+            window.addEventListener("scroll", requestUpdate, { passive: true });
+        } else {
+            scrollContainer.addEventListener("scroll", requestUpdate, { passive: true });
+        }
+        window.addEventListener("resize", requestUpdate);
+        window.addEventListener("hashchange", onHashChange);
+        requestUpdate();
 
         return () => {
-            observer.disconnect();
-            window.removeEventListener("hashchange", updateFromHash);
+            if (rafId) {
+                window.cancelAnimationFrame(rafId);
+            }
+            if (listenOnWindow) {
+                window.removeEventListener("scroll", requestUpdate);
+            } else {
+                scrollContainer.removeEventListener("scroll", requestUpdate);
+            }
+            window.removeEventListener("resize", requestUpdate);
+            window.removeEventListener("hashchange", onHashChange);
         };
     }, [items]);
 
@@ -167,6 +200,16 @@ export default function ArticleToc({ items, className, mode = "default" }: Props
                     </div>
                 ) : null}
             </>
+        );
+    }
+
+    if (variant === "widget") {
+        return (
+            <WidgetCard title="目录" className={["sticky top-24", className].filter(Boolean).join(" ")}>
+                <nav aria-label="目录" className="mt-4">
+                    {tocList}
+                </nav>
+            </WidgetCard>
         );
     }
 

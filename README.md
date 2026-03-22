@@ -38,6 +38,26 @@ Kaz-Blog 是一套以写作为中心的个人博客实现。
 - `NOTION_PROP_KEYWORDS`
 - `NOTION_PROP_TITLE`
 
+## 评论（Twikoo）
+
+评论系统使用 Twikoo，配置集中在 `app/site-config.ts`：
+
+```ts
+comments: {
+	twikoo: {
+		enabled: true,
+		envId: "你的 Twikoo envId",
+		region: "", // 可选
+	},
+},
+```
+
+其中：
+
+- `enabled`: 是否启用评论（不启用则文章页不渲染评论区）
+- `envId`: Twikoo 后端环境 ID（必填）
+- `region`: 地域（可选，不确定可留空）
+
 ## 启动方式
 
 ```sh
