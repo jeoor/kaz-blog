@@ -97,7 +97,7 @@ export default function TwikooComments({ title = "评论", className = "" }: Pro
     if (!enabled || !envId) return null;
 
     return (
-        <section className={["mt-10", className].filter(Boolean).join(" ")}>
+        <section id="comments" className={["mt-10", className].filter(Boolean).join(" ")}>
             <div className="text-[10px] font-semibold uppercase tracking-[0.32em] text-black/40 dark:text-white/40">
                 {title}
             </div>

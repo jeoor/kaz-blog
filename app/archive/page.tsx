@@ -63,7 +63,7 @@ export default async function ArchivePage() {
                                 {group.posts.map((post) => (
                                     <div key={post.id} className="mb-4 rounded-[1.15rem] border border-black/8 bg-black/[0.02] px-5 py-5 last:mb-0 dark:border-white/[0.05] dark:bg-white/[0.02] md:flex md:items-start md:justify-between md:gap-6">
                                         <div>
-                                            <Link href={`/posts/${post.id}`} className="font-serif text-[1.3rem] font-semibold tracking-tight hover:opacity-70">
+                                            <Link href={`/posts/${post.id}`} className="font-serif text-[1.3rem] font-semibold tracking-tight underline-offset-4 hover:underline focus-visible:underline">
                                                 {post.title}
                                             </Link>
                                             {post.description ? (

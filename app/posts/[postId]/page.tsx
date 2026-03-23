@@ -6,6 +6,7 @@ import BlogSidebar from "@/components/layout/blog-sidebar";
 import ArticleBody from "@/components/post-components/article-body";
 import ArticleToc from "@/components/post-components/article-toc";
 import TwikooComments from "@/components/comments/twikoo-comments";
+import ScrollToComments from "@/components/scroll-to-comments";
 import { getTagHref } from "@/lib/tags";
 import Link from "next/link";
 
@@ -82,11 +83,17 @@ export default async function Post({ params }: { params: { postId: string } }) {
             ) : null}
           </header>
 
-          <div className="max-w-[48rem] pt-10">
-            <ArticleToc items={toc} mode="mobile-sheet" className="md:hidden" />
-            <ArticleToc items={toc} className="mb-10 hidden border-b border-black/10 pb-8 md:block xl:hidden dark:border-white/10" />
-            <ArticleBody contentHtml={contentHtml} />
-            <TwikooComments />
+          <div className="pt-10 lg:grid lg:grid-cols-[minmax(0,48rem)_18rem] lg:items-start lg:gap-10 xl:block">
+            <div className="min-w-0">
+              <ArticleToc items={toc} mode="mobile-sheet" className="lg:hidden" />
+              <ArticleBody contentHtml={contentHtml} />
+              <ScrollToComments />
+              <TwikooComments />
+            </div>
+
+            <div className="hidden xl:hidden lg:block sticky top-24 self-start">
+              <ArticleToc items={toc} />
+            </div>
           </div>
         </div>
       </article>

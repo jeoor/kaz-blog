@@ -101,6 +101,13 @@
     a {
         transition: color 180ms ease, opacity 180ms ease, border-color 180ms ease, background-color 180ms ease, transform 180ms ease;
     }
+
+    html.theme-switching *,
+    html.theme-switching *::before,
+    html.theme-switching *::after {
+        transition: none !important;
+        animation: none !important;
+    }
 }
 
 @layer components {
@@ -374,35 +381,40 @@
     }
 
     .article-toc {
-        @apply sticky top-24 text-sm;
+        @apply sticky top-24;
     }
 
     .article-toc-label {
-        @apply text-[11px] font-semibold uppercase tracking-[0.28em] text-black/40 dark:text-white/40;
+        @apply font-serif text-base font-semibold tracking-tight text-black/40 dark:text-white/40;
     }
 
     .article-toc-list {
-        @apply mt-4 space-y-3 border-l border-black/10 pl-4 dark:border-white/10;
+        @apply mt-6 space-y-4 border-l border-black/10 pl-5 dark:border-white/10;
     }
 
     .article-toc-list li {
-        @apply leading-6 text-black/50 dark:text-white/50;
+        @apply text-[15px] leading-8 text-black/60 dark:text-white/60;
     }
 
     .article-toc-list li.is-sub {
-        @apply pl-3 text-black/40 dark:text-white/40;
+        @apply pl-3 text-[14px] text-black/40 dark:text-white/40;
     }
 
     .article-toc-list li.is-active {
-        color: var(--text-main);
+        @apply font-semibold text-black/80 dark:text-white/90;
     }
 
     .article-toc-list li.is-active a {
-        color: var(--text-main);
+        color: inherit;
     }
 
     .article-toc-list li {
         position: relative;
+    }
+
+    .article-toc-list a {
+        @apply block no-underline;
+        color: inherit;
     }
 
     .article-toc-list a:hover {
@@ -415,22 +427,7 @@
 
     .article-toc-mobile .article-toc-list {
         margin-top: 0;
-        border-left-color: rgba(255, 255, 255, 0.08);
         padding-left: 1rem;
-    }
-
-    .article-toc-mobile .article-toc-list li {
-        color: rgba(255, 255, 255, 0.72);
-    }
-
-    .article-toc-mobile .article-toc-list li.is-sub {
-        color: rgba(255, 255, 255, 0.5);
-    }
-
-    .article-toc-mobile .article-toc-list li.is-active,
-    .article-toc-mobile .article-toc-list li.is-active a,
-    .article-toc-mobile .article-toc-list a:hover {
-        color: rgba(255, 255, 255, 0.96);
     }
 
     .article-image {

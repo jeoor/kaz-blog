@@ -160,7 +160,7 @@ export default function ArticleToc({ items, className, mode = "default", variant
                     type="button"
                     aria-label="打开目录"
                     className={[
-                        "fixed bottom-20 right-5 z-[80] inline-flex h-12 w-12 items-center justify-center rounded-full border border-black/10 bg-[rgba(244,239,231,0.94)] text-black shadow-lg dark:border-white/10 dark:bg-[rgba(20,22,26,0.94)] dark:text-white",
+                        "fixed bottom-36 right-5 z-[80] inline-flex h-12 w-12 items-center justify-center rounded-full border border-black/10 bg-[var(--page-bg)] text-current shadow-sm dark:border-white/10 dark:bg-[var(--page-bg)]",
                         className,
                     ].filter(Boolean).join(" ")}
                     onClick={() => setMobileOpen(true)}
@@ -174,16 +174,16 @@ export default function ArticleToc({ items, className, mode = "default", variant
 
                 {mobileOpen ? (
                     <div className="fixed inset-0 z-[115] bg-black/55 backdrop-blur-sm" onClick={() => setMobileOpen(false)}>
-                        <div className="absolute inset-x-4 bottom-5 rounded-[1.6rem] border border-white/10 bg-[rgba(24,26,30,0.96)] p-5 text-white shadow-2xl" onClick={(event) => event.stopPropagation()}>
+                        <div className="absolute inset-x-4 bottom-5 rounded-[1.6rem] border border-black/10 bg-[var(--page-bg)] p-5 text-current shadow-2xl dark:border-white/10 dark:bg-[var(--page-bg)]" onClick={(event) => event.stopPropagation()}>
                             <div className="mb-4 flex items-center justify-between">
                                 <div>
-                                    <div className="text-[11px] font-semibold uppercase tracking-[0.28em] text-white/42">目录</div>
-                                    <div className="mt-2 text-sm text-white/68">当前阅读：{activeItem.text}</div>
+                                    <div className="text-[11px] font-semibold uppercase tracking-[0.28em] text-black/40 dark:text-white/40">目录</div>
+                                    <div className="mt-2 text-sm text-black/62 dark:text-white/62">当前阅读：{activeItem.text}</div>
                                 </div>
                                 <button
                                     type="button"
                                     aria-label="关闭目录"
-                                    className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-white/12 bg-white/5 text-white/88"
+                                    className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-black/10 bg-black/[0.02] text-current dark:border-white/10 dark:bg-white/[0.04]"
                                     onClick={() => setMobileOpen(false)}
                                 >
                                     <svg aria-hidden="true" viewBox="0 0 20 20" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round">

@@ -4,9 +4,27 @@ import { useEffect, useState } from "react";
 import { MoonIcon } from "@/components/icons/moon";
 import { SunIcon } from "@/components/icons/sun";
 
-export function ThemeSwitcher() {
+type Props = {
+  className?: string;
+};
+
+export function ThemeSwitcher({ className = "" }: Props) {
   const [mounted, setMounted] = useState(false);
   const { resolvedTheme, theme, setTheme } = useTheme();
+
+  const toggleTheme = (isDark: boolean) => {
+    const root = document.documentElement;
+    root.classList.add("theme-switching");
+
+    // Force a reflow so the class takes effect before theme mutations.
+    void root.offsetHeight;
+
+    setTheme(isDark ? "light" : "dark");
+
+    window.setTimeout(() => {
+      root.classList.remove("theme-switching");
+    }, 200);
+  };
 
   useEffect(() => setMounted(true), []);
 
@@ -15,9 +33,15 @@ export function ThemeSwitcher() {
       <button
         type="button"
         aria-label="切换主题"
-        className="pointer-events-none inline-flex h-10 w-10 items-center justify-center opacity-0"
+        className={[
+          "pointer-events-none mt-auto inline-flex w-fit items-center justify-center rounded-full border border-black/10 bg-black/[0.02] p-0.5 opacity-0 dark:border-white/10 dark:bg-white/[0.02]",
+          className,
+        ]
+          .filter(Boolean)
+          .join(" ")}
       >
-        <SunIcon />
+        <span className="sr-only">切换主题</span>
+        <span aria-hidden="true" className="block h-8 w-14" />
       </button>
     );
   }
@@ -29,10 +53,27 @@ export function ThemeSwitcher() {
     <button
       type="button"
       aria-label="切换主题"
-      className="inline-flex h-10 w-10 items-center justify-center text-current"
-      onClick={() => setTheme(isDark ? "light" : "dark")}
+      className={[
+        "mt-auto inline-flex w-fit items-center justify-center rounded-full border border-black/10 bg-black/[0.02] p-0.5 text-current transition-colors dark:border-white/10 dark:bg-white/[0.02]",
+        className,
+      ]
+        .filter(Boolean)
+        .join(" ")}
+      onClick={() => toggleTheme(isDark)}
     >
-      {isDark ? <SunIcon /> : <MoonIcon />}
+      <span
+        aria-hidden="true"
+        className="relative block h-8 w-14 shrink-0"
+      >
+        <span
+          className={[
+            "absolute left-0.5 top-0.5 grid h-7 w-7 place-items-center rounded-full border border-black/10 bg-white/70 text-black/72 transition-transform duration-300 ease-out dark:border-white/[0.08] dark:bg-black/30 dark:text-white/72",
+            isDark ? "translate-x-0" : "translate-x-7",
+          ].join(" ")}
+        >
+          {isDark ? <MoonIcon className="h-4 w-4" /> : <SunIcon className="h-4 w-4" />}
+        </span>
+      </span>
     </button>
   );
 }

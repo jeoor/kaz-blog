@@ -72,12 +72,7 @@ export default function BlogSidebar({ active }: Props) {
                 </ul>
             </nav>
 
-            <div className="mt-auto flex items-center justify-between rounded-full border border-black/8 bg-black/[0.02] px-4 py-2 dark:border-white/[0.05] dark:bg-white/[0.02]">
-                <div className="text-[10px] font-semibold uppercase tracking-[0.3em] text-black/40 dark:text-white/40">
-                    Theme
-                </div>
-                <ThemeSwitcher />
-            </div>
+            <ThemeSwitcher />
         </div>
     );
 }

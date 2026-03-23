@@ -21,7 +21,7 @@ export default function PostCard({ post }: Props) {
       <div className="mt-3">
         <Link
           href={"/posts/" + id}
-          className="block font-serif text-[1.8rem] font-semibold leading-[1.2] tracking-tight hover:opacity-75 md:text-[2.05rem]"
+          className="block font-serif text-[1.8rem] font-semibold leading-[1.2] tracking-tight underline-offset-4 hover:underline focus-visible:underline md:text-[2.05rem]"
         >
           {title}
         </Link>
