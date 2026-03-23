@@ -1,3 +1,5 @@
+"use client";
+
 import PostCard from "./post-card";
 
 type Props = {
