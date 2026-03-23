@@ -93,4 +93,20 @@ export const SITE = {
       region: "",
     },
   },
+  postFooter: {
+    disclaimer:
+      "本站内容仅供学习交流与个人记录使用，不构成任何建议。若内容涉及侵权或不当引用，请联系作者处理。",
+    qrcodes: [
+      {
+        label: "二维码1",
+        src: "/qr/qrcode_github.com.png",
+        alt: "二维码1",
+      },
+      {
+        label: "二维码2",
+        src: "/qr/qrcode_nextjs.org.png",
+        alt: "二维码2",
+      },
+    ],
+  },
 };

@@ -5,6 +5,7 @@ import BlogShell from "@/components/layout/blog-shell";
 import BlogSidebar from "@/components/layout/blog-sidebar";
 import ArticleBody from "@/components/post-components/article-body";
 import ArticleToc from "@/components/post-components/article-toc";
+import PostFooter from "@/components/post-components/post-footer";
 import TwikooComments from "@/components/comments/twikoo-comments";
 import ScrollToComments from "@/components/scroll-to-comments";
 import { getTagHref } from "@/lib/tags";
@@ -87,6 +88,7 @@ export default async function Post({ params }: { params: { postId: string } }) {
             <div className="min-w-0">
               <ArticleToc items={toc} mode="mobile-sheet" className="lg:hidden" />
               <ArticleBody contentHtml={contentHtml} />
+              <PostFooter posts={posts} currentPost={page} />
               <ScrollToComments />
               <TwikooComments />
             </div>
