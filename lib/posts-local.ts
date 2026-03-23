@@ -15,9 +15,12 @@ function getPostsDirectory(): string {
  */
 export function getSortedPostsDataLocal(): BlogPost[] {
     const postsDirectory = getPostsDirectory();
-    const fileNames = fs
-        .readdirSync(postsDirectory)
-        .filter((name) => name.toLowerCase().endsWith(".md"));
+    if (!fs.existsSync(postsDirectory)) {
+        console.error(`[posts-local] Posts directory not found: ${postsDirectory}`);
+        return [];
+    }
+
+    const fileNames = fs.readdirSync(postsDirectory).filter((name) => name.toLowerCase().endsWith(".md"));
 
     const allPostsData = fileNames.map((fileName) => {
         const id = fileName.replace(/\.md$/, "");
@@ -51,6 +54,10 @@ export function getSortedPostsDataLocal(): BlogPost[] {
 export async function getPostDataLocal(id: string): Promise<BlogPost & { contentHtml: string; toc: PostTocItem[] }> {
     const postsDirectory = getPostsDirectory();
     const fullPath = path.join(postsDirectory, `${id}.md`);
+
+    if (!fs.existsSync(fullPath)) {
+        throw new Error(`[posts-local] Post file not found: ${fullPath}`);
+    }
 
     const fileContents = fs.readFileSync(fullPath, "utf8");
     const matterResult = matter(fileContents);

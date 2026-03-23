@@ -4,7 +4,6 @@ import BlogSidebar from "@/components/layout/blog-sidebar";
 import { SITE } from "@/app/site-config";
 import { FRIEND_LINKS } from "@/app/links.config";
 import { getSortedPostsData } from "@/lib/posts";
-import Image from "next/image";
 
 export default async function LinksPage() {
     const posts = await getSortedPostsData();
@@ -42,12 +41,13 @@ export default async function LinksPage() {
                             >
                                 <div className="relative h-10 w-10 shrink-0 overflow-hidden rounded-full border border-black/8 bg-white/70 dark:border-white/[0.05] dark:bg-white/[0.02]">
                                     {item.avatar ? (
-                                        <Image
+                                        // eslint-disable-next-line @next/next/no-img-element
+                                        <img
                                             src={item.avatar}
                                             alt={item.name}
-                                            fill
-                                            sizes="40px"
-                                            className="object-cover"
+                                            className="h-full w-full object-cover"
+                                            loading="lazy"
+                                            referrerPolicy="no-referrer"
                                         />
                                     ) : (
                                         <div className="grid h-full w-full place-items-center text-sm font-semibold text-black/70 dark:text-white/70">

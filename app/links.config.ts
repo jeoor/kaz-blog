@@ -9,7 +9,7 @@ export const FRIEND_LINKS: FriendLink[] = [
     {
         name: "GitHub",
         url: "https://github.com",
-        avatar: "https://github.githubassets.com/favicons/favicon.png",
+        avatar: "https://github.com/favicon.ico",
         description: "代码托管与开源协作平台。",
     },
     {

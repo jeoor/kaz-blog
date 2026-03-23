@@ -44,7 +44,13 @@ export default async function Post({ params }: { params: { postId: string } }) {
   const { postId } = params;
   const page = posts.find((post) => post.id === postId);
   if (!page) notFound();
-  const { title, contentHtml, description, toc } = await getPostData(postId);
+  let postData: Awaited<ReturnType<typeof getPostData>>;
+  try {
+    postData = await getPostData(postId);
+  } catch {
+    notFound();
+  }
+  const { title, contentHtml, description, toc } = postData;
 
   return (
     <BlogShell
