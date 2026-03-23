@@ -2,9 +2,27 @@ import BlogShell from "@/components/layout/blog-shell";
 import BlogSidebar from "@/components/layout/blog-sidebar";
 import RightRail from "@/components/layout/right-rail/right-rail";
 import WidgetCard from "@/components/layout/right-rail/widget-card";
-import { SITE } from "@/app/site-config";
+import { getAboutContent } from "@/lib/about-content";
 
-export default function AboutPage() {
+type RenderSection = {
+    title: string;
+    contentHtml: string;
+};
+
+export default async function AboutPage() {
+    const about = await getAboutContent();
+
+    const title = about?.title?.trim() || "关于";
+    const description = about?.description?.trim() || "";
+    const profile = {
+        name: about?.profile?.name?.trim() || "",
+        role: about?.profile?.role?.trim() || "",
+        note: about?.profile?.note?.trim() || "",
+    };
+    const introHtml = about?.introHtml?.trim();
+    const mdSections = (about?.sections ?? []).filter((section) => section.title?.trim());
+    const sections: RenderSection[] = mdSections.length ? mdSections : [];
+
     return (
         <BlogShell
             sidebar={<BlogSidebar active="about" />}
@@ -16,9 +34,9 @@ export default function AboutPage() {
                             key: "profile",
                             node: (
                                 <WidgetCard title="Profile">
-                                    <h2 className="mt-3 font-serif text-2xl font-semibold tracking-tight">{SITE.about.profile.name}</h2>
-                                    <p className="mt-2 text-sm text-black/68 dark:text-white/68">{SITE.about.profile.role}</p>
-                                    <p className="mt-4 text-sm leading-7 text-black/76 dark:text-white/74">{SITE.about.profile.note}</p>
+                                    <h2 className="mt-3 font-serif text-2xl font-semibold tracking-tight">{profile.name}</h2>
+                                    <p className="mt-2 text-sm text-black/68 dark:text-white/68">{profile.role}</p>
+                                    <p className="mt-4 text-sm leading-7 text-black/76 dark:text-white/74">{profile.note}</p>
                                 </WidgetCard>
                             ),
                         },
@@ -45,10 +63,10 @@ export default function AboutPage() {
                         About
                     </p>
                     <h1 className="mt-4 font-serif text-4xl font-semibold tracking-tight md:text-5xl">
-                        {SITE.about.title}
+                        {title}
                     </h1>
                     <p className="mt-4 max-w-2xl text-base leading-8 text-black/82 dark:text-white/80">
-                        {SITE.about.description}
+                        {description}
                     </p>
                 </div>
             </header>
@@ -59,19 +77,25 @@ export default function AboutPage() {
                         <p className="eyebrow-label">
                             Intro
                         </p>
-                        <p className="mt-4 text-base leading-8 text-black/82 dark:text-white/80">
-                            {SITE.about.intro}
-                        </p>
+                        {introHtml ? (
+                            <div
+                                className="markdown mt-4 text-base leading-8 text-black/82 dark:text-white/80"
+                                dangerouslySetInnerHTML={{ __html: introHtml }}
+                            />
+                        ) : null}
                     </article>
 
                     <div className="grid gap-5">
-                        {SITE.about.sections.map((section) => (
+                        {sections.map((section) => (
                             <article
                                 key={section.title}
                                 className="rounded-[1.25rem] border border-black/8 bg-black/[0.02] px-5 py-5 dark:border-white/[0.05] dark:bg-white/[0.02]"
                             >
                                 <h2 className="font-serif text-2xl font-semibold tracking-tight">{section.title}</h2>
-                                <p className="mt-4 text-sm leading-8 text-black/68 dark:text-white/66">{section.content}</p>
+                                <div
+                                    className="markdown mt-4 text-sm leading-8 text-black/68 dark:text-white/66"
+                                    dangerouslySetInnerHTML={{ __html: section.contentHtml }}
+                                />
                             </article>
                         ))}
                     </div>
