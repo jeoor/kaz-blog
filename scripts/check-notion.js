@@ -157,13 +157,13 @@ async function main() {
             }
             console.log(
                 "[notion:check] If you see validation_error about missing columns, set these in .env.local to match your DB column names:\n" +
-                    "  NOTION_PROP_SLUG=...\n" +
-                    "  NOTION_PROP_DATE=...\n" +
-                    "  NOTION_PROP_DESCRIPTION=...\n" +
-                    "  NOTION_PROP_AUTHOR=...\n" +
-                    "  NOTION_PROP_KEYWORDS=...\n" +
-                    "  NOTION_PROP_PUBLISHED=...\n" +
-                    "  (optional) NOTION_PROP_TITLE=..."
+                "  NOTION_PROP_SLUG=...\n" +
+                "  NOTION_PROP_DATE=...\n" +
+                "  NOTION_PROP_DESCRIPTION=...\n" +
+                "  NOTION_PROP_AUTHOR=...\n" +
+                "  NOTION_PROP_KEYWORDS=...\n" +
+                "  NOTION_PROP_PUBLISHED=...\n" +
+                "  (optional) NOTION_PROP_TITLE=..."
             );
         }
 
