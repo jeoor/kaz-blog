@@ -149,7 +149,20 @@ export default function WritePage() {
 
             if (!res.ok) {
                 setIsUnlocked(false);
-                setUnlockError("密码不正确");
+                if (res.status === 401) {
+                    setUnlockError("密码不正确");
+                } else if (res.status === 404) {
+                    setUnlockError("当前部署找不到 /api/admin/session（可能是静态托管不支持 Next.js API 路由/函数）。");
+                } else {
+                    let serverMessage = "";
+                    try {
+                        const data = (await res.json()) as any;
+                        serverMessage = typeof data?.message === "string" ? data.message : "";
+                    } catch {
+                        // ignore
+                    }
+                    setUnlockError(serverMessage || `解锁失败（${res.status}）`);
+                }
                 return;
             }
 
