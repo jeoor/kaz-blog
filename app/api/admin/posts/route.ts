@@ -81,6 +81,11 @@ export async function GET(request: Request) {
     try {
         await assertAdmin(request);
 
+        const { searchParams } = new URL(request.url);
+        if (searchParams.get("intent") === "auth-check") {
+            return NextResponse.json({ ok: true });
+        }
+
         const slug = getSlugFromUrl(request);
         const env = getNotionEnvFromProcess();
         const page = await findPageBySlug(slug);

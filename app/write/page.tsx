@@ -78,10 +78,6 @@ export default function WritePage() {
     const normalizedSlug = normalizeSlug(slug);
 
     useEffect(() => {
-        // No caching: clear any existing admin session cookie on every /write entry.
-        fetch(adminApiUrl("/api/admin/session"), { method: "DELETE", credentials: adminCredentials() }).catch(() => {
-            // Ignore.
-        });
         setIsUnlocked(false);
         setUnlockError(null);
     }, []);
@@ -128,11 +124,6 @@ export default function WritePage() {
         };
     }
 
-    function eoLogUuidSuffix(res: Response): string {
-        const uuid = res.headers.get("eo-log-uuid") || res.headers.get("EO-LOG-UUID");
-        return uuid ? `（EO-LOG-UUID: ${uuid}）` : "";
-    }
-
     async function onUnlock(): Promise<void> {
         setStatus({ state: "idle" });
         setUnlockError(null);
@@ -143,27 +134,19 @@ export default function WritePage() {
 
         setIsUnlocking(true);
         try {
-            const res = await fetch(adminApiUrl("/api/admin/session"), {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                    ...adminHeaders(),
-                },
+            const res = await fetch(adminApiUrl("/api/admin/posts?intent=auth-check"), {
+                headers: adminHeaders(),
                 credentials: adminCredentials(),
-                body: JSON.stringify({ password: adminPassword.trim(), noCookie: true }),
             });
 
             if (!res.ok) {
                 setIsUnlocked(false);
-                const uuidSuffix = eoLogUuidSuffix(res);
                 if (res.status === 401) {
                     setUnlockError("密码不正确");
                 } else if (res.status === 545) {
                     setUnlockError(
-                        `EdgeOne 返回 545：边缘函数执行异常（例如引用未定义变量）。这通常表示请求在 EdgeOne 边缘侧报错，而不是到达 Next.js /api。${uuidSuffix}`,
+                        "EdgeOne 返回 545：边缘函数执行异常。这次解锁已经绕开 /api/admin/session，说明当前部署连 /api/admin/posts 也没有正常跑起来，请优先检查平台对 Next.js API 的支持和函数环境变量注入。",
                     );
-                } else if (res.status === 404) {
-                    setUnlockError("当前部署找不到 /api/admin/session（可能是静态托管不支持 Next.js API 路由/函数）。");
                 } else {
                     let serverMessage = "";
                     try {
@@ -172,7 +155,7 @@ export default function WritePage() {
                     } catch {
                         // ignore
                     }
-                    setUnlockError(serverMessage || `解锁失败（${res.status}）${uuidSuffix}`);
+                    setUnlockError(serverMessage || `解锁失败（${res.status}）`);
                 }
                 return;
             }
@@ -188,14 +171,10 @@ export default function WritePage() {
     }
 
     async function onLogout(): Promise<void> {
-        try {
-            await fetch(adminApiUrl("/api/admin/session"), { method: "DELETE", credentials: adminCredentials() });
-        } finally {
-            setAdminPassword("");
-            setIsUnlocked(false);
-            setUnlockError(null);
-            window.location.href = "/";
-        }
+        setAdminPassword("");
+        setIsUnlocked(false);
+        setUnlockError(null);
+        window.location.href = "/";
     }
 
     function resetForm(): void {
