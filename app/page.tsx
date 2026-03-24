@@ -7,6 +7,8 @@ import BlogSidebar from "@/components/layout/blog-sidebar";
 import HomePosts from "@/components/home-posts";
 import { getSortedPostsData } from "@/lib/posts";
 
+export const revalidate = 60;
+
 export default async function Home() {
   const posts = await getSortedPostsData();
   const pageSize = Math.max(1, SITE.home.pageSize || 6);

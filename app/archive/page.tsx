@@ -7,6 +7,8 @@ import { SITE } from "@/app/site-config";
 import getFormattedDate from "@/lib/getFormattedDate";
 import { getSortedPostsData } from "@/lib/posts";
 
+export const revalidate = 60;
+
 type ArchiveGroup = {
     year: number;
     posts: BlogPost[];

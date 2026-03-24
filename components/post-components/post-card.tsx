@@ -9,13 +9,17 @@ type Props = {
 };
 
 export default function PostCard({ post }: Props) {
-  const { id, title, date, description, keywords } = post;
+  const { id, title, date, description, keywords, author } = post;
   const formattedDate = getFormattedDate(date);
 
   return (
     <article className="rounded-[1.25rem] border border-black/8 bg-black/[0.02] px-6 py-6 transition-transform duration-200 hover:-translate-y-0.5 dark:border-white/[0.05] dark:bg-white/[0.02]">
       <div className="text-xs text-black/44 dark:text-white/44">
-        <div className="font-medium">{formattedDate}</div>
+        <div className="flex flex-wrap items-center gap-x-2 gap-y-1 font-medium">
+          <span>{formattedDate}</span>
+          {author ? <span className="opacity-70">·</span> : null}
+          {author ? <span>作者：{author}</span> : null}
+        </div>
       </div>
 
       <div className="mt-3">

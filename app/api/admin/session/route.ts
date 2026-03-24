@@ -9,11 +9,16 @@ import {
 
 export async function POST(request: Request) {
     try {
-        const payload = (await request.json().catch(() => ({}))) as { token?: string; password?: string };
+        const payload = (await request.json().catch(() => ({}))) as { token?: string; password?: string; noCookie?: boolean };
         const provided = (payload.token || payload.password || getAdminTokenFromRequest(request) || "").trim();
 
         if (!isAdminTokenValid(provided)) {
             return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
+        }
+
+        if (payload.noCookie) {
+            // Validate only (no session cookie) for per-visit password entry flows.
+            return NextResponse.json({ ok: true });
         }
 
         const jwt = await createAdminSessionJwt();

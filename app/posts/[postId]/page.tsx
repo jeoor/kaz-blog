@@ -10,6 +10,9 @@ import TwikooComments from "@/components/comments/twikoo-comments";
 import ScrollToComments from "@/components/scroll-to-comments";
 import { getTagHref } from "@/lib/tags";
 import Link from "next/link";
+import getFormattedDate from "@/lib/getFormattedDate";
+
+export const revalidate = 60;
 
 export async function generateStaticParams() {
   const posts = await getSortedPostsData();
@@ -66,6 +69,11 @@ export default async function Post({ params }: { params: { postId: string } }) {
             <h1 className="max-w-4xl font-serif text-4xl font-semibold leading-[1.08] tracking-tight md:text-5xl xl:text-[3.8rem]">
               {title}
             </h1>
+            <div className="mt-5 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-black/55 dark:text-white/55">
+              {page.date ? <span>{getFormattedDate(page.date)}</span> : null}
+              {page.author ? <span className="opacity-80">·</span> : null}
+              {page.author ? <span>作者：{page.author}</span> : null}
+            </div>
             <p className="mt-6 max-w-3xl text-[1.02rem] leading-8 text-black/62 dark:text-white/62">
               {description}
             </p>

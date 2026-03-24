@@ -8,6 +8,8 @@ import RenderPosts from "@/components/post-components/render-posts";
 import { getSortedPostsData } from "@/lib/posts";
 import { decodeTagParam, filterPostsByTag, getAllTags } from "@/lib/tags";
 
+export const revalidate = 60;
+
 export async function generateStaticParams() {
     const posts = await getSortedPostsData();
 

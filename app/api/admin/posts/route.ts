@@ -165,8 +165,38 @@ export async function POST(request: Request) {
             pageId: result.pageId,
         });
     } catch (e) {
-        const message = e instanceof Error ? e.message : "Error";
-        const status = message === "Unauthorized" ? 401 : 400;
+        const raw = e instanceof Error ? e.message : "Error";
+        const anyErr = e as any;
+        const code = String(anyErr?.code || anyErr?.errno || "");
+        const notionCode = String(anyErr?.code || "");
+        const statusFromNotion = Number(anyErr?.status || 0);
+
+        let message = raw;
+        let status = raw === "Unauthorized" ? 401 : 400;
+
+        if (code === "ECONNRESET" || raw.includes("ECONNRESET")) {
+            message = "Notion 请求被网络重置（ECONNRESET）。通常是代理/防火墙/VPN/网络抖动导致，建议稍后重试或更换网络。";
+            status = 503;
+        } else if (statusFromNotion === 429) {
+            message = "Notion 触发限流（429）。请稍后重试。";
+            status = 503;
+        } else if (notionCode === "validation_error" || raw.includes("validation_error") || raw.includes("Could not find property") || raw.includes("is not a property")) {
+            message =
+                "Notion 数据库字段不匹配（validation_error）。\n" +
+                "你当前数据库的列名/类型和项目期望的不一致。\n\n" +
+                "解决：\n" +
+                "- 方案 A：在 Notion 数据库里创建这些列：Slug / Date / Description / Author / Keywords / Published（类型按项目默认）；\n" +
+                "- 方案 B：在 .env.local 里设置 NOTION_PROP_SLUG/DATE/DESCRIPTION/AUTHOR/KEYWORDS/PUBLISHED 映射到你数据库的真实列名。\n\n" +
+                "建议先运行：npm run notion:check（会打印数据库的列名）。";
+            status = 400;
+        } else if (statusFromNotion === 404 || notionCode === "object_not_found" || raw.includes("Could not find database")) {
+            message = "Notion 数据库找不到（404）。请确认 NOTION_DATABASE_ID 正确，并在 Notion 的数据库页面 Share/Connections 把数据库共享给你的 integration（kaz-blog）。";
+            status = 400;
+        } else if (statusFromNotion === 401 || statusFromNotion === 403) {
+            message = "Notion 鉴权失败（401/403）。请确认 NOTION_TOKEN 正确且 integration 有权限访问该数据库。";
+            status = 400;
+        }
+
         return NextResponse.json({ message }, { status });
     }
 }

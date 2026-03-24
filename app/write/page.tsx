@@ -1,8 +1,11 @@
 "use client";
 
-import { useState } from "react";
-import { Button, Card, CardBody, Input, NextUIProvider, Spinner, Textarea } from "@nextui-org/react";
+import { useEffect, useId, useState } from "react";
+import { Button, Card, CardBody, Input, NextUIProvider, Spinner } from "@nextui-org/react";
 import { SITE } from "@/app/site-config";
+import ArticleBody from "@/components/post-components/article-body";
+import { remark } from "remark";
+import remarkHtml from "remark-html";
 
 type UiStatus =
     | { state: "idle" }
@@ -27,20 +30,41 @@ function todayYmd(): string {
     return `${yyyy}-${mm}-${dd}`;
 }
 
+function crc16CcittFalse(input: string): number {
+    // CRC-16/CCITT-FALSE
+    // poly=0x1021, init=0xFFFF, xorout=0x0000
+    let crc = 0xffff;
+    for (let i = 0; i < input.length; i++) {
+        crc ^= input.charCodeAt(i) << 8;
+        for (let bit = 0; bit < 8; bit++) {
+            crc = (crc & 0x8000) !== 0 ? ((crc << 1) ^ 0x1021) : (crc << 1);
+            crc &= 0xffff;
+        }
+    }
+    return crc & 0xffff;
+}
+
 function generateSlug(): string {
-    const now = new Date();
-    const yyyy = now.getFullYear();
-    const mm = String(now.getMonth() + 1).padStart(2, "0");
-    const dd = String(now.getDate()).padStart(2, "0");
-    const hh = String(now.getHours()).padStart(2, "0");
-    const mi = String(now.getMinutes()).padStart(2, "0");
-    const ss = String(now.getSeconds()).padStart(2, "0");
-    const rand = Math.random().toString(36).slice(2, 8);
-    return `${yyyy}${mm}${dd}${hh}${mi}${ss}-${rand}`;
+    // Use a time+random seed, then compress to 16-bit CRC hex.
+    // Output example: "66c8"
+    const seed = `${Date.now()}-${Math.random()}`;
+    const crc = crc16CcittFalse(seed);
+    return crc.toString(16).padStart(4, "0").toLowerCase();
 }
 
 export default function WritePage() {
+    const contentId = useId();
     const [status, setStatus] = useState<UiStatus>({ state: "idle" });
+
+    const [editorMode, setEditorMode] = useState<"edit" | "preview">("edit");
+    const [previewHtml, setPreviewHtml] = useState<string>("");
+    const [previewError, setPreviewError] = useState<string | null>(null);
+    const [isPreviewWorking, setIsPreviewWorking] = useState(false);
+
+    const [adminPassword, setAdminPassword] = useState("");
+    const [isUnlocked, setIsUnlocked] = useState(false);
+    const [isUnlocking, setIsUnlocking] = useState(false);
+    const [unlockError, setUnlockError] = useState<string | null>(null);
 
     const [slug, setSlug] = useState("");
     const [title, setTitle] = useState("");
@@ -52,15 +76,100 @@ export default function WritePage() {
 
     const normalizedSlug = normalizeSlug(slug);
 
+    useEffect(() => {
+        // No caching: clear any existing admin session cookie on every /write entry.
+        fetch("/api/admin/session", { method: "DELETE", credentials: "include" }).catch(() => {
+            // Ignore.
+        });
+        setIsUnlocked(false);
+        setUnlockError(null);
+    }, []);
+
+    useEffect(() => {
+        if (editorMode !== "preview") return;
+
+        let cancelled = false;
+        setIsPreviewWorking(true);
+        setPreviewError(null);
+
+        remark()
+            .use(remarkHtml)
+            .process(content || "")
+            .then((file) => {
+                if (cancelled) return;
+                setPreviewHtml(String(file));
+            })
+            .catch((e) => {
+                if (cancelled) return;
+                const message = e instanceof Error ? e.message : "预览渲染失败";
+                setPreviewError(message);
+                setPreviewHtml("");
+            })
+            .finally(() => {
+                if (cancelled) return;
+                setIsPreviewWorking(false);
+            });
+
+        return () => {
+            cancelled = true;
+        };
+    }, [content, editorMode]);
+
     function ensureBasics(): string | null {
+        if (!isUnlocked) return "需要先解锁写作台";
         if (!normalizedSlug) return "需要填写 slug";
         return null;
     }
 
+    function adminHeaders(): HeadersInit {
+        return {
+            "x-admin-token": adminPassword.trim(),
+        };
+    }
+
+    async function onUnlock(): Promise<void> {
+        setStatus({ state: "idle" });
+        setUnlockError(null);
+        if (!adminPassword.trim()) {
+            setUnlockError("请输入密码");
+            return;
+        }
+
+        setIsUnlocking(true);
+        try {
+            const res = await fetch("/api/admin/session", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    ...adminHeaders(),
+                },
+                credentials: "include",
+                body: JSON.stringify({ password: adminPassword.trim(), noCookie: true }),
+            });
+
+            if (!res.ok) {
+                setIsUnlocked(false);
+                setUnlockError("密码不正确");
+                return;
+            }
+
+            setIsUnlocked(true);
+        } catch (e) {
+            setIsUnlocked(false);
+            const message = e instanceof Error ? e.message : "验证失败";
+            setUnlockError(message);
+        } finally {
+            setIsUnlocking(false);
+        }
+    }
+
     async function onLogout(): Promise<void> {
         try {
-            await fetch("/api/admin/session", { method: "DELETE" });
+            await fetch("/api/admin/session", { method: "DELETE", credentials: "include" });
         } finally {
+            setAdminPassword("");
+            setIsUnlocked(false);
+            setUnlockError(null);
             window.location.href = "/";
         }
     }
@@ -86,6 +195,7 @@ export default function WritePage() {
         try {
             const res = await fetch(`/api/admin/posts?slug=${encodeURIComponent(normalizedSlug)}`, {
                 credentials: "include",
+                headers: adminHeaders(),
             });
 
             if (res.status === 404) {
@@ -148,6 +258,7 @@ export default function WritePage() {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
+                    ...adminHeaders(),
                 },
                 credentials: "include",
                 body: JSON.stringify({
@@ -193,6 +304,7 @@ export default function WritePage() {
             const res = await fetch(`/api/admin/posts?slug=${encodeURIComponent(normalizedSlug)}`, {
                 method: "DELETE",
                 credentials: "include",
+                headers: adminHeaders(),
             });
 
             const data = (await res.json()) as any;
@@ -210,51 +322,117 @@ export default function WritePage() {
     }
 
     const isWorking = status.state === "working";
+    const hasPassword = !!adminPassword.trim();
 
     return (
         <NextUIProvider>
             <div className="mx-auto w-full max-w-[94rem] px-4 pb-24 pt-10 md:pt-14">
-                <header className="mb-8 flex flex-col gap-5 rounded-[2rem] border border-black/10 bg-white/60 px-6 py-6 dark:border-white/10 dark:bg-white/[0.03] md:flex-row md:items-end md:justify-between md:px-8">
-                    <div>
-                        <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-black/45 dark:text-white/45">
-                            Writing Workspace
-                        </p>
-                        <h1 className="mt-3 font-serif text-4xl font-semibold tracking-tight md:text-5xl">
-                            {SITE.write.title}
-                        </h1>
-                        <p className="mt-4 max-w-2xl text-sm leading-7 text-black/68 dark:text-white/68">
-                            {SITE.write.description}
-                        </p>
-                    </div>
+                <div className="grid items-stretch gap-6 xl:grid-cols-[minmax(0,1fr)_22rem]">
+                    <Card
+                        shadow="none"
+                        className="border border-black/10 bg-white/78 dark:border-white/10 dark:bg-white/[0.03] min-h-[calc(100svh-10rem)] h-full"
+                    >
+                        <CardBody className="flex h-full flex-col gap-6 p-6 md:p-8">
+                            {editorMode === "edit" ? (
+                                <div className="flex w-full flex-1 min-h-0 flex-col">
+                                    <label
+                                        htmlFor={contentId}
+                                        className="text-sm font-medium text-black/70 dark:text-white/70"
+                                    >
+                                        正文（Markdown）
+                                    </label>
+                                    <div className="mt-3 flex-1 min-h-0 rounded-[1.5rem] border border-black/8 bg-black/[0.02] px-5 py-4 dark:border-white/8 dark:bg-white/[0.02]">
+                                        <textarea
+                                            id={contentId}
+                                            value={content}
+                                            onChange={(e) => setContent(e.target.value)}
+                                            placeholder="在这里写 Markdown 正文…"
+                                            className="h-full w-full resize-none bg-transparent !text-[15px] leading-8 font-medium text-black/90 outline-none dark:text-white/90"
+                                        />
+                                    </div>
+                                </div>
+                            ) : (
+                                <div className="flex flex-1 min-h-0 flex-col">
+                                    <div className="flex items-center justify-between gap-3">
+                                        <div className="text-sm font-medium text-black/70 dark:text-white/70">预览</div>
+                                        <div className="text-xs text-black/45 dark:text-white/45">当前内容（未发布）</div>
+                                    </div>
 
-                    <div className="flex flex-wrap items-center gap-3">
-                        <Button variant="flat" className="border border-black/10 dark:border-white/10" onPress={onLoad} isDisabled={isWorking || !normalizedSlug}>
-                            加载文章
-                        </Button>
-                        <Button variant="flat" className="border border-black/10 dark:border-white/10" onPress={onLogout}>
-                            退出登录
-                        </Button>
-                    </div>
-                </header>
+                                    <div className="mt-3 flex-1 min-h-0 overflow-auto rounded-[1.5rem] border border-black/8 bg-black/[0.02] px-5 py-4 dark:border-white/8 dark:bg-white/[0.02]">
+                                        {isPreviewWorking ? (
+                                            <div className="flex items-center gap-2 text-sm text-black/55 dark:text-white/55">
+                                                <Spinner size="sm" />
+                                                正在渲染预览...
+                                            </div>
+                                        ) : previewError ? (
+                                            <div className="text-sm text-red-400">{previewError}</div>
+                                        ) : previewHtml.trim() ? (
+                                            <ArticleBody contentHtml={previewHtml} />
+                                        ) : (
+                                            <div className="text-sm text-black/45 dark:text-white/45">（暂无内容）</div>
+                                        )}
+                                    </div>
+                                </div>
+                            )}
+                        </CardBody>
+                    </Card>
 
-                <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_22rem]">
-                    <Card shadow="none" className="border border-black/10 bg-white/78 dark:border-white/10 dark:bg-white/[0.03]">
-                        <CardBody className="space-y-6 p-6 md:p-8">
-                            <div className="flex flex-wrap items-start justify-between gap-4 border-b border-black/10 pb-5 dark:border-white/10">
+                    <aside className="space-y-6 xl:sticky xl:top-24 xl:self-start">
+                        <Card shadow="none" className="border border-black/10 bg-white/78 dark:border-white/10 dark:bg-white/[0.03]">
+                            <CardBody className="space-y-5 p-6">
                                 <div>
                                     <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-black/45 dark:text-white/45">
-                                        Draft
+                                        Writing Workspace
                                     </p>
-                                    <h2 className="mt-3 font-serif text-2xl font-semibold tracking-tight md:text-3xl">
-                                        正文编辑器
-                                    </h2>
-                                    <p className="mt-2 text-sm leading-7 text-black/60 dark:text-white/60">
-                                        正文占主列，专注写作；设置和操作收进右侧栏。
+                                    <h1 className="mt-3 font-serif text-3xl font-semibold tracking-tight">
+                                        {SITE.write.title}
+                                    </h1>
+                                    <p className="mt-3 text-sm leading-7 text-black/68 dark:text-white/68">
+                                        {SITE.write.description}
                                     </p>
                                 </div>
 
-                                <div className="flex flex-wrap items-center gap-3">
-                                    <Button color="primary" onPress={onPublish} isDisabled={isWorking}>
+                                {!isUnlocked ? (
+                                    <div className="space-y-3">
+                                        <Input
+                                            type="password"
+                                            label="写作台密码"
+                                            value={adminPassword}
+                                            onValueChange={(next) => {
+                                                setAdminPassword(next);
+                                                setIsUnlocked(false);
+                                                setUnlockError(null);
+                                                setStatus({ state: "idle" });
+                                            }}
+                                        />
+                                        {unlockError ? (
+                                            <div className="text-sm text-red-400">{unlockError}</div>
+                                        ) : null}
+                                        <Button
+                                            variant="flat"
+                                            className="border border-black/10 dark:border-white/10 w-full"
+                                            onPress={onUnlock}
+                                            isDisabled={isWorking || isUnlocking || !hasPassword}
+                                        >
+                                            {isUnlocking ? (
+                                                <span className="inline-flex items-center gap-2">
+                                                    <Spinner size="sm" />
+                                                    正在验证...
+                                                </span>
+                                            ) : (
+                                                "解锁"
+                                            )}
+                                        </Button>
+                                    </div>
+                                ) : null}
+
+                                <div className="flex flex-wrap items-center gap-2">
+                                    <Button
+                                        color="primary"
+                                        onPress={onPublish}
+                                        isDisabled={isWorking || !isUnlocked}
+                                        className="flex-1"
+                                    >
                                         {isWorking ? (
                                             <span className="inline-flex items-center gap-2">
                                                 <Spinner size="sm" />
@@ -264,48 +442,64 @@ export default function WritePage() {
                                             "发布/更新"
                                         )}
                                     </Button>
-                                    <Button color="danger" variant="flat" onPress={onDelete} isDisabled={isWorking || !normalizedSlug}>
+                                    <Button
+                                        variant="flat"
+                                        className="border border-black/10 dark:border-white/10"
+                                        onPress={() => setEditorMode((current) => (current === "edit" ? "preview" : "edit"))}
+                                        isDisabled={isWorking}
+                                    >
+                                        {editorMode === "edit" ? "预览" : "返回编辑"}
+                                    </Button>
+                                    <Button
+                                        color="danger"
+                                        variant="flat"
+                                        onPress={onDelete}
+                                        isDisabled={isWorking || !isUnlocked || !normalizedSlug}
+                                    >
                                         删除
                                     </Button>
                                 </div>
-                            </div>
 
-                            <Textarea
-                                label="正文（Markdown）"
-                                value={content}
-                                onValueChange={setContent}
-                                minRows={30}
-                                placeholder="在这里写 Markdown 正文..."
-                                classNames={{
-                                    base: "w-full",
-                                    inputWrapper: "min-h-[42rem] items-start rounded-[1.5rem] border border-black/8 bg-black/[0.02] px-5 py-4 dark:border-white/8 dark:bg-white/[0.02]",
-                                    input: "!text-[15px] leading-8 pt-1 font-medium",
-                                }}
-                            />
-
-                            {status.state === "success" ? (
-                                <div className="rounded-2xl border border-emerald-500/20 bg-emerald-500/10 px-4 py-3 text-sm text-emerald-300">
-                                    {status.message}
-                                    {status.postUrl ? (
-                                        <>
-                                            {" "}
-                                            <a className="underline" href={status.postUrl}>
-                                                打开文章
-                                            </a>
-                                        </>
-                                    ) : null}
+                                <div className="flex flex-wrap items-center gap-2">
+                                    <Button
+                                        variant="flat"
+                                        className="border border-black/10 dark:border-white/10 flex-1"
+                                        onPress={onLoad}
+                                        isDisabled={isWorking || !isUnlocked || !normalizedSlug}
+                                    >
+                                        加载文章
+                                    </Button>
+                                    <Button
+                                        variant="flat"
+                                        className="border border-black/10 dark:border-white/10"
+                                        onPress={onLogout}
+                                    >
+                                        退出登录
+                                    </Button>
                                 </div>
-                            ) : null}
 
-                            {status.state === "error" ? (
-                                <div className="rounded-2xl border border-red-500/20 bg-red-500/10 px-4 py-3 text-sm text-red-400">
-                                    {status.message}
-                                </div>
-                            ) : null}
-                        </CardBody>
-                    </Card>
+                                {status.state === "success" ? (
+                                    <div className="rounded-2xl border border-emerald-500/20 bg-emerald-500/10 px-4 py-3 text-sm text-emerald-300">
+                                        {status.message}
+                                        {status.postUrl ? (
+                                            <>
+                                                {" "}
+                                                <a className="underline" href={status.postUrl}>
+                                                    打开文章
+                                                </a>
+                                            </>
+                                        ) : null}
+                                    </div>
+                                ) : null}
 
-                    <aside className="space-y-6 xl:sticky xl:top-24 xl:self-start">
+                                {status.state === "error" ? (
+                                    <div className="rounded-2xl border border-red-500/20 bg-red-500/10 px-4 py-3 text-sm text-red-400">
+                                        {status.message}
+                                    </div>
+                                ) : null}
+                            </CardBody>
+                        </Card>
+
                         <Card shadow="none" className="border border-black/10 bg-white/78 dark:border-white/10 dark:bg-white/[0.03]">
                             <CardBody className="space-y-5 p-6">
                                 <div>
