@@ -16,9 +16,10 @@ export async function generateStaticParams() {
     return getAllTags(posts).map((tag) => ({ tag }));
 }
 
-export async function generateMetadata({ params }: { params: { tag: string } }) {
+export async function generateMetadata({ params }: { params: Promise<{ tag: string }> }) {
     const posts = await getSortedPostsData();
-    const currentTag = decodeTagParam(params.tag);
+    const { tag } = await params;
+    const currentTag = decodeTagParam(tag);
     const filteredPosts = filterPostsByTag(posts, currentTag);
 
     if (filteredPosts.length === 0) {
@@ -36,9 +37,10 @@ export async function generateMetadata({ params }: { params: { tag: string } }) 
     };
 }
 
-export default async function TagPage({ params }: { params: { tag: string } }) {
+export default async function TagPage({ params }: { params: Promise<{ tag: string }> }) {
     const posts = await getSortedPostsData();
-    const currentTag = decodeTagParam(params.tag);
+    const { tag } = await params;
+    const currentTag = decodeTagParam(tag);
     const filteredPosts = filterPostsByTag(posts, currentTag);
 
     if (filteredPosts.length === 0) {

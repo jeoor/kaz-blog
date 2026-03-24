@@ -26,7 +26,10 @@ export function ThemeSwitcher({ className = "" }: Props) {
     }, 200);
   };
 
-  useEffect(() => setMounted(true), []);
+  useEffect(() => {
+    const id = window.requestAnimationFrame(() => setMounted(true));
+    return () => window.cancelAnimationFrame(id);
+  }, []);
 
   if (!mounted) {
     return (
