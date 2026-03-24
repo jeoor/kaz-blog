@@ -7,6 +7,8 @@ import {
     isAdminTokenValid,
 } from "@/lib/admin-auth";
 
+export const runtime = "nodejs";
+
 export async function POST(request: Request) {
     try {
         const payload = (await request.json().catch(() => ({}))) as { token?: string; password?: string; noCookie?: boolean };

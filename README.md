@@ -42,6 +42,12 @@ Kaz-Blog 是一套以写作为中心的个人博客实现。
 
 - `NEXT_PUBLIC_ADMIN_API_BASE`（例如 `https://api.example.com`；不填则默认同源 `/api/...`）
 
+如果你部署在 EdgeOne 一类会把部分路由下沉到边缘执行的平台上，管理接口建议固定跑在 Node 运行时；当前项目里的 `/api/admin/session` 和 `/api/admin/posts` 都按这个假设实现。若线上出现 `545`，通常表示请求在平台边缘函数侧崩溃，还没正常进入 Next.js API。此时应优先检查：
+
+- 当前平台是否真的支持 Next.js `app/api/*`
+- `ADMIN_TOKEN`、`NOTION_TOKEN`、`NOTION_DATABASE_ID` 等服务端环境变量是否已注入函数运行时
+- 是否需要把管理接口单独部署到独立域名，并通过 `NEXT_PUBLIC_ADMIN_API_BASE` 指过去
+
 ## 评论（Twikoo）
 
 评论系统使用 Twikoo，配置集中在 `app/site-config.ts`：
