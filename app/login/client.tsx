@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Button, Card, CardBody, Input, Spinner, NextUIProvider } from "@nextui-org/react";
 import { SITE } from "@/app/site-config";
+import { adminApiUrl, adminCredentials } from "@/lib/admin-api";
 
 export default function LoginClient() {
     const router = useRouter();
@@ -23,9 +24,10 @@ export default function LoginClient() {
 
         setLoading(true);
         try {
-            const res = await fetch("/api/admin/session", {
+            const res = await fetch(adminApiUrl("/api/admin/session"), {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
+                credentials: adminCredentials(),
                 body: JSON.stringify({ token: token.trim() }),
             });
 

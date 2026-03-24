@@ -38,6 +38,10 @@ Kaz-Blog 是一套以写作为中心的个人博客实现。
 - `NOTION_PROP_KEYWORDS`
 - `NOTION_PROP_TITLE`
 
+如果你使用的是纯静态托管（例如 EdgeOne Pages 静态站点）且无法运行 Next.js `app/api/*`，可以把管理接口部署到单独的后端（例如边缘函数/Serverless），然后在前端构建时设置：
+
+- `NEXT_PUBLIC_ADMIN_API_BASE`（例如 `https://api.example.com`；不填则默认同源 `/api/...`）
+
 ## 评论（Twikoo）
 
 评论系统使用 Twikoo，配置集中在 `app/site-config.ts`：

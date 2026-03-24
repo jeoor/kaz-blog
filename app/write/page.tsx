@@ -4,6 +4,7 @@ import { useEffect, useId, useState } from "react";
 import { Button, Card, CardBody, Input, NextUIProvider, Spinner } from "@nextui-org/react";
 import { SITE } from "@/app/site-config";
 import ArticleBody from "@/components/post-components/article-body";
+import { adminApiUrl, adminCredentials } from "@/lib/admin-api";
 import { remark } from "remark";
 import remarkHtml from "remark-html";
 
@@ -78,7 +79,7 @@ export default function WritePage() {
 
     useEffect(() => {
         // No caching: clear any existing admin session cookie on every /write entry.
-        fetch("/api/admin/session", { method: "DELETE", credentials: "include" }).catch(() => {
+        fetch(adminApiUrl("/api/admin/session"), { method: "DELETE", credentials: adminCredentials() }).catch(() => {
             // Ignore.
         });
         setIsUnlocked(false);
@@ -127,6 +128,11 @@ export default function WritePage() {
         };
     }
 
+    function eoLogUuidSuffix(res: Response): string {
+        const uuid = res.headers.get("eo-log-uuid") || res.headers.get("EO-LOG-UUID");
+        return uuid ? `（EO-LOG-UUID: ${uuid}）` : "";
+    }
+
     async function onUnlock(): Promise<void> {
         setStatus({ state: "idle" });
         setUnlockError(null);
@@ -137,20 +143,25 @@ export default function WritePage() {
 
         setIsUnlocking(true);
         try {
-            const res = await fetch("/api/admin/session", {
+            const res = await fetch(adminApiUrl("/api/admin/session"), {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
                     ...adminHeaders(),
                 },
-                credentials: "include",
+                credentials: adminCredentials(),
                 body: JSON.stringify({ password: adminPassword.trim(), noCookie: true }),
             });
 
             if (!res.ok) {
                 setIsUnlocked(false);
+                const uuidSuffix = eoLogUuidSuffix(res);
                 if (res.status === 401) {
                     setUnlockError("密码不正确");
+                } else if (res.status === 545) {
+                    setUnlockError(
+                        `EdgeOne 返回 545：边缘函数执行异常（例如引用未定义变量）。这通常表示请求在 EdgeOne 边缘侧报错，而不是到达 Next.js /api。${uuidSuffix}`,
+                    );
                 } else if (res.status === 404) {
                     setUnlockError("当前部署找不到 /api/admin/session（可能是静态托管不支持 Next.js API 路由/函数）。");
                 } else {
@@ -161,7 +172,7 @@ export default function WritePage() {
                     } catch {
                         // ignore
                     }
-                    setUnlockError(serverMessage || `解锁失败（${res.status}）`);
+                    setUnlockError(serverMessage || `解锁失败（${res.status}）${uuidSuffix}`);
                 }
                 return;
             }
@@ -178,7 +189,7 @@ export default function WritePage() {
 
     async function onLogout(): Promise<void> {
         try {
-            await fetch("/api/admin/session", { method: "DELETE", credentials: "include" });
+            await fetch(adminApiUrl("/api/admin/session"), { method: "DELETE", credentials: adminCredentials() });
         } finally {
             setAdminPassword("");
             setIsUnlocked(false);
@@ -206,11 +217,10 @@ export default function WritePage() {
 
         setStatus({ state: "working", message: "正在加载文章..." });
         try {
-            const res = await fetch(`/api/admin/posts?slug=${encodeURIComponent(normalizedSlug)}`, {
-                credentials: "include",
+            const res = await fetch(adminApiUrl(`/api/admin/posts?slug=${encodeURIComponent(normalizedSlug)}`), {
+                credentials: adminCredentials(),
                 headers: adminHeaders(),
             });
-
             if (res.status === 404) {
                 setStatus({ state: "error", message: "没找到这篇文章（404）" });
                 return;
@@ -267,13 +277,13 @@ export default function WritePage() {
                 .map((k) => k.trim())
                 .filter(Boolean);
 
-            const res = await fetch("/api/admin/posts", {
+            const res = await fetch(adminApiUrl("/api/admin/posts"), {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
                     ...adminHeaders(),
                 },
-                credentials: "include",
+                credentials: adminCredentials(),
                 body: JSON.stringify({
                     slug: normalizedSlug,
                     frontmatter: {
@@ -314,9 +324,9 @@ export default function WritePage() {
 
         setStatus({ state: "working", message: "正在删除..." });
         try {
-            const res = await fetch(`/api/admin/posts?slug=${encodeURIComponent(normalizedSlug)}`, {
+            const res = await fetch(adminApiUrl(`/api/admin/posts?slug=${encodeURIComponent(normalizedSlug)}`), {
                 method: "DELETE",
-                credentials: "include",
+                credentials: adminCredentials(),
                 headers: adminHeaders(),
             });
 
