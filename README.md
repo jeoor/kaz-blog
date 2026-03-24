@@ -48,6 +48,8 @@ Kaz-Blog 是一套以写作为中心的个人博客实现。
 - `ADMIN_TOKEN`、`NOTION_TOKEN`、`NOTION_DATABASE_ID` 等服务端环境变量是否已注入函数运行时
 - 是否需要把管理接口单独部署到独立域名，并通过 `NEXT_PUBLIC_ADMIN_API_BASE` 指过去
 
+本项目已内置 EdgeOne Cloud Functions 备用管理接口：`/cfapi/admin/session`、`/cfapi/admin/posts`（代码在 `cloud-functions/cfapi/**`）。在生产构建下，前端默认优先使用 `/cfapi`；你也可以显式设置 `NEXT_PUBLIC_ADMIN_API_BASE=/cfapi`。
+
 ## 评论（Twikoo）
 
 评论系统使用 Twikoo，配置集中在 `app/site-config.ts`：

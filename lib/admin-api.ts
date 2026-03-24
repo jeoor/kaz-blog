@@ -1,4 +1,6 @@
-export const ADMIN_API_BASE = (process.env.NEXT_PUBLIC_ADMIN_API_BASE || "").trim().replace(/\/+$/, "");
+const defaultBase = process.env.NODE_ENV === "production" ? "/cfapi" : "";
+
+export const ADMIN_API_BASE = (process.env.NEXT_PUBLIC_ADMIN_API_BASE || defaultBase).trim().replace(/\/+$/, "");
 
 export function adminApiUrl(path: string): string {
     const normalizedPath = path.startsWith("/") ? path : `/${path}`;
