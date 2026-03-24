@@ -40,15 +40,15 @@ Kaz-Blog 是一套以写作为中心的个人博客实现。
 
 如果你使用的是纯静态托管（例如 EdgeOne Pages 静态站点）且无法运行 Next.js `app/api/*`，可以把管理接口部署到单独的后端（例如边缘函数/Serverless），然后在前端构建时设置：
 
-- `NEXT_PUBLIC_ADMIN_API_BASE`（例如 `https://api.example.com`；不填则默认同源 `/api/...`）
+- `NEXT_PUBLIC_ADMIN_API_BASE`（例如 `https://api.example.com`；不填时开发环境默认同源 `/api/...`，生产环境默认 `/cfapi`）
 
-如果你部署在 EdgeOne 一类会把部分路由下沉到边缘执行的平台上，管理接口建议固定跑在 Node 运行时；当前项目里的 `/api/admin/session` 和 `/api/admin/posts` 都按这个假设实现。若线上出现 `545`，通常表示请求在平台边缘函数侧崩溃，还没正常进入 Next.js API。此时应优先检查：
+本项目默认使用 EdgeOne Cloud Functions 管理接口：`/cfapi/api/admin/session`、`/cfapi/api/admin/posts`（代码在 `cloud-functions/cfapi/**`）。在生产构建下，前端默认优先使用 `/cfapi`；你也可以显式设置 `NEXT_PUBLIC_ADMIN_API_BASE=/cfapi`。
 
-- 当前平台是否真的支持 Next.js `app/api/*`
-- `ADMIN_TOKEN`、`NOTION_TOKEN`、`NOTION_DATABASE_ID` 等服务端环境变量是否已注入函数运行时
-- 是否需要把管理接口单独部署到独立域名，并通过 `NEXT_PUBLIC_ADMIN_API_BASE` 指过去
+若线上出现 `545`，通常表示 Cloud Functions 执行异常。优先检查：
 
-本项目已内置 EdgeOne Cloud Functions 备用管理接口：`/cfapi/admin/session`、`/cfapi/admin/posts`（代码在 `cloud-functions/cfapi/**`）。在生产构建下，前端默认优先使用 `/cfapi`；你也可以显式设置 `NEXT_PUBLIC_ADMIN_API_BASE=/cfapi`。
+- `/cfapi/api/admin/session` 与 `/cfapi/api/admin/posts` 是否已成功部署
+- `ADMIN_TOKEN`、`NOTION_TOKEN`、`NOTION_DATABASE_ID` 等服务端环境变量是否注入到函数运行时
+- 控制台日志分析中对应函数请求的错误堆栈
 
 ## 评论（Twikoo）
 

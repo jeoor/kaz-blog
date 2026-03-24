@@ -145,7 +145,7 @@ export default function WritePage() {
                     setUnlockError("密码不正确");
                 } else if (res.status === 545) {
                     setUnlockError(
-                        "EdgeOne 返回 545：边缘函数执行异常。这次解锁已经绕开 /api/admin/session，说明当前部署连 /api/admin/posts 也没有正常跑起来，请优先检查平台对 Next.js API 的支持和函数环境变量注入。",
+                        "EdgeOne 返回 545：Cloud Functions 执行异常。请优先检查 /cfapi/api/admin/posts 函数是否已部署，以及 ADMIN_TOKEN/NOTION_TOKEN/NOTION_DATABASE_ID 是否已注入。",
                     );
                 } else {
                     let serverMessage = "";
