@@ -1,14 +1,8 @@
 import { NextResponse } from "next/server";
-import { cookies } from "next/headers";
 
-import { archivePageBySlug, findPageBySlug, getBlocksWithChildren, pageToMeta } from "@/lib/notion";
-import { markdownToNotionBlocks, notionBlocksToMarkdown } from "@/lib/notion-markdown";
-import { upsertPage } from "@/lib/notion";
 import {
-    ADMIN_SESSION_COOKIE,
     getAdminTokenFromRequest,
     isAdminTokenValid,
-    verifyAdminSessionJwt,
 } from "@/lib/admin-auth";
 
 export const runtime = "nodejs";
@@ -36,17 +30,11 @@ function getAdminToken(request: Request): string | null {
     return getAdminTokenFromRequest(request);
 }
 
-async function assertAdmin(request: Request): Promise<void> {
-    // 1) header token fallback (useful for scripts)
+function assertAdmin(request: Request): void {
     const headerToken = getAdminToken(request);
     if (isAdminTokenValid(headerToken)) return;
 
-    // 2) cookie session
-    const session = cookies().get(ADMIN_SESSION_COOKIE)?.value;
-    const ok = await verifyAdminSessionJwt(session);
-    if (!ok) {
-        throw new Error("Unauthorized");
-    }
+    throw new Error("Unauthorized");
 }
 
 function getNotionEnvFromProcess() {
@@ -79,12 +67,18 @@ type PostFrontmatter = {
 
 export async function GET(request: Request) {
     try {
-        await assertAdmin(request);
-
         const { searchParams } = new URL(request.url);
         if (searchParams.get("intent") === "auth-check") {
+            assertAdmin(request);
             return NextResponse.json({ ok: true });
         }
+
+        assertAdmin(request);
+
+        const [{ findPageBySlug, getBlocksWithChildren, pageToMeta }, { notionBlocksToMarkdown }] = await Promise.all([
+            import("@/lib/notion"),
+            import("@/lib/notion-markdown"),
+        ]);
 
         const slug = getSlugFromUrl(request);
         const env = getNotionEnvFromProcess();
@@ -118,7 +112,12 @@ export async function GET(request: Request) {
 
 export async function POST(request: Request) {
     try {
-        await assertAdmin(request);
+        assertAdmin(request);
+
+        const [{ markdownToNotionBlocks }, { upsertPage }] = await Promise.all([
+            import("@/lib/notion-markdown"),
+            import("@/lib/notion"),
+        ]);
 
         const payload = (await request.json()) as {
             slug?: string;
@@ -208,7 +207,9 @@ export async function POST(request: Request) {
 
 export async function DELETE(request: Request) {
     try {
-        await assertAdmin(request);
+        assertAdmin(request);
+
+        const { archivePageBySlug } = await import("@/lib/notion");
 
         const slug = getSlugFromUrl(request);
         await archivePageBySlug(slug);
