@@ -182,10 +182,13 @@ async function loadMeta(kv) {
     const raw = await kvGetText(kv, META_KEY);
     const parsed = parseJsonString(raw, null);
     if (!parsed || typeof parsed !== "object") {
-        return { userCount: 0, createdAt: nowMs(), updatedAt: nowMs() };
+        return { userCount: 0, usernames: [], createdAt: nowMs(), updatedAt: nowMs() };
     }
+    const rawUsernames = Array.isArray(parsed.usernames) ? parsed.usernames : [];
+    const usernames = Array.from(new Set(rawUsernames.map((item) => String(item || "").trim().toLowerCase()).filter(Boolean)));
     return {
         userCount: Number.isFinite(parsed.userCount) ? parsed.userCount : 0,
+        usernames,
         createdAt: Number.isFinite(parsed.createdAt) ? parsed.createdAt : nowMs(),
         updatedAt: Number.isFinite(parsed.updatedAt) ? parsed.updatedAt : nowMs(),
     };
@@ -193,6 +196,18 @@ async function loadMeta(kv) {
 
 async function saveMeta(kv, meta) {
     await kvPutText(kv, META_KEY, toJsonString(meta));
+}
+
+async function rememberUsername(kv, username) {
+    const normalized = String(username || "").trim().toLowerCase();
+    if (!normalized) return;
+
+    const meta = await loadMeta(kv);
+    if (meta.usernames.includes(normalized)) return;
+
+    meta.usernames = [...meta.usernames, normalized];
+    meta.updatedAt = nowMs();
+    await saveMeta(kv, meta);
 }
 
 async function derivePasswordHash(password, saltHex, iterations = 120000) {
@@ -321,6 +336,15 @@ async function kvListAll(kv, prefix) {
     return keys;
 }
 
+function listedKeyName(entry) {
+    if (typeof entry === "string") return entry.trim();
+    if (entry && typeof entry === "object") {
+        if (typeof entry.name === "string") return entry.name.trim();
+        if (typeof entry.key === "string") return entry.key.trim();
+    }
+    return "";
+}
+
 async function loadUserByUsername(kv, username) {
     const raw = await kvGetText(kv, userKey(username));
     if (!raw) return null;
@@ -379,6 +403,7 @@ export async function registerUser(context, payload) {
     await kvPutText(kv, userKey(username), toJsonString(user));
 
     meta.userCount = userCount + 1;
+    meta.usernames = Array.from(new Set([...(Array.isArray(meta.usernames) ? meta.usernames : []), username]));
     meta.updatedAt = now;
     await saveMeta(kv, meta);
 
@@ -440,6 +465,7 @@ export async function loginUser(context, payload) {
     await kvPutText(kv, sessionKey(token), toJsonString(session), ttlSeconds);
     user.currentSessionToken = token;
     await saveUser(kv, user);
+    await rememberUsername(kv, user.username);
     return {
         token,
         maxAgeSeconds: ttlSeconds,
@@ -528,16 +554,27 @@ export function getSessionTokenForLogout(request) {
 
 export async function listManagedUsers(context) {
     const kv = resolveKv(context);
-    const keys = await kvListAll(kv, "author_user_");
     const users = [];
+    const meta = await loadMeta(kv);
 
-    for (const entry of keys) {
-        const key = String(entry?.name || "").trim();
-        if (!key) continue;
-        const raw = await kvGetText(kv, key);
-        const user = parseJsonString(raw, null);
-        if (!user || typeof user !== "object") continue;
+    for (const username of meta.usernames || []) {
+        const user = await loadUserByUsername(kv, username);
+        if (!user) continue;
         users.push(publicManagedUser(user));
+    }
+
+    if (users.length === 0 && typeof kv.list === "function") {
+        const keys = await kvListAll(kv, "author_user_");
+
+        for (const entry of keys) {
+            const key = listedKeyName(entry);
+            if (!key) continue;
+            const raw = await kvGetText(kv, key);
+            const user = parseJsonString(raw, null);
+            if (!user || typeof user !== "object") continue;
+            users.push(publicManagedUser(user));
+            await rememberUsername(kv, user.username);
+        }
     }
 
     users.sort((left, right) => Number(left.createdAt || 0) - Number(right.createdAt || 0));
