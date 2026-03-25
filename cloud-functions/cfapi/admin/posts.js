@@ -25,7 +25,6 @@ function httpError(status, message) {
 
 function isPrivilegedAuth(auth) {
     if (!auth || !auth.user) return false;
-    if (auth.mode === "legacy-token") return true;
     return isPrivilegedRole(auth.user.role);
 }
 

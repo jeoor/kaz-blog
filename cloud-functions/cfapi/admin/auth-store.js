@@ -121,13 +121,6 @@ function getBearerToken(request) {
     return "";
 }
 
-export function getLegacyAdminToken(request) {
-    const fromHeader = request.headers.get("x-admin-token");
-    if (fromHeader) return String(fromHeader).trim();
-    const bearer = getBearerToken(request);
-    return bearer ? String(bearer).trim() : "";
-}
-
 function getSessionTokenFromRequest(request) {
     const fromHeader = request.headers.get("x-session-token");
     if (fromHeader) return String(fromHeader).trim();
@@ -410,21 +403,6 @@ async function readSessionByToken(kv, token) {
 }
 
 export async function authenticateRequest(context, request) {
-    const legacyToken = getLegacyAdminToken(request);
-    const expectedLegacy = envValue("ADMIN_TOKEN", context).trim();
-    if (legacyToken && expectedLegacy && legacyToken === expectedLegacy) {
-        return {
-            mode: "legacy-token",
-            user: {
-                id: "legacy-admin",
-                username: "legacy-admin",
-                displayName: "Legacy Admin",
-                role: "owner",
-            },
-            sessionToken: "",
-        };
-    }
-
     const token = getSessionTokenFromRequest(request);
     if (!token) {
         throw httpError(401, "Unauthorized");

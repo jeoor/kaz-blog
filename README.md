@@ -34,10 +34,6 @@ Kaz-Blog 是一套以写作为中心的个人博客实现。
 - `REGISTER_INVITE_CODE`（可选；当不开放注册时用于创建新作者）
 - `AUTH_ALLOW_OPEN_REGISTRATION`（可选，`true` 时允许公开注册）
 
-兼容旧口令模式（可选）：
-
-- `ADMIN_TOKEN`（用于 legacy `x-admin-token` 鉴权兜底）
-
 可选字段用于映射 Notion Database 的属性名：
 
 - `NOTION_PROP_SLUG`
@@ -64,7 +60,7 @@ Kaz-Blog 是一套以写作为中心的个人博客实现。
 若线上出现 `545`，通常表示 Cloud Functions 执行异常。优先检查：
 
 - `/cfapi/api/admin/session` 与 `/cfapi/api/admin/posts` 是否已成功部署
-- `ADMIN_TOKEN`、`NOTION_TOKEN`、`NOTION_DATABASE_ID` 等服务端环境变量是否注入到函数运行时
+- `NOTION_TOKEN`、`NOTION_DATABASE_ID` 等服务端环境变量是否注入到函数运行时
 - 控制台日志分析中对应函数请求的错误堆栈
 
 ## 评论（Twikoo）

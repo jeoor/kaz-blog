@@ -32,6 +32,7 @@ export default function LoginClient() {
 
     const [registerUsername, setRegisterUsername] = useState("");
     const [registerDisplayName, setRegisterDisplayName] = useState("");
+    const [registerInviteCode, setRegisterInviteCode] = useState("");
     const [registerPassword, setRegisterPassword] = useState("");
     const [registerPasswordConfirm, setRegisterPasswordConfirm] = useState("");
 
@@ -100,6 +101,7 @@ export default function LoginClient() {
                     action: "register",
                     username: registerUsername.trim(),
                     displayName: registerDisplayName.trim(),
+                    inviteCode: registerInviteCode.trim(),
                     password: registerPassword,
                 }),
             });
@@ -219,6 +221,17 @@ export default function LoginClient() {
                                     classNames={inputClassNames}
                                 />
                                 <p className="text-xs text-black/52 dark:text-white/52">留空会使用用户名</p>
+                            </div>
+                            <div className="space-y-2">
+                                <label className="text-sm font-medium text-black/78 dark:text-white/78">邀请码</label>
+                                <Input
+                                    aria-label="邀请码"
+                                    value={registerInviteCode}
+                                    onValueChange={setRegisterInviteCode}
+                                    variant="flat"
+                                    classNames={inputClassNames}
+                                />
+                                <p className="text-xs text-black/52 dark:text-white/52">首个账号无需邀请码；之后创建新账号需要与服务端 `REGISTER_INVITE_CODE` 一致</p>
                             </div>
                             <div className="space-y-2">
                                 <label className="text-sm font-medium text-black/78 dark:text-white/78">密码</label>

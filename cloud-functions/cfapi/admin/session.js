@@ -1,8 +1,6 @@
 import {
     authenticateRequest,
     clearSessionCookie,
-    envValue,
-    getLegacyAdminToken,
     getSessionTokenForLogout,
     loginUser,
     logoutSession,
@@ -66,12 +64,7 @@ export async function onRequestPost(context) {
                 return withCookie(response, makeSessionCookie(login.token, request, login.maxAgeSeconds));
             }
 
-            const legacyProvided = String(body.token || body.password || getLegacyAdminToken(request) || "").trim();
-            const expected = envValue("ADMIN_TOKEN", context).trim();
-            if (!legacyProvided || !expected || legacyProvided !== expected) {
-                return json({ message: "Unauthorized" }, 401);
-            }
-            return json({ ok: true, action: "login", mode: "legacy-token" });
+            return json({ message: "请输入用户名和密码" }, 400);
         }
 
         return json({ message: "Unsupported action" }, 400);
