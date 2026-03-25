@@ -621,16 +621,9 @@ export default function WritePage() {
                                 <label className="text-sm font-medium text-black/72 dark:text-white/72">简介（description）</label>
                                 <Input aria-label="简介（description）" value={description} onValueChange={setDescription} variant="flat" classNames={inputClassNames} />
                             </div>
-                            <div className="space-y-2">
-                                <label className="text-sm font-medium text-black/72 dark:text-white/72">作者（author）</label>
-                                {hasSession && !isPrivilegedUser ? (
-                                    <>
-                                        <div className="rounded-[14px] border border-black/10 bg-black/[0.02] px-4 py-3 text-sm text-black/78 dark:border-white/10 dark:bg-white/[0.03] dark:text-white/82">
-                                            当前作者已自动绑定为：{sessionAuthorName}
-                                        </div>
-                                        <p className="text-xs text-black/52 dark:text-white/52">发布时将自动使用当前登录账号作为作者</p>
-                                    </>
-                                ) : (
+                            {(!hasSession || isPrivilegedUser) ? (
+                                <div className="space-y-2">
+                                    <label className="text-sm font-medium text-black/72 dark:text-white/72">作者（author）</label>
                                     <Input
                                         aria-label="作者（author）"
                                         value={author}
@@ -638,8 +631,8 @@ export default function WritePage() {
                                         variant="flat"
                                         classNames={inputClassNames}
                                     />
-                                )}
-                            </div>
+                                </div>
+                            ) : null}
                             <div className="space-y-2">
                                 <label className="text-sm font-medium text-black/72 dark:text-white/72">关键词（keywords）</label>
                                 <Input aria-label="关键词（keywords）" value={keywords} onValueChange={setKeywords} variant="flat" classNames={inputClassNames} />
