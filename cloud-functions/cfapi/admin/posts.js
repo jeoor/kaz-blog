@@ -1,4 +1,5 @@
 import { Client } from "@notionhq/client";
+import { authenticateRequest, isPrivilegedRole, statusFromError as authStatusFromError } from "./auth-store.js";
 
 function json(data, status = 200) {
     return new Response(JSON.stringify(data), {
@@ -16,23 +17,40 @@ function normalizeSlug(input) {
         .replace(/^-|-$/g, "");
 }
 
-function getAdminTokenFromRequest(request) {
-    const header = request.headers.get("x-admin-token");
-    if (header) return header;
-
-    const auth = request.headers.get("authorization");
-    if (auth && auth.toLowerCase().startsWith("bearer ")) {
-        return auth.slice("bearer ".length).trim();
-    }
-
-    return null;
+function httpError(status, message) {
+    const err = new Error(message);
+    err.status = status;
+    return err;
 }
 
-function assertAdmin(request) {
-    const expected = String(process.env.ADMIN_TOKEN || "").trim();
-    const provided = String(getAdminTokenFromRequest(request) || "").trim();
-    if (!expected) throw new Error("Missing env: ADMIN_TOKEN");
-    if (provided !== expected) throw new Error("Unauthorized");
+function isPrivilegedAuth(auth) {
+    if (!auth || !auth.user) return false;
+    if (auth.mode === "legacy-token") return true;
+    return isPrivilegedRole(auth.user.role);
+}
+
+function normalizedIdentitySet(auth) {
+    const out = new Set();
+    const displayName = String(auth?.user?.displayName || "").trim().toLowerCase();
+    const username = String(auth?.user?.username || "").trim().toLowerCase();
+    if (displayName) out.add(displayName);
+    if (username) out.add(username);
+    return out;
+}
+
+function canAccessByAuthor(auth, postAuthor) {
+    if (isPrivilegedAuth(auth)) return true;
+    const current = String(postAuthor || "").trim().toLowerCase();
+    if (!current) return false;
+    return normalizedIdentitySet(auth).has(current);
+}
+
+function resolveAuthorForPublish(auth, requestedAuthor) {
+    const fallback = String(auth?.user?.displayName || auth?.user?.username || "").trim();
+    if (isPrivilegedAuth(auth)) {
+        return String(requestedAuthor || fallback).trim();
+    }
+    return fallback;
 }
 
 function getNotionEnv() {
@@ -314,20 +332,19 @@ function buildCreatePropertiesFromPayload(frontmatter, env, titleProp) {
 }
 
 function statusFromError(err) {
-    const msg = String(err?.message || "Error");
-    if (msg === "Unauthorized") return 401;
-    if (msg.startsWith("Missing env:")) return 500;
-    return 400;
+    if (typeof err?.status === "number") return err.status;
+    return authStatusFromError(err);
 }
 
-export async function onRequestGet({ request }) {
+export async function onRequestGet(context) {
+    const { request } = context;
     try {
         const url = new URL(request.url);
         const intent = url.searchParams.get("intent") || "";
+        const auth = await authenticateRequest(context, request);
 
-        assertAdmin(request);
         if (intent === "auth-check") {
-            return json({ ok: true });
+            return json({ ok: true, user: auth.user, mode: auth.mode });
         }
 
         const slug = normalizeSlug(url.searchParams.get("slug") || "");
@@ -337,6 +354,11 @@ export async function onRequestGet({ request }) {
         const notion = new Client({ auth: env.token });
         const page = await findPageBySlug(notion, env, slug);
         if (!page) return json({ message: "Not found" }, 404);
+
+        const postAuthor = readTextProperty(page.properties?.[env.propAuthor]);
+        if (!canAccessByAuthor(auth, postAuthor)) {
+            throw httpError(403, "Forbidden");
+        }
 
         const blocks = await listBlocksRecursively(notion, page.id);
         const body = notionBlocksToMarkdown(blocks);
@@ -360,21 +382,23 @@ export async function onRequestGet({ request }) {
     }
 }
 
-export async function onRequestPost({ request }) {
+export async function onRequestPost(context) {
+    const { request } = context;
     try {
-        assertAdmin(request);
+        const auth = await authenticateRequest(context, request);
 
         const payload = await request.json();
         const slug = normalizeSlug(payload?.slug || "");
         if (!slug) return json({ message: "Missing slug" }, 400);
 
         const fm = payload?.frontmatter || {};
+        const author = resolveAuthorForPublish(auth, fm.author);
         const frontmatter = {
             slug,
             title: String(fm.title || "").trim(),
             date: String(fm.date || "").trim(),
             description: String(fm.description || "").trim(),
-            author: String(fm.author || "").trim(),
+            author,
             keywords: Array.isArray(fm.keywords) ? fm.keywords.map((x) => String(x).trim()).filter(Boolean) : [],
         };
 
@@ -387,6 +411,10 @@ export async function onRequestPost({ request }) {
 
         const existing = await findPageBySlug(notion, env, slug);
         if (existing) {
+            const existingAuthor = readTextProperty(existing.properties?.[env.propAuthor]);
+            if (!canAccessByAuthor(auth, existingAuthor)) {
+                throw httpError(403, "Forbidden");
+            }
             await notion.pages.update({ page_id: existing.id, archived: true });
         }
 
@@ -411,9 +439,10 @@ export async function onRequestPost({ request }) {
     }
 }
 
-export async function onRequestDelete({ request }) {
+export async function onRequestDelete(context) {
+    const { request } = context;
     try {
-        assertAdmin(request);
+        const auth = await authenticateRequest(context, request);
 
         const url = new URL(request.url);
         const slug = normalizeSlug(url.searchParams.get("slug") || "");
@@ -423,6 +452,11 @@ export async function onRequestDelete({ request }) {
         const notion = new Client({ auth: env.token });
         const existing = await findPageBySlug(notion, env, slug);
         if (!existing) return json({ message: "Not found" }, 404);
+
+        const existingAuthor = readTextProperty(existing.properties?.[env.propAuthor]);
+        if (!canAccessByAuthor(auth, existingAuthor)) {
+            throw httpError(403, "Forbidden");
+        }
 
         await notion.pages.update({ page_id: existing.id, archived: true });
         return json({ ok: true, slug });

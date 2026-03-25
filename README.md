@@ -14,7 +14,7 @@ Kaz-Blog 是一套以写作为中心的个人博客实现。
 ## 当前能力
 
 - 首页文章流、文章详情、归档、友链
-- `/login` 登录保护
+- `/login` 多作者注册/登录
 - `/write` 发布、加载、删除文章
 - Notion 作为主内容后端
 - Markdown 作为本地回退内容源
@@ -24,9 +24,19 @@ Kaz-Blog 是一套以写作为中心的个人博客实现。
 
 复制 `.env.example` 为 `.env.local`，至少配置以下字段：
 
-- `ADMIN_TOKEN`
 - `NOTION_TOKEN`
 - `NOTION_DATABASE_ID`
+
+用于多作者登录（EdgeOne KV）：
+
+- `AUTH_KV_BINDING`（默认 `AUTH_KV`，对应函数里绑定的 KV 名称）
+- `AUTH_SESSION_DAYS`（可选，默认 `30`）
+- `REGISTER_INVITE_CODE`（可选；当不开放注册时用于创建新作者）
+- `AUTH_ALLOW_OPEN_REGISTRATION`（可选，`true` 时允许公开注册）
+
+兼容旧口令模式（可选）：
+
+- `ADMIN_TOKEN`（用于 legacy `x-admin-token` 鉴权兜底）
 
 可选字段用于映射 Notion Database 的属性名：
 
@@ -42,7 +52,14 @@ Kaz-Blog 是一套以写作为中心的个人博客实现。
 
 - `NEXT_PUBLIC_ADMIN_API_BASE`（例如 `https://api.example.com`；不填时开发环境默认同源 `/api/...`，生产环境默认 `/cfapi`）
 
-本项目默认使用 EdgeOne Cloud Functions 管理接口：`/cfapi/api/admin/session`、`/cfapi/api/admin/posts`（代码在 `cloud-functions/cfapi/**`）。在生产构建下，前端默认优先使用 `/cfapi`；你也可以显式设置 `NEXT_PUBLIC_ADMIN_API_BASE=/cfapi`。
+本项目默认使用 EdgeOne Cloud Functions 管理接口：`/cfapi/api/admin/session`、`/cfapi/api/admin/posts`（代码在 `cloud-functions/cfapi/**`）。
+
+- `POST /cfapi/api/admin/session`：`action=login|register`
+- `GET /cfapi/api/admin/session`：检查当前会话
+- `DELETE /cfapi/api/admin/session`：退出登录
+- `GET/POST/DELETE /cfapi/api/admin/posts`：作者权限下的文章管理
+
+在生产构建下，前端默认优先使用 `/cfapi`；你也可以显式设置 `NEXT_PUBLIC_ADMIN_API_BASE=/cfapi`。
 
 若线上出现 `545`，通常表示 Cloud Functions 执行异常。优先检查：
 
@@ -89,8 +106,8 @@ npm run dev:stable
 - `/` 前台首页
 - `/archive` 归档
 - `/links` 友链
-- `/login` 后台登录
-- `/write` 写作台
+- `/login` 作者登录/注册
+- `/write` 写作台（需要已登录会话）
 
 ## 内容来源
 

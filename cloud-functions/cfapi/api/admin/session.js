@@ -1,1 +1,1 @@
-export { onRequestPost, onRequestDelete } from "../../admin/session.js";
+export { onRequestGet, onRequestPost, onRequestDelete } from "../../admin/session.js";

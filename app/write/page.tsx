@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useId, useState } from "react";
+import { useCallback, useEffect, useId, useState } from "react";
 import { Button, Card, CardBody, Input, NextUIProvider, Spinner } from "@nextui-org/react";
 import { SITE } from "@/app/site-config";
 import ArticleBody from "@/components/post-components/article-body";
@@ -13,6 +13,12 @@ type UiStatus =
     | { state: "working"; message: string }
     | { state: "success"; message: string; postUrl?: string }
     | { state: "error"; message: string };
+
+type SessionUser = {
+    username: string;
+    displayName?: string;
+    role?: string;
+};
 
 function normalizeSlug(input: string): string {
     return input
@@ -62,10 +68,10 @@ export default function WritePage() {
     const [previewError, setPreviewError] = useState<string | null>(null);
     const [isPreviewWorking, setIsPreviewWorking] = useState(false);
 
-    const [adminPassword, setAdminPassword] = useState("");
     const [isUnlocked, setIsUnlocked] = useState(false);
     const [isUnlocking, setIsUnlocking] = useState(false);
     const [unlockError, setUnlockError] = useState<string | null>(null);
+    const [sessionUser, setSessionUser] = useState<SessionUser | null>(null);
 
     const [slug, setSlug] = useState("");
     const [title, setTitle] = useState("");
@@ -76,11 +82,6 @@ export default function WritePage() {
     const [content, setContent] = useState("");
 
     const normalizedSlug = normalizeSlug(slug);
-
-    useEffect(() => {
-        setIsUnlocked(false);
-        setUnlockError(null);
-    }, []);
 
     useEffect(() => {
         if (editorMode !== "preview") return;
@@ -113,39 +114,29 @@ export default function WritePage() {
     }, [content, editorMode]);
 
     function ensureBasics(): string | null {
-        if (!isUnlocked) return "需要先解锁写作台";
+        if (!isUnlocked) return "需要先登录写作台";
         if (!normalizedSlug) return "需要填写 slug";
         return null;
     }
 
-    function adminHeaders(): HeadersInit {
-        return {
-            "x-admin-token": adminPassword.trim(),
-        };
-    }
-
-    async function onUnlock(): Promise<void> {
+    const onUnlock = useCallback(async (): Promise<void> => {
         setStatus({ state: "idle" });
         setUnlockError(null);
-        if (!adminPassword.trim()) {
-            setUnlockError("请输入密码");
-            return;
-        }
 
         setIsUnlocking(true);
         try {
-            const res = await fetch(adminApiUrl("/api/admin/posts?intent=auth-check"), {
-                headers: adminHeaders(),
+            const res = await fetch(adminApiUrl("/api/admin/session"), {
                 credentials: adminCredentials(),
             });
 
             if (!res.ok) {
                 setIsUnlocked(false);
+                setSessionUser(null);
                 if (res.status === 401) {
-                    setUnlockError("密码不正确");
+                    setUnlockError("未登录，请先去登录页");
                 } else if (res.status === 545) {
                     setUnlockError(
-                        "EdgeOne 返回 545：Cloud Functions 执行异常。请优先检查 /cfapi/api/admin/posts 函数是否已部署，以及 ADMIN_TOKEN/NOTION_TOKEN/NOTION_DATABASE_ID 是否已注入。",
+                        "EdgeOne 返回 545：Cloud Functions 执行异常。请优先检查 /cfapi/api/admin/session 函数是否已部署，以及 AUTH_KV_BINDING/NOTION_TOKEN/NOTION_DATABASE_ID 是否已注入。",
                     );
                 } else {
                     let serverMessage = "";
@@ -160,21 +151,41 @@ export default function WritePage() {
                 return;
             }
 
+            const data = (await res.json().catch(() => ({}))) as any;
+            const user = (data?.user || null) as SessionUser | null;
+            setSessionUser(user);
+            const fallbackAuthor = String(user?.displayName || user?.username || "").trim();
+            if (fallbackAuthor) {
+                setAuthor((prev) => (prev.trim() ? prev : fallbackAuthor));
+            }
             setIsUnlocked(true);
         } catch (e) {
             setIsUnlocked(false);
+            setSessionUser(null);
             const message = e instanceof Error ? e.message : "验证失败";
             setUnlockError(message);
         } finally {
             setIsUnlocking(false);
         }
-    }
+    }, []);
+
+    useEffect(() => {
+        void onUnlock();
+    }, [onUnlock]);
 
     async function onLogout(): Promise<void> {
-        setAdminPassword("");
+        try {
+            await fetch(adminApiUrl("/api/admin/session"), {
+                method: "DELETE",
+                credentials: adminCredentials(),
+            });
+        } catch {
+            // Ignore logout request failure and clear local state anyway.
+        }
+        setSessionUser(null);
         setIsUnlocked(false);
-        setUnlockError(null);
-        window.location.href = "/";
+        setUnlockError("已退出登录");
+        window.location.href = "/login?next=/write";
     }
 
     function resetForm(): void {
@@ -198,10 +209,16 @@ export default function WritePage() {
         try {
             const res = await fetch(adminApiUrl(`/api/admin/posts?slug=${encodeURIComponent(normalizedSlug)}`), {
                 credentials: adminCredentials(),
-                headers: adminHeaders(),
             });
             if (res.status === 404) {
                 setStatus({ state: "error", message: "没找到这篇文章（404）" });
+                return;
+            }
+            if (res.status === 401) {
+                setIsUnlocked(false);
+                setSessionUser(null);
+                setUnlockError("登录已失效，请重新登录");
+                setStatus({ state: "error", message: "登录已失效，请重新登录" });
                 return;
             }
             const data = (await res.json()) as any;
@@ -260,7 +277,6 @@ export default function WritePage() {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
-                    ...adminHeaders(),
                 },
                 credentials: adminCredentials(),
                 body: JSON.stringify({
@@ -275,6 +291,14 @@ export default function WritePage() {
                     body: content,
                 }),
             });
+
+            if (res.status === 401) {
+                setIsUnlocked(false);
+                setSessionUser(null);
+                setUnlockError("登录已失效，请重新登录");
+                setStatus({ state: "error", message: "登录已失效，请重新登录" });
+                return;
+            }
 
             const data = (await res.json()) as any;
             if (!res.ok) {
@@ -306,8 +330,15 @@ export default function WritePage() {
             const res = await fetch(adminApiUrl(`/api/admin/posts?slug=${encodeURIComponent(normalizedSlug)}`), {
                 method: "DELETE",
                 credentials: adminCredentials(),
-                headers: adminHeaders(),
             });
+
+            if (res.status === 401) {
+                setIsUnlocked(false);
+                setSessionUser(null);
+                setUnlockError("登录已失效，请重新登录");
+                setStatus({ state: "error", message: "登录已失效，请重新登录" });
+                return;
+            }
 
             const data = (await res.json()) as any;
             if (!res.ok) {
@@ -324,7 +355,8 @@ export default function WritePage() {
     }
 
     const isWorking = status.state === "working";
-    const hasPassword = !!adminPassword.trim();
+    const hasSession = !!sessionUser;
+    const isPrivilegedUser = ["owner", "admin"].includes(String(sessionUser?.role || "").toLowerCase());
 
     return (
         <NextUIProvider>
@@ -396,37 +428,44 @@ export default function WritePage() {
 
                                 {!isUnlocked ? (
                                     <div className="space-y-3">
-                                        <Input
-                                            type="password"
-                                            label="写作台密码"
-                                            value={adminPassword}
-                                            onValueChange={(next) => {
-                                                setAdminPassword(next);
-                                                setIsUnlocked(false);
-                                                setUnlockError(null);
-                                                setStatus({ state: "idle" });
-                                            }}
-                                        />
+                                        <div className="rounded-2xl border border-black/10 bg-black/[0.02] px-4 py-3 text-sm text-black/68 dark:border-white/10 dark:bg-white/[0.03] dark:text-white/68">
+                                            当前未登录。请先登录后进入写作台。
+                                        </div>
                                         {unlockError ? (
                                             <div className="text-sm text-red-400">{unlockError}</div>
                                         ) : null}
-                                        <Button
-                                            variant="flat"
-                                            className="border border-black/10 dark:border-white/10 w-full"
-                                            onPress={onUnlock}
-                                            isDisabled={isWorking || isUnlocking || !hasPassword}
-                                        >
-                                            {isUnlocking ? (
-                                                <span className="inline-flex items-center gap-2">
-                                                    <Spinner size="sm" />
-                                                    正在验证...
-                                                </span>
-                                            ) : (
-                                                "解锁"
-                                            )}
-                                        </Button>
+                                        <div className="grid grid-cols-2 gap-2">
+                                            <Button
+                                                variant="flat"
+                                                className="border border-black/10 dark:border-white/10"
+                                                onPress={onUnlock}
+                                                isDisabled={isWorking || isUnlocking}
+                                            >
+                                                {isUnlocking ? (
+                                                    <span className="inline-flex items-center gap-2">
+                                                        <Spinner size="sm" />
+                                                        检查中...
+                                                    </span>
+                                                ) : (
+                                                    "刷新会话"
+                                                )}
+                                            </Button>
+                                            <Button
+                                                color="primary"
+                                                onPress={() => {
+                                                    window.location.href = "/login?next=/write";
+                                                }}
+                                            >
+                                                去登录
+                                            </Button>
+                                        </div>
                                     </div>
-                                ) : null}
+                                ) : (
+                                    <div className="rounded-2xl border border-emerald-500/20 bg-emerald-500/10 px-4 py-3 text-sm text-emerald-300">
+                                        已登录：{sessionUser?.displayName || sessionUser?.username}
+                                        {sessionUser?.role ? `（${sessionUser.role}）` : ""}
+                                    </div>
+                                )}
 
                                 <div className="flex flex-wrap items-center gap-2">
                                     <Button
@@ -549,7 +588,13 @@ export default function WritePage() {
                                 <Input label="标题" value={title} onValueChange={setTitle} />
                                 <Input label="日期（YYYY-MM-DD）" value={date} onValueChange={setDate} />
                                 <Input label="简介（description）" value={description} onValueChange={setDescription} />
-                                <Input label="作者（author）" value={author} onValueChange={setAuthor} />
+                                <Input
+                                    label="作者（author）"
+                                    value={author}
+                                    onValueChange={setAuthor}
+                                    isReadOnly={hasSession && !isPrivilegedUser}
+                                    description={hasSession && !isPrivilegedUser ? "作者由当前账号自动绑定" : ""}
+                                />
                                 <Input
                                     label="关键词（keywords）"
                                     value={keywords}
