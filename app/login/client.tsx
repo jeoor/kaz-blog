@@ -260,6 +260,7 @@ export default function LoginClient() {
                                         variant="flat"
                                         classNames={inputClassNames}
                                     />
+                                    <p className="text-xs text-black/52 dark:text-white/52">请向管理员请求邀请码</p>
                                 </div>
                             ) : null}
                             <div className="space-y-2">
