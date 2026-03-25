@@ -27,11 +27,9 @@ export const SITE = {
   },
   login: {
     title: "进入写作后台",
-    description: "只保留最小管理入口。",
   },
   write: {
     title: "写作台",
-    description: "在这里编辑 Markdown，并将内容同步进 Notion 数据库。",
     hint: "写作流程保持简单：整理结构、生成 slug、发布、校对。",
   },
   footer: {

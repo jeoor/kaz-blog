@@ -1,12 +1,25 @@
 "use client";
 
 import { useCallback, useEffect, useId, useState } from "react";
-import { Button, Card, CardBody, HeroUIProvider, Input, Spinner } from "@heroui/react";
+import { Button, Card, CardBody, Input, Spinner } from "@heroui/react";
 import { SITE } from "@/app/site-config";
 import ArticleBody from "@/components/post-components/article-body";
 import { adminApiUrl, adminCredentials } from "@/lib/admin-api";
 import { remark } from "remark";
 import remarkHtml from "remark-html";
+
+const CONTROL_RADIUS = "rounded-[14px]";
+const CONTROL_HEIGHT = "h-11 min-h-11";
+const PANEL_RADIUS = "rounded-[2rem] overflow-hidden";
+const BUTTON_OUTLINE = `${CONTROL_HEIGHT} ${CONTROL_RADIUS} border border-black/10 bg-black/[0.02] !text-black/78 transition-colors duration-150 hover:border-black/14 hover:bg-black/[0.04] hover:!text-black/90 disabled:opacity-50 dark:border-white/[0.08] dark:bg-white/[0.02] dark:!text-white/84 dark:hover:border-white/[0.12] dark:hover:bg-white/[0.06] dark:hover:!text-white/92`;
+const BUTTON_PRIMARY = `${CONTROL_HEIGHT} ${CONTROL_RADIUS} border border-[#8d674052] bg-[#8d67401c] !text-black/92 transition-colors duration-150 hover:bg-[#8d674029] disabled:opacity-50 dark:border-[#c59a6950] dark:bg-[#c59a6922] dark:!text-white/96 dark:hover:bg-[#c59a6930]`;
+const BUTTON_DANGER = `${CONTROL_HEIGHT} ${CONTROL_RADIUS} border border-red-500/35 bg-red-500/12 !text-red-700 transition-colors duration-150 hover:bg-red-500/18 disabled:opacity-50 dark:border-red-300/32 dark:bg-red-500/14 dark:!text-red-200 dark:hover:bg-red-500/22`;
+
+const inputClassNames = {
+    inputWrapper: `${CONTROL_HEIGHT} ${CONTROL_RADIUS} border border-black/18 bg-black/[0.02] shadow-none transition-colors duration-150 group-data-[focus=true]:border-black/34 group-data-[focus=true]:ring-0 data-[hover=true]:border-black/28 dark:border-white/14 dark:bg-white/[0.03] dark:group-data-[focus=true]:border-white/30 dark:data-[hover=true]:border-white/24`,
+    innerWrapper: "border-none bg-transparent shadow-none",
+    input: "border-0 bg-transparent text-sm text-black/88 placeholder:text-black/42 outline-none ring-0 focus:outline-none focus:ring-0 dark:text-white/92 dark:placeholder:text-white/42",
+};
 
 type UiStatus =
     | { state: "idle" }
@@ -19,6 +32,10 @@ type SessionUser = {
     displayName?: string;
     role?: string;
 };
+
+function getSessionAuthorName(user: SessionUser | null): string {
+    return String(user?.displayName || user?.username || "").trim();
+}
 
 function normalizeSlug(input: string): string {
     return input
@@ -75,13 +92,16 @@ export default function WritePage() {
 
     const [slug, setSlug] = useState("");
     const [title, setTitle] = useState("");
-    const [date, setDate] = useState(todayYmd);
+    const [date, setDate] = useState("");
     const [description, setDescription] = useState("");
     const [author, setAuthor] = useState("");
     const [keywords, setKeywords] = useState("");
     const [content, setContent] = useState("");
 
     const normalizedSlug = normalizeSlug(slug);
+    const hasSession = !!sessionUser;
+    const isPrivilegedUser = ["owner", "admin"].includes(String(sessionUser?.role || "").toLowerCase());
+    const sessionAuthorName = getSessionAuthorName(sessionUser);
 
     useEffect(() => {
         if (editorMode !== "preview") return;
@@ -112,6 +132,10 @@ export default function WritePage() {
             cancelled = true;
         };
     }, [content, editorMode]);
+
+    useEffect(() => {
+        setDate((prev) => (prev.trim() ? prev : todayYmd()));
+    }, []);
 
     function ensureBasics(): string | null {
         if (!isUnlocked) return "需要先登录写作台";
@@ -154,9 +178,10 @@ export default function WritePage() {
             const data = (await res.json().catch(() => ({}))) as any;
             const user = (data?.user || null) as SessionUser | null;
             setSessionUser(user);
-            const fallbackAuthor = String(user?.displayName || user?.username || "").trim();
+            const fallbackAuthor = getSessionAuthorName(user);
             if (fallbackAuthor) {
-                setAuthor((prev) => (prev.trim() ? prev : fallbackAuthor));
+                const canEditAuthor = ["owner", "admin"].includes(String(user?.role || "").toLowerCase());
+                setAuthor((prev) => (canEditAuthor && prev.trim() ? prev : fallbackAuthor));
             }
             setIsUnlocked(true);
         } catch (e) {
@@ -172,6 +197,11 @@ export default function WritePage() {
     useEffect(() => {
         void onUnlock();
     }, [onUnlock]);
+
+    useEffect(() => {
+        if (!sessionAuthorName || isPrivilegedUser) return;
+        setAuthor(sessionAuthorName);
+    }, [isPrivilegedUser, sessionAuthorName]);
 
     async function onLogout(): Promise<void> {
         try {
@@ -257,7 +287,8 @@ export default function WritePage() {
             setStatus({ state: "error", message: "需要填写简介（description）" });
             return;
         }
-        if (!author.trim()) {
+        const effectiveAuthor = isPrivilegedUser ? author.trim() : sessionAuthorName;
+        if (!effectiveAuthor) {
             setStatus({ state: "error", message: "需要填写作者（author）" });
             return;
         }
@@ -285,7 +316,7 @@ export default function WritePage() {
                         title: title.trim(),
                         date: date.trim(),
                         description: description.trim(),
-                        author: author.trim(),
+                        author: effectiveAuthor,
                         keywords: kwList,
                     },
                     body: content,
@@ -355,257 +386,269 @@ export default function WritePage() {
     }
 
     const isWorking = status.state === "working";
-    const hasSession = !!sessionUser;
-    const isPrivilegedUser = ["owner", "admin"].includes(String(sessionUser?.role || "").toLowerCase());
 
     return (
-        <HeroUIProvider>
-            <div className="mx-auto w-full max-w-[94rem] px-4 pb-24 pt-10 md:pt-14">
-                <div className="grid items-stretch gap-6 xl:grid-cols-[minmax(0,1fr)_22rem]">
-                    <Card
-                        shadow="none"
-                        className="border border-black/10 bg-white/78 dark:border-white/10 dark:bg-white/[0.03] min-h-[calc(100svh-10rem)] h-full"
-                    >
-                        <CardBody className="flex h-full flex-col gap-6 p-6 md:p-8">
-                            {editorMode === "edit" ? (
-                                <div className="flex w-full flex-1 min-h-0 flex-col">
-                                    <label
-                                        htmlFor={contentId}
-                                        className="text-sm font-medium text-black/70 dark:text-white/70"
-                                    >
-                                        正文（Markdown）
-                                    </label>
-                                    <div className="mt-3 flex-1 min-h-0 rounded-[1.5rem] border border-black/8 bg-black/[0.02] px-5 py-4 dark:border-white/8 dark:bg-white/[0.02]">
-                                        <textarea
-                                            id={contentId}
-                                            value={content}
-                                            onChange={(e) => setContent(e.target.value)}
-                                            placeholder="在这里写 Markdown 正文…"
-                                            className="h-full w-full resize-none bg-transparent !text-[15px] leading-8 font-medium text-black/90 outline-none dark:text-white/90"
-                                        />
+        <div className="mx-auto w-full max-w-[94rem] px-4 pb-24 pt-10 md:pt-14">
+            <div className="grid items-stretch gap-6 xl:grid-cols-[minmax(0,1fr)_22rem]">
+                <Card
+                    shadow="none"
+                    className={`${PANEL_RADIUS} border border-black/10 bg-white/82 dark:border-white/12 dark:bg-white/[0.05] min-h-[calc(100svh-10rem)] h-full`}
+                >
+                    <CardBody className="flex h-full flex-col gap-6 p-6 md:p-8">
+                        {editorMode === "edit" ? (
+                            <div className="flex w-full flex-1 min-h-0 flex-col">
+                                <label
+                                    htmlFor={contentId}
+                                    className="text-sm font-medium text-black/70 dark:text-white/70"
+                                >
+                                    正文（Markdown）
+                                </label>
+                                <div className="mt-3 flex-1 min-h-0 rounded-[1.5rem] border border-black/10 bg-black/[0.02] px-5 py-4 dark:border-white/10 dark:bg-white/[0.02]">
+                                    <textarea
+                                        id={contentId}
+                                        value={content}
+                                        onChange={(e) => setContent(e.target.value)}
+                                        placeholder="在这里写 Markdown 正文…"
+                                        className="h-full w-full resize-none bg-transparent !text-[15px] leading-8 font-medium text-black/90 outline-none dark:text-white/90"
+                                    />
+                                </div>
+                            </div>
+                        ) : (
+                            <div className="flex flex-1 min-h-0 flex-col">
+                                <div className="flex items-center justify-between gap-3">
+                                    <div className="text-sm font-medium text-black/70 dark:text-white/70">预览</div>
+                                    <div className="text-xs text-black/45 dark:text-white/45">当前内容（未发布）</div>
+                                </div>
+
+                                <div className="mt-3 flex-1 min-h-0 overflow-auto rounded-[1.5rem] border border-black/10 bg-black/[0.02] px-5 py-4 dark:border-white/10 dark:bg-white/[0.02]">
+                                    {isPreviewWorking ? (
+                                        <div className="flex items-center gap-2 text-sm text-black/55 dark:text-white/55">
+                                            <Spinner size="sm" />
+                                            正在渲染预览...
+                                        </div>
+                                    ) : previewError ? (
+                                        <div className="text-sm text-red-400">{previewError}</div>
+                                    ) : previewHtml.trim() ? (
+                                        <ArticleBody contentHtml={previewHtml} />
+                                    ) : (
+                                        <div className="text-sm text-black/45 dark:text-white/45">（暂无内容）</div>
+                                    )}
+                                </div>
+                            </div>
+                        )}
+                    </CardBody>
+                </Card>
+
+                <aside className="space-y-6 xl:sticky xl:top-24 xl:self-start">
+                    <Card shadow="none" className={`${PANEL_RADIUS} border border-black/10 bg-white/82 dark:border-white/12 dark:bg-white/[0.05]`}>
+                        <CardBody className="space-y-5 p-6">
+                            <div>
+                                <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-black/45 dark:text-white/45">
+                                    Writing Workspace
+                                </p>
+                                <h1 className="mt-3 font-serif text-3xl font-semibold tracking-tight">
+                                    {SITE.write.title}
+                                </h1>
+                            </div>
+
+                            {!isUnlocked ? (
+                                <div className="space-y-3">
+                                    <div className="rounded-2xl border border-black/12 bg-black/[0.02] px-4 py-3 text-sm text-black/68 dark:border-white/12 dark:bg-white/[0.03] dark:text-white/68">
+                                        当前未登录。请先登录后进入写作台。
+                                    </div>
+                                    {unlockError ? (
+                                        <div className="text-sm text-red-400">{unlockError}</div>
+                                    ) : null}
+                                    <div className="grid grid-cols-2 gap-2">
+                                        <Button
+                                            className={BUTTON_OUTLINE}
+                                            onPress={onUnlock}
+                                            isDisabled={isWorking || isUnlocking}
+                                        >
+                                            {isUnlocking ? (
+                                                <span className="inline-flex items-center gap-2">
+                                                    <Spinner size="sm" />
+                                                    检查中...
+                                                </span>
+                                            ) : (
+                                                "刷新会话"
+                                            )}
+                                        </Button>
+                                        <Button
+                                            className={BUTTON_PRIMARY}
+                                            onPress={() => {
+                                                window.location.href = "/login?next=/write";
+                                            }}
+                                        >
+                                            去登录
+                                        </Button>
                                     </div>
                                 </div>
                             ) : (
-                                <div className="flex flex-1 min-h-0 flex-col">
-                                    <div className="flex items-center justify-between gap-3">
-                                        <div className="text-sm font-medium text-black/70 dark:text-white/70">预览</div>
-                                        <div className="text-xs text-black/45 dark:text-white/45">当前内容（未发布）</div>
-                                    </div>
-
-                                    <div className="mt-3 flex-1 min-h-0 overflow-auto rounded-[1.5rem] border border-black/8 bg-black/[0.02] px-5 py-4 dark:border-white/8 dark:bg-white/[0.02]">
-                                        {isPreviewWorking ? (
-                                            <div className="flex items-center gap-2 text-sm text-black/55 dark:text-white/55">
-                                                <Spinner size="sm" />
-                                                正在渲染预览...
-                                            </div>
-                                        ) : previewError ? (
-                                            <div className="text-sm text-red-400">{previewError}</div>
-                                        ) : previewHtml.trim() ? (
-                                            <ArticleBody contentHtml={previewHtml} />
-                                        ) : (
-                                            <div className="text-sm text-black/45 dark:text-white/45">（暂无内容）</div>
-                                        )}
-                                    </div>
+                                <div className="rounded-2xl border border-black/12 bg-black/[0.03] px-4 py-3 text-sm text-black/72 dark:border-white/12 dark:bg-white/[0.04] dark:text-white/76">
+                                    已登录：{sessionUser?.displayName || sessionUser?.username}
+                                    {sessionUser?.role ? `（${sessionUser.role}）` : ""}
                                 </div>
                             )}
+
+                            <div className="flex flex-wrap items-center gap-2">
+                                <Button
+                                    onPress={onPublish}
+                                    isDisabled={isWorking || !isUnlocked}
+                                    className={`flex-1 ${BUTTON_PRIMARY}`}
+                                >
+                                    {isWorking ? (
+                                        <span className="inline-flex items-center gap-2">
+                                            <Spinner size="sm" />
+                                            {status.state === "working" ? status.message : "处理中..."}
+                                        </span>
+                                    ) : (
+                                        "发布/更新"
+                                    )}
+                                </Button>
+                                <Button
+                                    className={BUTTON_OUTLINE}
+                                    onPress={() => setEditorMode((current) => (current === "edit" ? "preview" : "edit"))}
+                                    isDisabled={isWorking}
+                                >
+                                    {editorMode === "edit" ? "预览" : "返回编辑"}
+                                </Button>
+                                <Button
+                                    className={BUTTON_DANGER}
+                                    onPress={onDelete}
+                                    isDisabled={isWorking || !isUnlocked || !normalizedSlug}
+                                >
+                                    删除
+                                </Button>
+                            </div>
+
+                            <div className="flex flex-wrap items-center gap-2">
+                                <Button
+                                    className={`flex-1 ${BUTTON_OUTLINE}`}
+                                    onPress={onLoad}
+                                    isDisabled={isWorking || !isUnlocked || !normalizedSlug}
+                                >
+                                    加载文章
+                                </Button>
+                                <Button
+                                    className={BUTTON_OUTLINE}
+                                    onPress={onLogout}
+                                >
+                                    退出登录
+                                </Button>
+                            </div>
+
+                            {status.state === "success" ? (
+                                <div className="rounded-2xl border border-black/12 bg-black/[0.03] px-4 py-3 text-sm text-black/72 dark:border-white/12 dark:bg-white/[0.04] dark:text-white/76">
+                                    {status.message}
+                                    {status.postUrl ? (
+                                        <>
+                                            {" "}
+                                            <a className="underline" href={status.postUrl}>
+                                                打开文章
+                                            </a>
+                                        </>
+                                    ) : null}
+                                </div>
+                            ) : null}
+
+                            {status.state === "error" ? (
+                                <div className="rounded-2xl border border-red-500/20 bg-red-500/10 px-4 py-3 text-sm text-red-400">
+                                    {status.message}
+                                </div>
+                            ) : null}
                         </CardBody>
                     </Card>
 
-                    <aside className="space-y-6 xl:sticky xl:top-24 xl:self-start">
-                        <Card shadow="none" className="border border-black/10 bg-white/78 dark:border-white/10 dark:bg-white/[0.03]">
-                            <CardBody className="space-y-5 p-6">
-                                <div>
-                                    <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-black/45 dark:text-white/45">
-                                        Writing Workspace
-                                    </p>
-                                    <h1 className="mt-3 font-serif text-3xl font-semibold tracking-tight">
-                                        {SITE.write.title}
-                                    </h1>
-                                    <p className="mt-3 text-sm leading-7 text-black/68 dark:text-white/68">
-                                        {SITE.write.description}
-                                    </p>
-                                </div>
+                    <Card shadow="none" className={`${PANEL_RADIUS} border border-black/10 bg-white/82 dark:border-white/12 dark:bg-white/[0.05]`}>
+                        <CardBody className="space-y-5 p-6">
+                            <div>
+                                <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-black/45 dark:text-white/45">
+                                    Meta
+                                </p>
+                                <h2 className="mt-3 font-serif text-2xl font-semibold tracking-tight">
+                                    文章设置
+                                </h2>
+                            </div>
 
-                                {!isUnlocked ? (
-                                    <div className="space-y-3">
-                                        <div className="rounded-2xl border border-black/10 bg-black/[0.02] px-4 py-3 text-sm text-black/68 dark:border-white/10 dark:bg-white/[0.03] dark:text-white/68">
-                                            当前未登录。请先登录后进入写作台。
-                                        </div>
-                                        {unlockError ? (
-                                            <div className="text-sm text-red-400">{unlockError}</div>
-                                        ) : null}
-                                        <div className="grid grid-cols-2 gap-2">
-                                            <Button
-                                                variant="flat"
-                                                className="border border-black/10 dark:border-white/10"
-                                                onPress={onUnlock}
-                                                isDisabled={isWorking || isUnlocking}
-                                            >
-                                                {isUnlocking ? (
-                                                    <span className="inline-flex items-center gap-2">
-                                                        <Spinner size="sm" />
-                                                        检查中...
-                                                    </span>
-                                                ) : (
-                                                    "刷新会话"
-                                                )}
-                                            </Button>
-                                            <Button
-                                                color="primary"
-                                                onPress={() => {
-                                                    window.location.href = "/login?next=/write";
-                                                }}
-                                            >
-                                                去登录
-                                            </Button>
-                                        </div>
-                                    </div>
-                                ) : (
-                                    <div className="rounded-2xl border border-emerald-500/20 bg-emerald-500/10 px-4 py-3 text-sm text-emerald-300">
-                                        已登录：{sessionUser?.displayName || sessionUser?.username}
-                                        {sessionUser?.role ? `（${sessionUser.role}）` : ""}
-                                    </div>
-                                )}
-
-                                <div className="flex flex-wrap items-center gap-2">
-                                    <Button
-                                        color="primary"
-                                        onPress={onPublish}
-                                        isDisabled={isWorking || !isUnlocked}
-                                        className="flex-1"
-                                    >
-                                        {isWorking ? (
-                                            <span className="inline-flex items-center gap-2">
-                                                <Spinner size="sm" />
-                                                {status.state === "working" ? status.message : "处理中..."}
-                                            </span>
-                                        ) : (
-                                            "发布/更新"
-                                        )}
-                                    </Button>
-                                    <Button
-                                        variant="flat"
-                                        className="border border-black/10 dark:border-white/10"
-                                        onPress={() => setEditorMode((current) => (current === "edit" ? "preview" : "edit"))}
-                                        isDisabled={isWorking}
-                                    >
-                                        {editorMode === "edit" ? "预览" : "返回编辑"}
-                                    </Button>
-                                    <Button
-                                        color="danger"
-                                        variant="flat"
-                                        onPress={onDelete}
-                                        isDisabled={isWorking || !isUnlocked || !normalizedSlug}
-                                    >
-                                        删除
-                                    </Button>
-                                </div>
-
-                                <div className="flex flex-wrap items-center gap-2">
-                                    <Button
-                                        variant="flat"
-                                        className="border border-black/10 dark:border-white/10 flex-1"
-                                        onPress={onLoad}
-                                        isDisabled={isWorking || !isUnlocked || !normalizedSlug}
-                                    >
-                                        加载文章
-                                    </Button>
-                                    <Button
-                                        variant="flat"
-                                        className="border border-black/10 dark:border-white/10"
-                                        onPress={onLogout}
-                                    >
-                                        退出登录
-                                    </Button>
-                                </div>
-
-                                {status.state === "success" ? (
-                                    <div className="rounded-2xl border border-emerald-500/20 bg-emerald-500/10 px-4 py-3 text-sm text-emerald-300">
-                                        {status.message}
-                                        {status.postUrl ? (
-                                            <>
-                                                {" "}
-                                                <a className="underline" href={status.postUrl}>
-                                                    打开文章
-                                                </a>
-                                            </>
-                                        ) : null}
-                                    </div>
-                                ) : null}
-
-                                {status.state === "error" ? (
-                                    <div className="rounded-2xl border border-red-500/20 bg-red-500/10 px-4 py-3 text-sm text-red-400">
-                                        {status.message}
-                                    </div>
-                                ) : null}
-                            </CardBody>
-                        </Card>
-
-                        <Card shadow="none" className="border border-black/10 bg-white/78 dark:border-white/10 dark:bg-white/[0.03]">
-                            <CardBody className="space-y-5 p-6">
-                                <div>
-                                    <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-black/45 dark:text-white/45">
-                                        Meta
-                                    </p>
-                                    <h2 className="mt-3 font-serif text-2xl font-semibold tracking-tight">
-                                        文章设置
-                                    </h2>
-                                </div>
-
+                            <div className="space-y-2">
+                                <label className="text-sm font-medium text-black/72 dark:text-white/72">永久链接（slug）</label>
                                 <Input
-                                    label="永久链接（slug）"
+                                    aria-label="永久链接（slug）"
                                     value={slug}
                                     onValueChange={setSlug}
-                                    description={slug ? `实际：${normalizedSlug}（发布后尽量不要改）` : "例如：my-first-post"}
+                                    variant="flat"
+                                    classNames={inputClassNames}
                                 />
+                                <p className="text-xs text-black/52 dark:text-white/52">{slug ? `实际：${normalizedSlug}（发布后尽量不要改）` : "例如：my-first-post"}</p>
+                            </div>
 
-                                <div className="grid grid-cols-3 gap-2">
-                                    <Button
-                                        variant="flat"
-                                        onPress={() => {
-                                            setSlug(generateSlug());
-                                            setStatus({ state: "idle" });
-                                        }}
-                                        isDisabled={isWorking}
-                                    >
-                                        生成
-                                    </Button>
-                                    <Button
-                                        variant="flat"
-                                        onPress={() => {
-                                            resetForm();
-                                            setStatus({ state: "idle" });
-                                        }}
-                                        isDisabled={isWorking}
-                                    >
-                                        清空
-                                    </Button>
-                                    <Button variant="flat" isDisabled>
-                                        草稿
-                                    </Button>
-                                </div>
+                            <div className="grid grid-cols-3 gap-2">
+                                <Button
+                                    className={BUTTON_OUTLINE}
+                                    onPress={() => {
+                                        setSlug(generateSlug());
+                                        setStatus({ state: "idle" });
+                                    }}
+                                    isDisabled={isWorking}
+                                >
+                                    生成
+                                </Button>
+                                <Button
+                                    className={BUTTON_OUTLINE}
+                                    onPress={() => {
+                                        resetForm();
+                                        setStatus({ state: "idle" });
+                                    }}
+                                    isDisabled={isWorking}
+                                >
+                                    清空
+                                </Button>
+                                <Button className={BUTTON_OUTLINE} isDisabled>
+                                    草稿
+                                </Button>
+                            </div>
 
-                                <Input label="标题" value={title} onValueChange={setTitle} />
-                                <Input label="日期（YYYY-MM-DD）" value={date} onValueChange={setDate} />
-                                <Input label="简介（description）" value={description} onValueChange={setDescription} />
-                                <Input
-                                    label="作者（author）"
-                                    value={author}
-                                    onValueChange={setAuthor}
-                                    isReadOnly={hasSession && !isPrivilegedUser}
-                                    description={hasSession && !isPrivilegedUser ? "作者由当前账号自动绑定" : ""}
-                                />
-                                <Input
-                                    label="关键词（keywords）"
-                                    value={keywords}
-                                    onValueChange={setKeywords}
-                                    description="逗号分隔，例如：notion,blog,writing"
-                                />
-                            </CardBody>
-                        </Card>
-                    </aside>
-                </div>
+                            <div className="space-y-2">
+                                <label className="text-sm font-medium text-black/72 dark:text-white/72">标题</label>
+                                <Input aria-label="标题" value={title} onValueChange={setTitle} variant="flat" classNames={inputClassNames} />
+                            </div>
+                            <div className="space-y-2">
+                                <label className="text-sm font-medium text-black/72 dark:text-white/72">日期（YYYY-MM-DD）</label>
+                                <Input aria-label="日期（YYYY-MM-DD）" value={date} onValueChange={setDate} variant="flat" classNames={inputClassNames} />
+                            </div>
+                            <div className="space-y-2">
+                                <label className="text-sm font-medium text-black/72 dark:text-white/72">简介（description）</label>
+                                <Input aria-label="简介（description）" value={description} onValueChange={setDescription} variant="flat" classNames={inputClassNames} />
+                            </div>
+                            <div className="space-y-2">
+                                <label className="text-sm font-medium text-black/72 dark:text-white/72">作者（author）</label>
+                                {hasSession && !isPrivilegedUser ? (
+                                    <>
+                                        <div className="rounded-[14px] border border-black/10 bg-black/[0.02] px-4 py-3 text-sm text-black/78 dark:border-white/10 dark:bg-white/[0.03] dark:text-white/82">
+                                            当前作者已自动绑定为：{sessionAuthorName}
+                                        </div>
+                                        <p className="text-xs text-black/52 dark:text-white/52">发布时将自动使用当前登录账号作为作者</p>
+                                    </>
+                                ) : (
+                                    <Input
+                                        aria-label="作者（author）"
+                                        value={author}
+                                        onValueChange={setAuthor}
+                                        variant="flat"
+                                        classNames={inputClassNames}
+                                    />
+                                )}
+                            </div>
+                            <div className="space-y-2">
+                                <label className="text-sm font-medium text-black/72 dark:text-white/72">关键词（keywords）</label>
+                                <Input aria-label="关键词（keywords）" value={keywords} onValueChange={setKeywords} variant="flat" classNames={inputClassNames} />
+                                <p className="text-xs text-black/52 dark:text-white/52">逗号分隔，例如：notion,blog,writing</p>
+                            </div>
+                        </CardBody>
+                    </Card>
+                </aside>
             </div>
-        </HeroUIProvider>
+        </div>
     );
 }

@@ -1,6 +1,6 @@
 {
   "name": "kaz-blog",
-  "version": "0.0.3",
+  "version": "0.0.4",
   "homepage": "https://github.com/jeoor/kaz-blog",
   "private": true,
   "scripts": {

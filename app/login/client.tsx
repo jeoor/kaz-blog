@@ -2,9 +2,23 @@
 
 import { useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Button, Card, CardBody, HeroUIProvider, Input, Spinner } from "@heroui/react";
+import { Button, Card, CardBody, Input, Spinner } from "@heroui/react";
 import { SITE } from "@/app/site-config";
 import { adminApiUrl, adminCredentials } from "@/lib/admin-api";
+
+const CONTROL_RADIUS = "rounded-[14px]";
+const CONTROL_HEIGHT = "h-11 min-h-11";
+const TAB_BUTTON_BASE = `${CONTROL_HEIGHT} ${CONTROL_RADIUS} border text-sm font-medium transition-colors duration-150`;
+const TAB_BUTTON_ACTIVE = "border-[#8d67404d] bg-[#8d67401a] !text-black/86 hover:bg-[#8d674026] dark:border-[#c59a6948] dark:bg-[#c59a691f] dark:!text-white/94 dark:hover:bg-[#c59a6928]";
+const TAB_BUTTON_IDLE = "border-black/10 bg-black/[0.02] text-black/68 hover:border-black/14 hover:bg-black/[0.04] hover:text-black/84 dark:border-white/[0.08] dark:bg-white/[0.02] dark:text-white/70 dark:hover:border-white/[0.12] dark:hover:bg-white/[0.06] dark:hover:text-white/90";
+const PRIMARY_BUTTON = `${CONTROL_HEIGHT} ${CONTROL_RADIUS} border border-[#8d674052] bg-[#8d67401c] !text-black/92 transition-colors duration-150 hover:bg-[#8d674029] disabled:opacity-50 dark:border-[#c59a6950] dark:bg-[#c59a6922] dark:!text-white/96 dark:hover:bg-[#c59a6930]`;
+
+const inputClassNames = {
+    inputWrapper: `${CONTROL_HEIGHT} ${CONTROL_RADIUS} border border-black/18 bg-black/[0.02] shadow-none transition-colors duration-150 group-data-[focus=true]:border-black/35 group-data-[focus=true]:ring-0 data-[hover=true]:border-black/28 dark:border-white/14 dark:bg-white/[0.03] dark:group-data-[focus=true]:border-white/30 dark:data-[hover=true]:border-white/24`,
+    innerWrapper: "border-none bg-transparent shadow-none",
+    input: "border-0 bg-transparent text-sm text-black/88 placeholder:text-black/42 outline-none ring-0 focus:outline-none focus:ring-0 dark:text-white/92 dark:placeholder:text-white/42",
+    helperWrapper: "px-1",
+};
 
 export default function LoginClient() {
     const router = useRouter();
@@ -18,9 +32,8 @@ export default function LoginClient() {
 
     const [registerUsername, setRegisterUsername] = useState("");
     const [registerDisplayName, setRegisterDisplayName] = useState("");
-    const [registerEmail, setRegisterEmail] = useState("");
     const [registerPassword, setRegisterPassword] = useState("");
-    const [registerInviteCode, setRegisterInviteCode] = useState("");
+    const [registerPasswordConfirm, setRegisterPasswordConfirm] = useState("");
 
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
@@ -72,6 +85,10 @@ export default function LoginClient() {
             setError("请输入密码");
             return;
         }
+        if (registerPassword !== registerPasswordConfirm) {
+            setError("两次输入的密码不一致");
+            return;
+        }
 
         setLoading(true);
         try {
@@ -83,9 +100,7 @@ export default function LoginClient() {
                     action: "register",
                     username: registerUsername.trim(),
                     displayName: registerDisplayName.trim(),
-                    email: registerEmail.trim(),
                     password: registerPassword,
-                    inviteCode: registerInviteCode.trim(),
                 }),
             });
 
@@ -105,128 +120,147 @@ export default function LoginClient() {
     }
 
     return (
-        <HeroUIProvider>
-            <div className="mx-auto grid w-full max-w-[76rem] gap-6 px-4 pb-28 pt-10 md:grid-cols-[minmax(0,1fr)_26rem] md:pt-16">
-                <section className="reading-shell-strong rounded-[2.3rem] p-8 md:p-10">
-                    <p className="eyebrow-label">
-                        Admin Access
-                    </p>
-                    <h1 className="mt-4 font-serif text-4xl font-semibold tracking-tight md:text-5xl">
-                        {SITE.login.title}
-                    </h1>
-                    <p className="mt-5 max-w-2xl text-base leading-8 text-black/72 dark:text-white/68">
-                        {SITE.login.description}
-                    </p>
-                </section>
+        <div className="mx-auto grid w-full max-w-[76rem] gap-6 px-4 pb-28 pt-10 md:grid-cols-[minmax(0,1fr)_26rem] md:pt-16">
+            <section className="p-8 md:p-10">
+                <p className="eyebrow-label">
+                    Admin Access
+                </p>
+                <h1 className="mt-4 font-serif text-4xl font-semibold tracking-tight md:text-5xl">
+                    {SITE.login.title}
+                </h1>
+            </section>
 
-                <Card shadow="none" className="reading-shell rounded-[2rem] border-none">
-                    <CardBody className="space-y-6 p-6 md:p-8">
-                        <div>
-                            <h2 className="text-2xl font-semibold tracking-tight">身份验证</h2>
-                            <p className="mt-2 text-sm opacity-80">支持多作者登录。首个账号将自动成为 owner。</p>
-                        </div>
+            <Card shadow="none" className="reading-shell rounded-[2rem] border border-black/10 bg-white/78 dark:border-white/12 dark:bg-white/[0.05]">
+                <CardBody className="space-y-6 p-6 md:p-8">
+                    <div>
+                        <h2 className="text-2xl font-semibold tracking-tight">身份验证</h2>
+                        <p className="mt-2 text-sm text-black/62 dark:text-white/72">支持多作者登录。首个账号将自动成为 owner。</p>
+                    </div>
 
-                        <div className="grid grid-cols-2 gap-2 rounded-2xl border border-black/10 bg-black/[0.02] p-1 dark:border-white/10 dark:bg-white/[0.03]">
-                            <Button
-                                variant={mode === "login" ? "solid" : "light"}
-                                color={mode === "login" ? "primary" : "default"}
-                                onPress={() => {
-                                    setMode("login");
-                                    setError(null);
-                                    setSuccessMessage(null);
-                                }}
-                            >
-                                登录
-                            </Button>
-                            <Button
-                                variant={mode === "register" ? "solid" : "light"}
-                                color={mode === "register" ? "primary" : "default"}
-                                onPress={() => {
-                                    setMode("register");
-                                    setError(null);
-                                    setSuccessMessage(null);
-                                }}
-                            >
-                                注册
-                            </Button>
-                        </div>
+                    <div className="grid grid-cols-2 gap-2 rounded-2xl border border-black/10 bg-black/[0.02] p-1 dark:border-white/12 dark:bg-white/[0.02]">
+                        <Button
+                            variant="light"
+                            className={`${TAB_BUTTON_BASE} ${mode === "login" ? TAB_BUTTON_ACTIVE : TAB_BUTTON_IDLE}`}
+                            onPress={() => {
+                                setMode("login");
+                                setError(null);
+                                setSuccessMessage(null);
+                            }}
+                        >
+                            登录
+                        </Button>
+                        <Button
+                            variant="light"
+                            className={`${TAB_BUTTON_BASE} ${mode === "register" ? TAB_BUTTON_ACTIVE : TAB_BUTTON_IDLE}`}
+                            onPress={() => {
+                                setMode("register");
+                                setError(null);
+                                setSuccessMessage(null);
+                            }}
+                        >
+                            注册
+                        </Button>
+                    </div>
 
-                        {mode === "login" ? (
-                            <>
+                    {mode === "login" ? (
+                        <>
+                            <div className="space-y-2">
+                                <label className="text-sm font-medium text-black/78 dark:text-white/78">用户名或邮箱</label>
                                 <Input
-                                    label="用户名或邮箱"
+                                    aria-label="用户名或邮箱"
                                     value={identifier}
                                     onValueChange={setIdentifier}
+                                    variant="flat"
+                                    classNames={inputClassNames}
                                 />
+                            </div>
+                            <div className="space-y-2">
+                                <label className="text-sm font-medium text-black/78 dark:text-white/78">密码</label>
                                 <Input
-                                    label="密码"
+                                    aria-label="密码"
                                     type="password"
                                     value={password}
                                     onValueChange={setPassword}
+                                    variant="flat"
+                                    classNames={inputClassNames}
                                 />
-                                <Button color="primary" onPress={onLogin} isDisabled={loading}>
-                                    {loading ? (
-                                        <span className="inline-flex items-center gap-2">
-                                            <Spinner size="sm" />
-                                            登录中...
-                                        </span>
-                                    ) : (
-                                        "登录"
-                                    )}
-                                </Button>
-                            </>
-                        ) : (
-                            <>
+                            </div>
+                            <Button onPress={onLogin} isDisabled={loading} className={PRIMARY_BUTTON}>
+                                {loading ? (
+                                    <span className="inline-flex items-center gap-2">
+                                        <Spinner size="sm" />
+                                        登录中...
+                                    </span>
+                                ) : (
+                                    "登录"
+                                )}
+                            </Button>
+                        </>
+                    ) : (
+                        <>
+                            <div className="space-y-2">
+                                <label className="text-sm font-medium text-black/78 dark:text-white/78">用户名</label>
                                 <Input
-                                    label="用户名"
+                                    aria-label="用户名"
                                     value={registerUsername}
                                     onValueChange={setRegisterUsername}
-                                    description="3-32 位，小写字母/数字/._-"
+                                    variant="flat"
+                                    classNames={inputClassNames}
                                 />
+                                <p className="text-xs text-black/52 dark:text-white/52">3-32 位，小写字母/数字/._-</p>
+                            </div>
+                            <div className="space-y-2">
+                                <label className="text-sm font-medium text-black/78 dark:text-white/78">显示名</label>
                                 <Input
-                                    label="显示名"
+                                    aria-label="显示名"
                                     value={registerDisplayName}
                                     onValueChange={setRegisterDisplayName}
-                                    description="留空会使用用户名"
+                                    variant="flat"
+                                    classNames={inputClassNames}
                                 />
+                                <p className="text-xs text-black/52 dark:text-white/52">留空会使用用户名</p>
+                            </div>
+                            <div className="space-y-2">
+                                <label className="text-sm font-medium text-black/78 dark:text-white/78">密码</label>
                                 <Input
-                                    label="邮箱（可选）"
-                                    type="email"
-                                    value={registerEmail}
-                                    onValueChange={setRegisterEmail}
-                                />
-                                <Input
-                                    label="密码"
+                                    aria-label="密码"
                                     type="password"
                                     value={registerPassword}
                                     onValueChange={setRegisterPassword}
-                                    description="至少 8 位"
+                                    variant="flat"
+                                    classNames={inputClassNames}
                                 />
+                                <p className="text-xs text-black/52 dark:text-white/52">至少 8 位</p>
+                            </div>
+                            <div className="space-y-2">
+                                <label className="text-sm font-medium text-black/78 dark:text-white/78">确认密码</label>
                                 <Input
-                                    label="邀请码（可选）"
-                                    value={registerInviteCode}
-                                    onValueChange={setRegisterInviteCode}
-                                    description="首个账号无需邀请码，后续按服务端配置"
+                                    aria-label="确认密码"
+                                    type="password"
+                                    value={registerPasswordConfirm}
+                                    onValueChange={setRegisterPasswordConfirm}
+                                    variant="flat"
+                                    classNames={inputClassNames}
                                 />
-                                <Button color="primary" onPress={onRegister} isDisabled={loading}>
-                                    {loading ? (
-                                        <span className="inline-flex items-center gap-2">
-                                            <Spinner size="sm" />
-                                            注册中...
-                                        </span>
-                                    ) : (
-                                        "注册并登录"
-                                    )}
-                                </Button>
-                            </>
-                        )}
+                            </div>
+                            <Button onPress={onRegister} isDisabled={loading} className={PRIMARY_BUTTON}>
+                                {loading ? (
+                                    <span className="inline-flex items-center gap-2">
+                                        <Spinner size="sm" />
+                                        注册中...
+                                    </span>
+                                ) : (
+                                    "注册并登录"
+                                )}
+                            </Button>
+                        </>
+                    )}
 
-                        {successMessage ? <div className="text-sm text-emerald-500">{successMessage}</div> : null}
+                    {successMessage ? <div className="text-sm text-emerald-500">{successMessage}</div> : null}
 
-                        {error ? <div className="text-sm text-red-500">{error}</div> : null}
-                    </CardBody>
-                </Card>
-            </div>
-        </HeroUIProvider>
+                    {error ? <div className="text-sm text-red-500">{error}</div> : null}
+                </CardBody>
+            </Card>
+        </div>
     );
 }
