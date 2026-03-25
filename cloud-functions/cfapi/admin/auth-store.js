@@ -554,16 +554,16 @@ export function getSessionTokenForLogout(request) {
 
 export async function listManagedUsers(context) {
     const kv = resolveKv(context);
-    const users = [];
     const meta = await loadMeta(kv);
+    const usersByUsername = new Map();
 
     for (const username of meta.usernames || []) {
         const user = await loadUserByUsername(kv, username);
         if (!user) continue;
-        users.push(publicManagedUser(user));
+        usersByUsername.set(user.username, publicManagedUser(user));
     }
 
-    if (users.length === 0 && typeof kv.list === "function") {
+    if (usersByUsername.size < Number(meta.userCount || 0) && typeof kv.list === "function") {
         const keys = await kvListAll(kv, "author_user_");
 
         for (const entry of keys) {
@@ -572,10 +572,13 @@ export async function listManagedUsers(context) {
             const raw = await kvGetText(kv, key);
             const user = parseJsonString(raw, null);
             if (!user || typeof user !== "object") continue;
-            users.push(publicManagedUser(user));
+            const publicUser = publicManagedUser(user);
+            usersByUsername.set(publicUser.username, publicUser);
             await rememberUsername(kv, user.username);
         }
     }
+
+    const users = Array.from(usersByUsername.values());
 
     users.sort((left, right) => Number(left.createdAt || 0) - Number(right.createdAt || 0));
     return users;
