@@ -240,6 +240,17 @@ function allowOpenRegistration(context) {
     return configured === "1" || configured === "true" || configured === "yes";
 }
 
+export async function getRegistrationStatus(context) {
+    const kv = resolveKv(context);
+    const meta = await loadMeta(kv);
+    const userCount = Number(meta.userCount || 0);
+    return {
+        hasUsers: userCount > 0,
+        userCount,
+        inviteRequired: userCount > 0 && !allowOpenRegistration(context),
+    };
+}
+
 function toPublicUser(user) {
     return {
         id: user.id,

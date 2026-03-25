@@ -1,6 +1,7 @@
 import {
     authenticateRequest,
     clearSessionCookie,
+    getRegistrationStatus,
     getSessionTokenForLogout,
     loginUser,
     logoutSession,
@@ -33,11 +34,12 @@ function withCookie(response, cookieValue) {
 
 export async function onRequestGet(context) {
     const { request } = context;
+    const registration = await getRegistrationStatus(context);
     try {
         const auth = await authenticateRequest(context, request);
-        return json({ ok: true, authenticated: true, mode: auth.mode, user: auth.user });
+        return json({ ok: true, authenticated: true, mode: auth.mode, user: auth.user, registration });
     } catch {
-        return json({ ok: false, authenticated: false, message: "Unauthorized" }, 401);
+        return json({ ok: false, authenticated: false, message: "Unauthorized", registration }, 401);
     }
 }
 

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Button, Card, CardBody, Input, Spinner } from "@heroui/react";
 import { SITE } from "@/app/site-config";
@@ -39,6 +39,34 @@ export default function LoginClient() {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [successMessage, setSuccessMessage] = useState<string | null>(null);
+    const [inviteRequired, setInviteRequired] = useState<boolean | null>(null);
+
+    useEffect(() => {
+        let cancelled = false;
+
+        async function loadRegistrationStatus() {
+            try {
+                const res = await fetch(adminApiUrl("/api/admin/session"), {
+                    credentials: adminCredentials(),
+                });
+                const data = (await res.json().catch(() => ({}))) as any;
+                if (cancelled) return;
+
+                const required = Boolean(data?.registration?.inviteRequired);
+                setInviteRequired(required);
+            } catch {
+                if (!cancelled) {
+                    setInviteRequired(true);
+                }
+            }
+        }
+
+        void loadRegistrationStatus();
+
+        return () => {
+            cancelled = true;
+        };
+    }, []);
 
     async function onLogin() {
         setError(null);
@@ -222,17 +250,18 @@ export default function LoginClient() {
                                 />
                                 <p className="text-xs text-black/52 dark:text-white/52">留空会使用用户名</p>
                             </div>
-                            <div className="space-y-2">
-                                <label className="text-sm font-medium text-black/78 dark:text-white/78">邀请码</label>
-                                <Input
-                                    aria-label="邀请码"
-                                    value={registerInviteCode}
-                                    onValueChange={setRegisterInviteCode}
-                                    variant="flat"
-                                    classNames={inputClassNames}
-                                />
-                                <p className="text-xs text-black/52 dark:text-white/52">首个账号无需邀请码；之后创建新账号需要与服务端 `REGISTER_INVITE_CODE` 一致</p>
-                            </div>
+                            {inviteRequired ? (
+                                <div className="space-y-2">
+                                    <label className="text-sm font-medium text-black/78 dark:text-white/78">邀请码</label>
+                                    <Input
+                                        aria-label="邀请码"
+                                        value={registerInviteCode}
+                                        onValueChange={setRegisterInviteCode}
+                                        variant="flat"
+                                        classNames={inputClassNames}
+                                    />
+                                </div>
+                            ) : null}
                             <div className="space-y-2">
                                 <label className="text-sm font-medium text-black/78 dark:text-white/78">密码</label>
                                 <Input
