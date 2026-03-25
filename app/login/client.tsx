@@ -302,6 +302,8 @@ export default function LoginClient() {
                     {successMessage ? <div className="text-sm text-emerald-500">{successMessage}</div> : null}
 
                     {error ? <div className="text-sm text-red-500">{error}</div> : null}
+
+                    <div className="text-xs text-black/50 dark:text-white/50">如忘记密码请联系管理员</div>
                 </CardBody>
             </Card>
         </div>
