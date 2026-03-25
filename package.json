@@ -13,9 +13,9 @@
     "notion:check": "node scripts/check-notion.js"
   },
   "dependencies": {
-    "@nextui-org/react": "^2.1.13",
+    "@nextui-org/react": "^2.6.11",
     "@notionhq/client": "^2.2.14",
-    "framer-motion": "^10.16.4",
+    "framer-motion": "^12.38.0",
     "gray-matter": "^4.0.3",
     "highlight.js": "^11.11.1",
     "next": "^16.2.1",
