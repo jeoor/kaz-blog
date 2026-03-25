@@ -1,5 +1,5 @@
 const SESSION_COOKIE_NAME = "eo_admin_session";
-const META_KEY = "author:meta";
+const META_KEY = "author_meta";
 
 function toJsonString(value) {
     return JSON.stringify(value);
@@ -15,6 +15,14 @@ function parseJsonString(input, fallback = null) {
 
 function nowMs() {
     return Date.now();
+}
+
+function utf8ToHex(input) {
+    const encoder = new TextEncoder();
+    const bytes = encoder.encode(String(input || ""));
+    return Array.from(bytes)
+        .map((b) => b.toString(16).padStart(2, "0"))
+        .join("");
 }
 
 function envValue(name, context) {
@@ -91,15 +99,15 @@ function normalizeDisplayName(input, fallback) {
 }
 
 function userKey(username) {
-    return `author:user:${username}`;
+    return `author_user_${utf8ToHex(username)}`;
 }
 
 function emailKey(email) {
-    return `author:email:${email}`;
+    return `author_email_${utf8ToHex(email)}`;
 }
 
 function sessionKey(token) {
-    return `author:session:${token}`;
+    return `author_session_${utf8ToHex(token)}`;
 }
 
 function parseCookies(request) {
