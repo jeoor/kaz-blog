@@ -198,6 +198,31 @@ async function saveMeta(kv, meta) {
     await kvPutText(kv, META_KEY, toJsonString(meta));
 }
 
+async function reconcileMetaUsers(kv, meta, usernames) {
+    const normalized = Array.from(new Set((usernames || []).map((item) => String(item || "").trim().toLowerCase()).filter(Boolean)));
+    const nextCount = normalized.length;
+    const prevUsernames = Array.isArray(meta?.usernames) ? meta.usernames : [];
+    const prevCount = Number(meta?.userCount || 0);
+    const sameCount = prevCount === nextCount;
+    const sameNames = prevUsernames.length === normalized.length && prevUsernames.every((value, index) => value === normalized[index]);
+    if (sameCount && sameNames) {
+        return {
+            ...meta,
+            userCount: nextCount,
+            usernames: normalized,
+        };
+    }
+
+    const nextMeta = {
+        ...meta,
+        userCount: nextCount,
+        usernames: normalized,
+        updatedAt: nowMs(),
+    };
+    await saveMeta(kv, nextMeta);
+    return nextMeta;
+}
+
 async function rememberUsername(kv, username) {
     const normalized = String(username || "").trim().toLowerCase();
     if (!normalized) return;
@@ -554,7 +579,7 @@ export function getSessionTokenForLogout(request) {
 
 export async function listManagedUsers(context) {
     const kv = resolveKv(context);
-    const meta = await loadMeta(kv);
+    let meta = await loadMeta(kv);
     const usersByUsername = new Map();
 
     for (const username of meta.usernames || []) {
@@ -579,6 +604,8 @@ export async function listManagedUsers(context) {
     }
 
     const users = Array.from(usersByUsername.values());
+    const usernames = users.map((user) => user.username);
+    meta = await reconcileMetaUsers(kv, meta, usernames);
 
     users.sort((left, right) => Number(left.createdAt || 0) - Number(right.createdAt || 0));
     return users;
