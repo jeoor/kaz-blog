@@ -9,10 +9,11 @@ export function adminApiUrl(path: string): string {
 
 export function adminCredentials(): RequestCredentials {
     if (!ADMIN_API_BASE) return "include";
+    if (ADMIN_API_BASE.startsWith("/")) return "include";
     try {
         // If the base is same-origin, cookies (if any) are safe to include.
         if (typeof window !== "undefined") {
-            const baseOrigin = new URL(ADMIN_API_BASE).origin;
+            const baseOrigin = new URL(ADMIN_API_BASE, window.location.origin).origin;
             if (baseOrigin === window.location.origin) return "include";
         }
     } catch {
