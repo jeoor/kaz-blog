@@ -13,7 +13,7 @@
     "notion:check": "node scripts/check-notion.js"
   },
   "dependencies": {
-    "@nextui-org/react": "^2.6.11",
+    "@heroui/react": "^2.8.5",
     "@notionhq/client": "^2.2.14",
     "framer-motion": "^12.38.0",
     "gray-matter": "^4.0.3",

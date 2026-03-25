@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useId, useState } from "react";
-import { Button, Card, CardBody, Input, NextUIProvider, Spinner } from "@nextui-org/react";
+import { Button, Card, CardBody, HeroUIProvider, Input, Spinner } from "@heroui/react";
 import { SITE } from "@/app/site-config";
 import ArticleBody from "@/components/post-components/article-body";
 import { adminApiUrl, adminCredentials } from "@/lib/admin-api";
@@ -359,7 +359,7 @@ export default function WritePage() {
     const isPrivilegedUser = ["owner", "admin"].includes(String(sessionUser?.role || "").toLowerCase());
 
     return (
-        <NextUIProvider>
+        <HeroUIProvider>
             <div className="mx-auto w-full max-w-[94rem] px-4 pb-24 pt-10 md:pt-14">
                 <div className="grid items-stretch gap-6 xl:grid-cols-[minmax(0,1fr)_22rem]">
                     <Card
@@ -606,6 +606,6 @@ export default function WritePage() {
                     </aside>
                 </div>
             </div>
-        </NextUIProvider>
+        </HeroUIProvider>
     );
 }

@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Button, Card, CardBody, Input, Spinner, NextUIProvider } from "@nextui-org/react";
+import { Button, Card, CardBody, HeroUIProvider, Input, Spinner } from "@heroui/react";
 import { SITE } from "@/app/site-config";
 import { adminApiUrl, adminCredentials } from "@/lib/admin-api";
 
@@ -105,7 +105,7 @@ export default function LoginClient() {
     }
 
     return (
-        <NextUIProvider>
+        <HeroUIProvider>
             <div className="mx-auto grid w-full max-w-[76rem] gap-6 px-4 pb-28 pt-10 md:grid-cols-[minmax(0,1fr)_26rem] md:pt-16">
                 <section className="reading-shell-strong rounded-[2.3rem] p-8 md:p-10">
                     <p className="eyebrow-label">
@@ -227,6 +227,6 @@ export default function LoginClient() {
                     </CardBody>
                 </Card>
             </div>
-        </NextUIProvider>
+        </HeroUIProvider>
     );
 }
