@@ -621,7 +621,7 @@ export default function WritePage() {
                                 <label className="text-sm font-medium text-black/72 dark:text-white/72">简介（description）</label>
                                 <Input aria-label="简介（description）" value={description} onValueChange={setDescription} variant="flat" classNames={inputClassNames} />
                             </div>
-                            {(!hasSession || isPrivilegedUser) ? (
+                            {!hasSession ? (
                                 <div className="space-y-2">
                                     <label className="text-sm font-medium text-black/72 dark:text-white/72">作者（author）</label>
                                     <Input
