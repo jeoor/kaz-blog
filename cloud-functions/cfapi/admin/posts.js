@@ -1,5 +1,5 @@
 import { Client } from "@notionhq/client";
-import { authenticateRequest, envValue, isPrivilegedRole, statusFromError as authStatusFromError } from "./auth-store.js";
+import { authenticateRequest, envValue, isOwnerRole, statusFromError as authStatusFromError } from "./auth-store.js";
 
 function json(data, status = 200) {
     return new Response(JSON.stringify(data), {
@@ -25,7 +25,7 @@ function httpError(status, message) {
 
 function isPrivilegedAuth(auth) {
     if (!auth || !auth.user) return false;
-    return isPrivilegedRole(auth.user.role);
+    return isOwnerRole(auth.user.role);
 }
 
 function normalizedIdentitySet(auth) {

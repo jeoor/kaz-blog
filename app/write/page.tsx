@@ -100,7 +100,7 @@ export default function WritePage() {
 
     const normalizedSlug = normalizeSlug(slug);
     const hasSession = !!sessionUser;
-    const isPrivilegedUser = ["owner", "admin"].includes(String(sessionUser?.role || "").toLowerCase());
+    const isOwnerUser = String(sessionUser?.role || "").toLowerCase() === "owner";
     const sessionAuthorName = getSessionAuthorName(sessionUser);
 
     useEffect(() => {
@@ -180,7 +180,7 @@ export default function WritePage() {
             setSessionUser(user);
             const fallbackAuthor = getSessionAuthorName(user);
             if (fallbackAuthor) {
-                const canEditAuthor = ["owner", "admin"].includes(String(user?.role || "").toLowerCase());
+                const canEditAuthor = String(user?.role || "").toLowerCase() === "owner";
                 setAuthor((prev) => (canEditAuthor && prev.trim() ? prev : fallbackAuthor));
             }
             setIsUnlocked(true);
@@ -199,9 +199,9 @@ export default function WritePage() {
     }, [onUnlock]);
 
     useEffect(() => {
-        if (!sessionAuthorName || isPrivilegedUser) return;
+        if (!sessionAuthorName || isOwnerUser) return;
         setAuthor(sessionAuthorName);
-    }, [isPrivilegedUser, sessionAuthorName]);
+    }, [isOwnerUser, sessionAuthorName]);
 
     async function onLogout(): Promise<void> {
         try {
@@ -215,7 +215,7 @@ export default function WritePage() {
         setSessionUser(null);
         setIsUnlocked(false);
         setUnlockError("已退出登录");
-        window.location.href = "/login?next=/write";
+        window.location.href = "/";
     }
 
     function resetForm(): void {
@@ -287,7 +287,7 @@ export default function WritePage() {
             setStatus({ state: "error", message: "需要填写简介（description）" });
             return;
         }
-        const effectiveAuthor = isPrivilegedUser ? author.trim() : sessionAuthorName;
+        const effectiveAuthor = isOwnerUser ? author.trim() : sessionAuthorName;
         if (!effectiveAuthor) {
             setStatus({ state: "error", message: "需要填写作者（author）" });
             return;
@@ -538,6 +538,17 @@ export default function WritePage() {
                                 </Button>
                             </div>
 
+                            {isOwnerUser ? (
+                                <Button
+                                    className={BUTTON_OUTLINE}
+                                    onPress={() => {
+                                        window.location.href = "/write/authors";
+                                    }}
+                                >
+                                    作者管理
+                                </Button>
+                            ) : null}
+
                             {status.state === "success" ? (
                                 <div className="rounded-2xl border border-black/12 bg-black/[0.03] px-4 py-3 text-sm text-black/72 dark:border-white/12 dark:bg-white/[0.04] dark:text-white/76">
                                     {status.message}
@@ -621,7 +632,7 @@ export default function WritePage() {
                                 <label className="text-sm font-medium text-black/72 dark:text-white/72">简介（description）</label>
                                 <Input aria-label="简介（description）" value={description} onValueChange={setDescription} variant="flat" classNames={inputClassNames} />
                             </div>
-                            {!hasSession ? (
+                            {!hasSession || isOwnerUser ? (
                                 <div className="space-y-2">
                                     <label className="text-sm font-medium text-black/72 dark:text-white/72">作者（author）</label>
                                     <Input

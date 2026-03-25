@@ -251,12 +251,24 @@ export async function getRegistrationStatus(context) {
     };
 }
 
+function publicManagedUser(user) {
+    return {
+        id: user.id,
+        username: user.username,
+        displayName: user.displayName,
+        role: ensureStoredRole(user.role),
+        createdAt: user.createdAt,
+        updatedAt: user.updatedAt,
+        disabledAt: user.disabledAt || null,
+    };
+}
+
 function toPublicUser(user) {
     return {
         id: user.id,
         username: user.username,
         displayName: user.displayName,
-        role: user.role,
+        role: ensureStoredRole(user.role),
         createdAt: user.createdAt,
     };
 }
@@ -267,15 +279,55 @@ async function saveUser(kv, user) {
     await kvPutText(kv, userKey(user.username), toJsonString(user));
 }
 
-export function isPrivilegedRole(role) {
-    const value = String(role || "").toLowerCase();
-    return value === "owner" || value === "admin";
+export function isOwnerRole(role) {
+    return String(role || "").toLowerCase() === "owner";
+}
+
+function ensureUserEnabled(user) {
+    if (user && user.disabledAt) {
+        throw httpError(403, "账号已被禁用，请联系 owner");
+    }
+}
+
+function ensureManageableRole(role) {
+    const value = String(role || "").trim().toLowerCase();
+    if (value !== "owner" && value !== "author") {
+        throw httpError(400, "角色无效");
+    }
+    return value;
+}
+
+function ensureStoredRole(role) {
+    const value = String(role || "").trim().toLowerCase();
+    if (value !== "owner" && value !== "author") {
+        throw httpError(500, "Invalid stored role");
+    }
+    return value;
+}
+
+async function kvListAll(kv, prefix) {
+    if (typeof kv.list !== "function") {
+        throw httpError(500, "当前 KV 绑定不支持 list，无法管理作者");
+    }
+
+    const keys = [];
+    let cursor = undefined;
+    do {
+        const resp = await kv.list({ prefix, cursor, limit: 1000 });
+        keys.push(...(Array.isArray(resp?.keys) ? resp.keys : []));
+        cursor = resp?.list_complete ? undefined : resp?.cursor;
+    } while (cursor);
+
+    return keys;
 }
 
 async function loadUserByUsername(kv, username) {
     const raw = await kvGetText(kv, userKey(username));
     if (!raw) return null;
-    return parseJsonString(raw, null);
+    const user = parseJsonString(raw, null);
+    if (!user || typeof user !== "object") return null;
+    user.role = ensureStoredRole(user.role);
+    return user;
 }
 
 async function loadUserByIdentifier(kv, identifier) {
@@ -357,6 +409,7 @@ export async function loginUser(context, payload) {
     if (!user) {
         throw httpError(401, "账号或密码错误");
     }
+    ensureUserEnabled(user);
 
     const pass = await verifyPassword(password, user.password);
     if (!pass) {
@@ -430,6 +483,10 @@ export async function authenticateRequest(context, request) {
         await kv.delete(sessionKey(token));
         throw httpError(401, "Unauthorized");
     }
+    if (user.disabledAt) {
+        await kv.delete(sessionKey(token));
+        throw httpError(401, "Unauthorized");
+    }
 
     const currentSessionToken = String(user.currentSessionToken || "").trim();
     if (!currentSessionToken || currentSessionToken !== token) {
@@ -467,6 +524,91 @@ export async function logoutSession(context, token) {
 
 export function getSessionTokenForLogout(request) {
     return getSessionTokenFromRequest(request);
+}
+
+export async function listManagedUsers(context) {
+    const kv = resolveKv(context);
+    const keys = await kvListAll(kv, "author_user_");
+    const users = [];
+
+    for (const entry of keys) {
+        const key = String(entry?.name || "").trim();
+        if (!key) continue;
+        const raw = await kvGetText(kv, key);
+        const user = parseJsonString(raw, null);
+        if (!user || typeof user !== "object") continue;
+        users.push(publicManagedUser(user));
+    }
+
+    users.sort((left, right) => Number(left.createdAt || 0) - Number(right.createdAt || 0));
+    return users;
+}
+
+export async function updateManagedUser(context, payload) {
+    const kv = resolveKv(context);
+    const actor = payload?.actor;
+    const targetUsername = normalizeUsername(payload?.username);
+    const action = String(payload?.action || "").trim().toLowerCase();
+    const user = await loadUserByUsername(kv, targetUsername);
+
+    if (!user) {
+        throw httpError(404, "用户不存在");
+    }
+    if (!isOwnerRole(actor?.role)) {
+        throw httpError(403, "Forbidden");
+    }
+
+    const actorUsername = String(actor?.username || "").trim().toLowerCase();
+    const isSelf = actorUsername === targetUsername;
+
+    if (action === "set-profile") {
+        const nextDisplayName = normalizeDisplayName(payload?.displayName, user.username);
+        const nextRole = ensureManageableRole(payload?.role || user.role);
+        if (isSelf && nextRole !== "owner") {
+            throw httpError(400, "不能移除自己的 owner 角色");
+        }
+        user.displayName = nextDisplayName;
+        user.role = nextRole;
+        await saveUser(kv, user);
+        return publicManagedUser(user);
+    }
+
+    if (action === "disable") {
+        if (isSelf) {
+            throw httpError(400, "不能禁用自己的账号");
+        }
+        user.disabledAt = nowMs();
+        const currentToken = String(user.currentSessionToken || "").trim();
+        if (currentToken) {
+            await kv.delete(sessionKey(currentToken));
+            delete user.currentSessionToken;
+        }
+        await saveUser(kv, user);
+        return publicManagedUser(user);
+    }
+
+    if (action === "enable") {
+        delete user.disabledAt;
+        await saveUser(kv, user);
+        return publicManagedUser(user);
+    }
+
+    if (action === "reset-password") {
+        const password = String(payload?.password || "");
+        if (password.length < 8) {
+            throw httpError(400, "密码至少 8 位");
+        }
+        user.password = await derivePasswordHash(password);
+        const currentToken = String(user.currentSessionToken || "").trim();
+        if (currentToken) {
+            await kv.delete(sessionKey(currentToken));
+            delete user.currentSessionToken;
+        }
+        await saveUser(kv, user);
+        return publicManagedUser(user);
+    }
+
+    throw httpError(400, "Unsupported action");
 }
 
 export function statusFromError(err) {

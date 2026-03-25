@@ -153,7 +153,7 @@ export default function LoginClient() {
         <div className="mx-auto grid w-full max-w-[76rem] gap-6 px-4 pb-28 pt-10 md:grid-cols-[minmax(0,1fr)_26rem] md:pt-16">
             <section className="p-8 md:p-10">
                 <p className="eyebrow-label">
-                    Admin Access
+                    Writing Access
                 </p>
                 <h1 className="mt-4 font-serif text-4xl font-semibold tracking-tight md:text-5xl">
                     {SITE.login.title}
@@ -164,7 +164,6 @@ export default function LoginClient() {
                 <CardBody className="space-y-6 p-6 md:p-8">
                     <div>
                         <h2 className="text-2xl font-semibold tracking-tight">身份验证</h2>
-                        <p className="mt-2 text-sm text-black/62 dark:text-white/72">支持多作者登录。首个账号将自动成为 owner。</p>
                     </div>
 
                     <div className="grid grid-cols-2 gap-2 rounded-2xl border border-black/10 bg-black/[0.02] p-1 dark:border-white/12 dark:bg-white/[0.02]">

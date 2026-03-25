@@ -40,19 +40,6 @@ export default async function AboutPage() {
                                 </WidgetCard>
                             ),
                         },
-                        {
-                            key: "sections",
-                            node: (
-                                <WidgetCard title="Sections">
-                                    <ul className="mt-4 space-y-3 text-sm text-black/74 dark:text-white/72">
-                                        <li>文章：适合完整表达和长期更新</li>
-                                        <li>归档：适合梳理时间线和回看内容</li>
-                                        <li>友链：适合保留长期访问入口</li>
-                                        <li>关于：适合说明站点定位和维护方式</li>
-                                    </ul>
-                                </WidgetCard>
-                            ),
-                        },
                     ]}
                 />
             }
