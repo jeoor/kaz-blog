@@ -1,5 +1,5 @@
 import { Client } from "@notionhq/client";
-import { authenticateRequest, isPrivilegedRole, statusFromError as authStatusFromError } from "./auth-store.js";
+import { authenticateRequest, envValue, isPrivilegedRole, statusFromError as authStatusFromError } from "./auth-store.js";
 
 function json(data, status = 200) {
     return new Response(JSON.stringify(data), {
@@ -53,21 +53,21 @@ function resolveAuthorForPublish(auth, requestedAuthor) {
     return fallback;
 }
 
-function getNotionEnv() {
-    const token = String(process.env.NOTION_TOKEN || "").trim();
-    const databaseId = String(process.env.NOTION_DATABASE_ID || "").trim();
+function getNotionEnv(context) {
+    const token = envValue("NOTION_TOKEN", context).trim();
+    const databaseId = envValue("NOTION_DATABASE_ID", context).trim();
     if (!token || !databaseId) throw new Error("Notion is not configured");
 
     return {
         token,
         databaseId,
-        propSlug: String(process.env.NOTION_PROP_SLUG || "Slug").trim(),
-        propPublished: String(process.env.NOTION_PROP_PUBLISHED || "Published").trim(),
-        propDate: String(process.env.NOTION_PROP_DATE || "Date").trim(),
-        propDescription: String(process.env.NOTION_PROP_DESCRIPTION || "Description").trim(),
-        propAuthor: String(process.env.NOTION_PROP_AUTHOR || "Author").trim(),
-        propKeywords: String(process.env.NOTION_PROP_KEYWORDS || "Keywords").trim(),
-        propTitle: String(process.env.NOTION_PROP_TITLE || "").trim(),
+        propSlug: envValue("NOTION_PROP_SLUG", context).trim() || "Slug",
+        propPublished: envValue("NOTION_PROP_PUBLISHED", context).trim() || "Published",
+        propDate: envValue("NOTION_PROP_DATE", context).trim() || "Date",
+        propDescription: envValue("NOTION_PROP_DESCRIPTION", context).trim() || "Description",
+        propAuthor: envValue("NOTION_PROP_AUTHOR", context).trim() || "Author",
+        propKeywords: envValue("NOTION_PROP_KEYWORDS", context).trim() || "Keywords",
+        propTitle: envValue("NOTION_PROP_TITLE", context).trim(),
     };
 }
 
@@ -350,7 +350,7 @@ export async function onRequestGet(context) {
         const slug = normalizeSlug(url.searchParams.get("slug") || "");
         if (!slug) return json({ message: "Missing slug" }, 400);
 
-        const env = getNotionEnv();
+        const env = getNotionEnv(context);
         const notion = new Client({ auth: env.token });
         const page = await findPageBySlug(notion, env, slug);
         if (!page) return json({ message: "Not found" }, 404);
@@ -406,7 +406,7 @@ export async function onRequestPost(context) {
             return json({ message: "Missing frontmatter fields" }, 400);
         }
 
-        const env = getNotionEnv();
+        const env = getNotionEnv(context);
         const notion = new Client({ auth: env.token });
 
         const existing = await findPageBySlug(notion, env, slug);
@@ -448,7 +448,7 @@ export async function onRequestDelete(context) {
         const slug = normalizeSlug(url.searchParams.get("slug") || "");
         if (!slug) return json({ message: "Missing slug" }, 400);
 
-        const env = getNotionEnv();
+        const env = getNotionEnv(context);
         const notion = new Client({ auth: env.token });
         const existing = await findPageBySlug(notion, env, slug);
         if (!existing) return json({ message: "Not found" }, 404);

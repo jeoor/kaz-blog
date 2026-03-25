@@ -1,6 +1,7 @@
 import {
     authenticateRequest,
     clearSessionCookie,
+    envValue,
     getLegacyAdminToken,
     getSessionTokenForLogout,
     loginUser,
@@ -66,7 +67,7 @@ export async function onRequestPost(context) {
             }
 
             const legacyProvided = String(body.token || body.password || getLegacyAdminToken(request) || "").trim();
-            const expected = String(process.env.ADMIN_TOKEN || "").trim();
+            const expected = envValue("ADMIN_TOKEN", context).trim();
             if (!legacyProvided || !expected || legacyProvided !== expected) {
                 return json({ message: "Unauthorized" }, 401);
             }

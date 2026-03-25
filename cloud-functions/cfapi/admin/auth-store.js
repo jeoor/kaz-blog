@@ -25,7 +25,7 @@ function utf8ToHex(input) {
         .join("");
 }
 
-function envValue(name, context) {
+export function envValue(name, context) {
     const runtimeEnv = context?.env;
     const fromContext = runtimeEnv && Object.prototype.hasOwnProperty.call(runtimeEnv, name)
         ? runtimeEnv[name]
@@ -34,9 +34,11 @@ function envValue(name, context) {
         return String(fromContext);
     }
 
-    const fromProcess = process?.env?.[name];
-    if (fromProcess !== undefined && fromProcess !== null && String(fromProcess) !== "") {
-        return String(fromProcess);
+    if (typeof process !== "undefined" && process.env) {
+        const fromProcess = process.env[name];
+        if (fromProcess !== undefined && fromProcess !== null && String(fromProcess) !== "") {
+            return String(fromProcess);
+        }
     }
 
     return "";
@@ -269,6 +271,11 @@ function toPublicUser(user) {
     };
 }
 
+async function saveUser(kv, user) {
+    user.updatedAt = nowMs();
+    await kvPutText(kv, userKey(user.username), toJsonString(user));
+}
+
 export function isPrivilegedRole(role) {
     const value = String(role || "").toLowerCase();
     return value === "owner" || value === "admin";
@@ -389,6 +396,11 @@ export async function loginUser(context, payload) {
     const expiresAt = now + ttlSeconds * 1000;
     const token = bytesToHex(randomBytes(32));
 
+    const previousToken = String(user.currentSessionToken || "").trim();
+    if (previousToken) {
+        await kv.delete(sessionKey(previousToken));
+    }
+
     const session = {
         token,
         userId: user.id,
@@ -400,6 +412,8 @@ export async function loginUser(context, payload) {
     };
 
     await kvPutText(kv, sessionKey(token), toJsonString(session), ttlSeconds);
+    user.currentSessionToken = token;
+    await saveUser(kv, user);
     return {
         token,
         maxAgeSeconds: ttlSeconds,
@@ -454,14 +468,26 @@ export async function authenticateRequest(context, request) {
         throw httpError(401, "Unauthorized");
     }
 
+    const user = await loadUserByUsername(kv, session.username);
+    if (!user) {
+        await kv.delete(sessionKey(token));
+        throw httpError(401, "Unauthorized");
+    }
+
+    const currentSessionToken = String(user.currentSessionToken || "").trim();
+    if (!currentSessionToken || currentSessionToken !== token) {
+        await kv.delete(sessionKey(token));
+        throw httpError(401, "Unauthorized");
+    }
+
     return {
         mode: "session",
         user: {
-            id: session.userId,
-            username: session.username,
-            displayName: session.displayName,
-            email: "",
-            role: session.role,
+            id: user.id,
+            username: user.username,
+            displayName: user.displayName,
+            email: user.email || "",
+            role: user.role,
         },
         sessionToken: token,
     };
@@ -470,7 +496,17 @@ export async function authenticateRequest(context, request) {
 export async function logoutSession(context, token) {
     if (!token) return;
     const kv = resolveKv(context);
+    const session = await readSessionByToken(kv, token);
     await kv.delete(sessionKey(token));
+    if (!session?.username) return;
+
+    const user = await loadUserByUsername(kv, session.username);
+    if (!user) return;
+
+    if (String(user.currentSessionToken || "").trim() === token) {
+        delete user.currentSessionToken;
+        await saveUser(kv, user);
+    }
 }
 
 export function getSessionTokenForLogout(request) {
