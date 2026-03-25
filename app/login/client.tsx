@@ -165,9 +165,9 @@ export default function LoginClient() {
                     {mode === "login" ? (
                         <>
                             <div className="space-y-2">
-                                <label className="text-sm font-medium text-black/78 dark:text-white/78">用户名或邮箱</label>
+                                <label className="text-sm font-medium text-black/78 dark:text-white/78">用户名</label>
                                 <Input
-                                    aria-label="用户名或邮箱"
+                                    aria-label="用户名"
                                     value={identifier}
                                     onValueChange={setIdentifier}
                                     variant="flat"

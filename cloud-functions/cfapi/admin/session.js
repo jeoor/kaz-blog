@@ -60,7 +60,7 @@ export async function onRequestPost(context) {
         }
 
         if (action === "login") {
-            if (body.identifier || body.username || body.email) {
+            if (body.identifier || body.username) {
                 const login = await loginUser(context, body);
                 const response = json({ ok: true, action: "login", user: login.user, mode: "session" });
                 return withCookie(response, makeSessionCookie(login.token, request, login.maxAgeSeconds));

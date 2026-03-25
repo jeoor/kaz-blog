@@ -85,15 +85,6 @@ function normalizeUsername(input) {
     return value;
 }
 
-function normalizeEmail(input) {
-    const value = String(input || "").trim().toLowerCase();
-    if (!value) return "";
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) {
-        throw httpError(400, "邮箱格式不正确");
-    }
-    return value;
-}
-
 function normalizeDisplayName(input, fallback) {
     const value = String(input || "").trim();
     if (value) return value.slice(0, 80);
@@ -102,10 +93,6 @@ function normalizeDisplayName(input, fallback) {
 
 function userKey(username) {
     return `author_user_${utf8ToHex(username)}`;
-}
-
-function emailKey(email) {
-    return `author_email_${utf8ToHex(email)}`;
 }
 
 function sessionKey(token) {
@@ -265,13 +252,13 @@ function toPublicUser(user) {
         id: user.id,
         username: user.username,
         displayName: user.displayName,
-        email: user.email || "",
         role: user.role,
         createdAt: user.createdAt,
     };
 }
 
 async function saveUser(kv, user) {
+    delete user.email;
     user.updatedAt = nowMs();
     await kvPutText(kv, userKey(user.username), toJsonString(user));
 }
@@ -290,19 +277,12 @@ async function loadUserByUsername(kv, username) {
 async function loadUserByIdentifier(kv, identifier) {
     const value = String(identifier || "").trim().toLowerCase();
     if (!value) return null;
-
-    if (value.includes("@")) {
-        const mapped = await kvGetText(kv, emailKey(value));
-        if (!mapped) return null;
-        return loadUserByUsername(kv, mapped);
-    }
     return loadUserByUsername(kv, normalizeUsername(value));
 }
 
 export async function registerUser(context, payload) {
     const kv = resolveKv(context);
     const username = normalizeUsername(payload?.username);
-    const email = normalizeEmail(payload?.email);
     const password = String(payload?.password || "");
     const inviteCode = String(payload?.inviteCode || "").trim();
 
@@ -313,13 +293,6 @@ export async function registerUser(context, payload) {
     const existingByUsername = await loadUserByUsername(kv, username);
     if (existingByUsername) {
         throw httpError(409, "用户名已存在");
-    }
-
-    if (email) {
-        const existingByEmail = await kvGetText(kv, emailKey(email));
-        if (existingByEmail) {
-            throw httpError(409, "邮箱已被使用");
-        }
     }
 
     const meta = await loadMeta(kv);
@@ -341,7 +314,6 @@ export async function registerUser(context, payload) {
         id: bytesToHex(randomBytes(16)),
         username,
         displayName: normalizeDisplayName(payload?.displayName, username),
-        email,
         role,
         password: passwordHash,
         createdAt: now,
@@ -349,9 +321,6 @@ export async function registerUser(context, payload) {
     };
 
     await kvPutText(kv, userKey(username), toJsonString(user));
-    if (email) {
-        await kvPutText(kv, emailKey(email), username);
-    }
 
     meta.userCount = userCount + 1;
     meta.updatedAt = now;
@@ -373,7 +342,7 @@ async function verifyPassword(password, stored) {
 
 export async function loginUser(context, payload) {
     const kv = resolveKv(context);
-    const identifier = String(payload?.identifier || payload?.username || payload?.email || "").trim();
+    const identifier = String(payload?.identifier || payload?.username || "").trim();
     const password = String(payload?.password || "");
 
     if (!identifier || !password) {
@@ -450,7 +419,6 @@ export async function authenticateRequest(context, request) {
                 id: "legacy-admin",
                 username: "legacy-admin",
                 displayName: "Legacy Admin",
-                email: "",
                 role: "owner",
             },
             sessionToken: "",
@@ -486,7 +454,6 @@ export async function authenticateRequest(context, request) {
             id: user.id,
             username: user.username,
             displayName: user.displayName,
-            email: user.email || "",
             role: user.role,
         },
         sessionToken: token,
