@@ -303,7 +303,7 @@ export default function LoginClient() {
 
                     {error ? <div className="text-sm text-red-500">{error}</div> : null}
 
-                    <div className="text-xs text-black/50 dark:text-white/50">如忘记密码请联系管理员</div>
+                    {mode === "login" ? <div className="text-xs text-black/50 dark:text-white/50">如忘记密码请联系管理员</div> : null}
                 </CardBody>
             </Card>
         </div>
