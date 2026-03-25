@@ -1,10 +1,12 @@
 "use client";
 
-import { Suspense, useEffect, useMemo, useState } from "react";
-import { useSearchParams } from "next/navigation";
+import { startTransition, Suspense, useDeferredValue, useEffect, useMemo, useState } from "react";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 
 import Pagination from "@/components/pagination";
+import PostSearchInput from "@/components/post-search-input";
 import RenderPosts from "@/components/post-components/render-posts";
+import { searchPosts } from "@/lib/post-search";
 
 function toPositiveInteger(value: string | null) {
     const parsed = Number.parseInt(value || "1", 10);
@@ -21,13 +23,54 @@ type Props = {
 };
 
 export default function HomePosts({ posts, pageSize }: Props) {
-    const totalPages = useMemo(() => Math.max(1, Math.ceil(posts.length / Math.max(1, pageSize))), [pageSize, posts.length]);
+    const router = useRouter();
+    const pathname = usePathname();
+    const searchParams = useSearchParams();
+
+    const query = searchParams.get("q") || "";
+    const deferredQuery = useDeferredValue(query);
+    const filteredPosts = useMemo(() => searchPosts(posts, deferredQuery), [deferredQuery, posts]);
+    const totalPages = useMemo(() => Math.max(1, Math.ceil(filteredPosts.length / Math.max(1, pageSize))), [filteredPosts.length, pageSize]);
     const [currentPage, setCurrentPage] = useState(1);
 
     const visiblePosts = useMemo(() => {
         const startIndex = (currentPage - 1) * pageSize;
-        return posts.slice(startIndex, startIndex + pageSize);
-    }, [currentPage, pageSize, posts]);
+        return filteredPosts.slice(startIndex, startIndex + pageSize);
+    }, [currentPage, filteredPosts, pageSize]);
+
+    function handleQueryChange(nextQuery: string) {
+        startTransition(() => {
+            const params = new URLSearchParams(searchParams.toString());
+            const trimmedQuery = nextQuery.trim();
+
+            if (trimmedQuery) {
+                params.set("q", trimmedQuery);
+            } else {
+                params.delete("q");
+            }
+
+            params.delete("page");
+
+            const nextUrl = params.toString() ? `${pathname}?${params.toString()}` : pathname;
+            router.replace(nextUrl, { scroll: false });
+        });
+    }
+
+    function getSearchPageHref(page: number) {
+        const params = new URLSearchParams();
+        const trimmedQuery = query.trim();
+
+        if (trimmedQuery) {
+            params.set("q", trimmedQuery);
+        }
+
+        if (page > 1) {
+            params.set("page", String(page));
+        }
+
+        const paramsText = params.toString();
+        return paramsText ? `${getPageHref(1)}?${paramsText}` : getPageHref(1);
+    }
 
     return (
         <section>
@@ -35,14 +78,30 @@ export default function HomePosts({ posts, pageSize }: Props) {
                 <SearchParamsSync totalPages={totalPages} onPageChange={setCurrentPage} />
             </Suspense>
 
-            <RenderPosts posts={visiblePosts} />
-
-            <Pagination
-                ariaLabel="首页分页"
-                currentPage={currentPage}
-                totalPages={totalPages}
-                getPageHref={getPageHref}
+            <PostSearchInput
+                value={query}
+                onChange={handleQueryChange}
+                resultCount={filteredPosts.length}
+                totalCount={posts.length}
+                className="mb-6"
             />
+
+            {filteredPosts.length === 0 ? (
+                <div className="rounded-[1.15rem] border border-dashed border-black/10 px-5 py-8 text-sm text-black/60 dark:border-white/[0.08] dark:text-white">
+                    没有找到匹配的文章，试试标题、标签或作者名。
+                </div>
+            ) : (
+                <>
+                    <RenderPosts posts={visiblePosts} />
+
+                    <Pagination
+                        ariaLabel="首页分页"
+                        currentPage={currentPage}
+                        totalPages={totalPages}
+                        getPageHref={getSearchPageHref}
+                    />
+                </>
+            )}
         </section>
     );
 }

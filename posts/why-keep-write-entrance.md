@@ -2,7 +2,7 @@
 title: "用最小后台写作：为什么我保留 /write 入口"
 date: "2026-03-19"
 description: "后台不需要完整，写作流程需要稳定：发布、校对、回滚要足够顺手。"
-author: "纸舟"
+author: "Kaz"
 keywords:
   - "写作"
   - "产品"

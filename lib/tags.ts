@@ -11,7 +11,7 @@ export function decodeTagParam(tag: string) {
 }
 
 export function getTagHref(tag: string) {
-    return `/tags/${encodeURIComponent(tag.trim())}`;
+    return `/archive?tag=${encodeURIComponent(tag.trim())}`;
 }
 
 export function filterPostsByTag(posts: BlogPost[], tag: string) {

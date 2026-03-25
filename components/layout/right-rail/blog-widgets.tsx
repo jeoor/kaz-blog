@@ -67,7 +67,7 @@ export function getBlogRailWidgets({ posts, title = "站点概览", note, curren
                                 className={[
                                     "rounded-full border px-3 py-1.5 text-xs transition",
                                     currentTag && normalizeTag(currentTag) === normalizeTag(tag)
-                                        ? "border-black/14 bg-black/[0.05] text-black dark:border-white/[0.12] dark:bg-white/[0.06] dark:text-white"
+                                        ? "border-black/14 bg-black/[0.05] text-black dark:border-white/[0.12] dark:bg-white/[0.06] dark:text-white/94"
                                         : "border-black/8 bg-white/78 text-black/62 hover:border-black/14 hover:text-black dark:border-white/[0.05] dark:bg-white/[0.02] dark:text-white/62 dark:hover:border-white/[0.1] dark:hover:text-white",
                                 ].join(" ")}
                             >

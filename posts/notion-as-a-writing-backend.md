@@ -2,7 +2,7 @@
 title: "为什么我更愿意让 Notion 做内容后端"
 date: "2026-03-18"
 description: "如果目标是稳定写作，而不是维护一套复杂 CMS，那么 Notion 作为内容后端的价值在于低心智成本和足够清晰的结构。"
-author: "纸舟"
+author: "Kaz"
 keywords:
   - "Notion"
   - "架构"

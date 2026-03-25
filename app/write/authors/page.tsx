@@ -249,7 +249,7 @@ export default function AuthorManagementPage() {
                         ) : null}
 
                         {pageError ? (
-                            <div className="rounded-2xl border border-red-500/20 bg-red-500/10 px-4 py-3 text-sm text-red-400">
+                            <div className="rounded-2xl border border-red-500/20 bg-red-500/10 px-4 py-3 text-sm text-red-400 dark:border-red-300/22 dark:bg-red-500/12 dark:text-red-300">
                                 {pageError}
                             </div>
                         ) : null}
@@ -281,7 +281,7 @@ export default function AuthorManagementPage() {
                                                 <span className="rounded-full border border-black/10 px-3 py-1 text-black/66 dark:border-white/10 dark:text-white/70">
                                                     角色：{user.role}
                                                 </span>
-                                                <span className={`rounded-full border px-3 py-1 ${isDisabled ? "border-red-500/25 text-red-500" : "border-emerald-500/25 text-emerald-600 dark:text-emerald-300"}`}>
+                                                <span className={`rounded-full border px-3 py-1 ${isDisabled ? "border-red-500/25 text-red-500 dark:border-red-300/28 dark:text-red-300" : "border-emerald-500/25 text-emerald-600 dark:text-emerald-300"}`}>
                                                     {isDisabled ? "已禁用" : "正常"}
                                                 </span>
                                                 {isSelf ? (

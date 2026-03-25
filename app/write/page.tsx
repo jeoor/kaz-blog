@@ -427,7 +427,7 @@ export default function WritePage() {
                                             正在渲染预览...
                                         </div>
                                     ) : previewError ? (
-                                        <div className="text-sm text-red-400">{previewError}</div>
+                                        <div className="text-sm text-red-400 dark:text-red-300">{previewError}</div>
                                     ) : previewHtml.trim() ? (
                                         <ArticleBody contentHtml={previewHtml} />
                                     ) : (
@@ -457,7 +457,7 @@ export default function WritePage() {
                                         当前未登录。请先登录后进入写作台。
                                     </div>
                                     {unlockError ? (
-                                        <div className="text-sm text-red-400">{unlockError}</div>
+                                        <div className="text-sm text-red-400 dark:text-red-300">{unlockError}</div>
                                     ) : null}
                                     <div className="grid grid-cols-2 gap-2">
                                         <Button
@@ -564,7 +564,7 @@ export default function WritePage() {
                             ) : null}
 
                             {status.state === "error" ? (
-                                <div className="rounded-2xl border border-red-500/20 bg-red-500/10 px-4 py-3 text-sm text-red-400">
+                                <div className="rounded-2xl border border-red-500/20 bg-red-500/10 px-4 py-3 text-sm text-red-400 dark:border-red-300/22 dark:bg-red-500/12 dark:text-red-300">
                                     {status.message}
                                 </div>
                             ) : null}

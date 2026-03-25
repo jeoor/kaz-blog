@@ -2,7 +2,7 @@
 title: "测试代码高亮与 Lightbox"
 date: "2026-03-21"
 description: "这篇文章专门用来验证代码块高亮、目录提取和正文图片 lightbox 是否工作正常。"
-author: "纸舟"
+author: "Kaz"
 keywords:
   - "测试"
   - "代码高亮"

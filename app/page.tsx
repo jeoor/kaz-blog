@@ -1,4 +1,4 @@
-import Link from "next/link";
+import { Suspense } from "react";
 
 import { SITE } from "@/app/site-config";
 import BlogRightRail from "@/components/layout/blog-right-rail";
@@ -18,7 +18,9 @@ export default async function Home() {
       sidebar={<BlogSidebar active="home" />}
       aside={<BlogRightRail posts={posts} title="Writing" note="以文章为主，按时间缓慢积累。" />}
     >
-      <HomePosts posts={posts} pageSize={pageSize} />
+      <Suspense fallback={null}>
+        <HomePosts posts={posts} pageSize={pageSize} />
+      </Suspense>
     </BlogShell>
   );
 }

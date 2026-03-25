@@ -52,12 +52,12 @@ export default function Pagination({ currentPage, totalPages, getPageHref, ariaL
     const nextPage = Math.min(totalPages, currentPage + 1);
 
     const buttonBase = "rounded-full border px-4 py-2 transition";
-    const buttonDisabled = "pointer-events-none border-black/6 text-black/28 dark:border-white/[0.05] dark:text-white/28";
+    const buttonDisabled = "pointer-events-none border-black/6 text-black/28 dark:border-white/[0.05] dark:text-white/44";
     const buttonEnabled = "border-black/10 text-black/62 hover:border-black/16 hover:text-black dark:border-white/[0.08] dark:text-white/62 dark:hover:border-white/[0.12] dark:hover:text-white";
 
     const pageBase = "inline-flex h-10 min-w-10 items-center justify-center rounded-full border px-3 transition";
-    const pageActive = "border-black/14 bg-black/[0.04] text-black dark:border-white/[0.08] dark:bg-white/[0.05] dark:text-white";
-    const pageIdle = "border-black/8 text-black/54 hover:border-black/14 hover:text-black dark:border-white/[0.05] dark:text-white/54 dark:hover:border-white/[0.1] dark:hover:text-white";
+    const pageActive = "border-black/14 bg-black/[0.04] text-black dark:border-white/[0.08] dark:bg-white/[0.05] dark:text-white/94";
+    const pageIdle = "border-black/8 text-black/54 hover:border-black/14 hover:text-black dark:border-white/[0.05] dark:text-white/54 dark:hover:border-white/[0.1] dark:hover:text-white/94";
 
     const items = getItems(currentPage, totalPages);
 
@@ -91,7 +91,7 @@ export default function Pagination({ currentPage, totalPages, getPageHref, ariaL
                                 <span
                                     key={item.key}
                                     aria-hidden="true"
-                                    className="inline-flex h-10 min-w-10 items-center justify-center text-black/30 dark:text-white/30"
+                                    className="inline-flex h-10 min-w-10 items-center justify-center text-black/30 dark:text-white/46"
                                 >
                                     …
                                 </span>
