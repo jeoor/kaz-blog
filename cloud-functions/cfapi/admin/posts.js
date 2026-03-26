@@ -104,10 +104,24 @@ function readKeywordsProperty(prop) {
     return text.split(",").map((x) => x.trim()).filter(Boolean);
 }
 
+function parseMarkdownImage(text) {
+    const match = /^!\[([^\]]*)\]\((https?:\/\/[^\s)]+)(?:\s+"([^"]*)")?\)$/.exec(String(text || "").trim());
+    if (!match) return null;
+
+    return {
+        alt: String(match[1] || "").trim(),
+        url: String(match[2] || "").trim(),
+        title: String(match[3] || "").trim(),
+    };
+}
+
 function classifyLine(line) {
     const raw = String(line || "");
     const trimmed = raw.trim();
     if (!trimmed) return { kind: "blank" };
+
+    const image = parseMarkdownImage(trimmed);
+    if (image) return { kind: "image", ...image };
 
     const fence = /^```\s*(\S*)\s*$/.exec(trimmed);
     if (fence) {
@@ -175,6 +189,20 @@ function markdownToNotionBlocks(markdown) {
 
         if (c.kind === "blank") {
             flushParagraph();
+            continue;
+        }
+
+        if (c.kind === "image") {
+            flushParagraph();
+            blocks.push({
+                object: "block",
+                type: "image",
+                image: {
+                    type: "external",
+                    external: { url: c.url || "" },
+                    caption: richText(c.alt || c.title || ""),
+                },
+            });
             continue;
         }
 
@@ -255,6 +283,16 @@ function notionBlocksToMarkdown(blocks) {
                 emit(blockText(b).trimEnd());
                 emit("\`\`\`");
                 emit();
+                break;
+            }
+            case "image": {
+                const img = b?.image;
+                const url = img?.type === "external" ? img.external?.url : img?.file?.url;
+                const caption = plainFromRich(img?.caption);
+                if (url) {
+                    emit(`![${caption}](${url})`);
+                    emit();
+                }
                 break;
             }
             case "bulleted_list_item":

@@ -30,6 +30,17 @@ function blockText(block: any): string {
     return Array.isArray(rich) ? richToPlain(rich) : "";
 }
 
+function parseMarkdownImage(text: string): { alt: string; url: string; title: string } | null {
+    const match = /^!\[([^\]]*)\]\((https?:\/\/[^\s)]+)(?:\s+"([^"]*)")?\)$/.exec((text || "").trim());
+    if (!match) return null;
+
+    return {
+        alt: String(match[1] || "").trim(),
+        url: String(match[2] || "").trim(),
+        title: String(match[3] || "").trim(),
+    };
+}
+
 export function notionBlocksToMarkdown(blocks: NotionBlock[]): string {
     const out: string[] = [];
 
@@ -78,8 +89,9 @@ export function notionBlocksToMarkdown(blocks: NotionBlock[]): string {
                 case "image": {
                     const img = (b as any).image;
                     const url = img?.type === "external" ? img.external?.url : img?.file?.url;
+                    const caption = richToPlain(img?.caption);
                     if (url) {
-                        emit(`${indent}![](${url})`);
+                        emit(`${indent}![${caption}](${url})`);
                         emit();
                     }
                     break;
@@ -131,6 +143,7 @@ export function notionBlocksToMarkdown(blocks: NotionBlock[]): string {
 type MarkdownLine = {
     kind:
     | "blank"
+    | "image"
     | "heading"
     | "quote"
     | "code_fence_start"
@@ -147,6 +160,9 @@ function classifyLine(line: string): MarkdownLine {
     const raw = line;
     const trimmed = raw.trim();
     if (!trimmed) return { kind: "blank" };
+
+    const image = parseMarkdownImage(trimmed);
+    if (image) return { kind: "image", ...image };
 
     const fence = /^```\s*(\S*)\s*$/.exec(trimmed);
     if (fence) {
@@ -228,6 +244,20 @@ export function markdownToNotionBlocks(markdown: string): any[] {
 
         if (c.kind === "blank") {
             flushParagraph();
+            continue;
+        }
+
+        if (c.kind === "image") {
+            flushParagraph();
+            blocks.push({
+                object: "block",
+                type: "image",
+                image: {
+                    type: "external",
+                    external: { url: c.url || "" },
+                    caption: rt(c.alt || c.title || ""),
+                },
+            });
             continue;
         }
 
