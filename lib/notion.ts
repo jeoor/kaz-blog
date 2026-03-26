@@ -426,6 +426,10 @@ function propertyKeywords(page: NotionPage, name: string): string[] {
     return [];
 }
 
+function isActivePage(page: NotionPage): boolean {
+    return !Boolean((page as any)?.archived) && !Boolean((page as any)?.in_trash);
+}
+
 function getTitleFromPage(page: NotionPage, env: NotionEnv): string {
     if (env.propTitle) {
         const v = propertyString(page, env.propTitle);
@@ -520,6 +524,7 @@ export const getAllPostMetas = cache(async (): Promise<NotionPostMeta[]> => {
     }
 
     const metas = pages
+        .filter((p) => isActivePage(p))
         .map((p) => pageToMeta(p, env))
         .filter((m) => Boolean(m.slug))
         .filter((m) => m.published);
@@ -557,11 +562,14 @@ export const findPageBySlug = cache(async (slug: string): Promise<NotionPage | n
             client.databases.query({
                 database_id: env.databaseId,
                 filter,
-                page_size: 1,
+                page_size: 10,
             })
         );
-        const first = res.results[0];
-        if (first && typeof first === "object" && "properties" in (first as any)) return first as any;
+        const firstActive = res.results.find((result) => result && typeof result === "object" && "properties" in (result as any) && isActivePage(result as any));
+        if (firstActive) return firstActive as any;
+
+        const first = res.results.find((result) => result && typeof result === "object" && "properties" in (result as any));
+        if (first) return first as any;
         return null;
     };
 

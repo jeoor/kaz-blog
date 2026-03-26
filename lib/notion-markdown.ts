@@ -154,6 +154,9 @@ type MarkdownLine = {
     level?: 1 | 2 | 3;
     text?: string;
     lang?: string;
+    alt?: string;
+    url?: string;
+    title?: string;
 };
 
 function classifyLine(line: string): MarkdownLine {

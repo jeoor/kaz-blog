@@ -104,6 +104,10 @@ function readKeywordsProperty(prop) {
     return text.split(",").map((x) => x.trim()).filter(Boolean);
 }
 
+function isActivePage(page) {
+    return !Boolean(page?.archived) && !Boolean(page?.in_trash);
+}
+
 function parseMarkdownImage(text) {
     const match = /^!\[([^\]]*)\]\((https?:\/\/[^\s)]+)(?:\s+"([^"]*)")?\)$/.exec(String(text || "").trim());
     if (!match) return null;
@@ -327,6 +331,23 @@ async function findPageBySlug(notion, env, slug) {
     if (!target) return null;
 
     let cursor = undefined;
+    do {
+        const resp = await notion.databases.query({
+            database_id: env.databaseId,
+            start_cursor: cursor,
+            page_size: 100,
+        });
+
+        for (const page of resp.results || []) {
+            const prop = page?.properties?.[env.propSlug];
+            const current = normalizeSlug(readTextProperty(prop));
+            if (current === target && isActivePage(page)) return page;
+        }
+
+        cursor = resp.has_more ? resp.next_cursor : undefined;
+    } while (cursor);
+
+    cursor = undefined;
     do {
         const resp = await notion.databases.query({
             database_id: env.databaseId,
