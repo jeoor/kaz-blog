@@ -47,6 +47,8 @@ Kaz-Blog 是一套以写作为中心的个人博客实现。
 如果你使用的是纯静态托管（例如 EdgeOne Pages 静态站点）且无法运行 Next.js `app/api/*`，可以把管理接口部署到单独的后端（例如边缘函数/Serverless），然后在前端构建时设置：
 
 - `NEXT_PUBLIC_ADMIN_API_BASE`（例如 `https://api.example.com`；不填时开发环境默认同源 `/api/...`，生产环境默认 `/cfapi`）
+- `IMAGE_HOST_TOKEN`（可选；用于 Cloud Functions 代理上传 7bu 图床，建议放服务端环境变量）
+- `IMAGE_HOST_API_BASE`（可选；默认 `https://7bu.top/api/v1`）
 
 本项目默认使用 EdgeOne Cloud Functions 管理接口：`/cfapi/api/admin/session`、`/cfapi/api/admin/posts`（代码在 `cloud-functions/cfapi/**`）。
 
@@ -104,6 +106,14 @@ npm run dev:stable
 - `/links` 友链
 - `/login` 作者登录/注册
 - `/write` 写作台（需要已登录会话）
+
+如果你要在 `/write` 中使用 7bu 图床上传图片，可在 `.env.local` 或 Cloud Functions 运行时环境中添加：
+
+```sh
+IMAGE_HOST_TOKEN=你的7buBearerToken
+```
+
+本项目现在通过自己的 Cloud Functions 代理上传到 7bu，浏览器不会直接携带 7bu token 请求第三方接口。修改后需要重启开发服务器或重新部署函数，页面才会读取到新的 7bu 配置。
 
 ## 内容来源
 

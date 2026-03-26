@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useId, useState } from "react";
+import { useCallback, useEffect, useId, useRef, useState } from "react";
 import { Button, Card, CardBody, Input, Spinner } from "@heroui/react";
 import { SITE } from "@/app/site-config";
 import ArticleBody from "@/components/post-components/article-body";
@@ -14,6 +14,8 @@ const PANEL_RADIUS = "rounded-[2rem] overflow-hidden";
 const BUTTON_OUTLINE = `${CONTROL_HEIGHT} ${CONTROL_RADIUS} border border-black/10 bg-black/[0.02] !text-black/78 transition-colors duration-150 hover:border-black/14 hover:bg-black/[0.04] hover:!text-black/90 disabled:opacity-50 dark:border-white/[0.08] dark:bg-white/[0.02] dark:!text-white/84 dark:hover:border-white/[0.12] dark:hover:bg-white/[0.06] dark:hover:!text-white/92`;
 const BUTTON_PRIMARY = `${CONTROL_HEIGHT} ${CONTROL_RADIUS} border border-[#8d674052] bg-[#8d67401c] !text-black/92 transition-colors duration-150 hover:bg-[#8d674029] disabled:opacity-50 dark:border-[#c59a6950] dark:bg-[#c59a6922] dark:!text-white/96 dark:hover:bg-[#c59a6930]`;
 const BUTTON_DANGER = `${CONTROL_HEIGHT} ${CONTROL_RADIUS} border border-red-500/35 bg-red-500/12 !text-red-700 transition-colors duration-150 hover:bg-red-500/18 disabled:opacity-50 dark:border-red-300/32 dark:bg-red-500/14 dark:!text-red-200 dark:hover:bg-red-500/22`;
+const IMAGE_HOST_API_BASE = "https://7bu.top/api/v1";
+const WEBP_QUALITY = 0.86;
 
 const inputClassNames = {
     inputWrapper: `${CONTROL_HEIGHT} ${CONTROL_RADIUS} border border-black/18 bg-black/[0.02] shadow-none transition-colors duration-150 group-data-[focus=true]:border-black/34 group-data-[focus=true]:ring-0 data-[hover=true]:border-black/28 dark:border-white/14 dark:bg-white/[0.03] dark:group-data-[focus=true]:border-white/30 dark:data-[hover=true]:border-white/24`,
@@ -32,6 +34,12 @@ type SessionUser = {
     displayName?: string;
     role?: string;
 };
+
+type ImageUploadStatus =
+    | { state: "idle" }
+    | { state: "working"; message: string }
+    | { state: "success"; message: string }
+    | { state: "error"; message: string };
 
 function getSessionAuthorName(user: SessionUser | null): string {
     return String(user?.displayName || user?.username || "").trim();
@@ -76,9 +84,85 @@ function generateSlug(): string {
     return crc.toString(16).padStart(4, "0").toLowerCase();
 }
 
+function getInsertionPaddingLeft(text: string): string {
+    if (!text) return "";
+    if (text.endsWith("\n\n")) return "";
+    if (text.endsWith("\n")) return "\n";
+    return "\n\n";
+}
+
+function getInsertionPaddingRight(text: string): string {
+    if (!text) return "";
+    if (text.startsWith("\n\n")) return "";
+    if (text.startsWith("\n")) return "\n";
+    return "\n\n";
+}
+
+function shouldConvertImageToWebp(file: File): boolean {
+    const mime = file.type.toLowerCase();
+    if (!mime) return false;
+    if (mime === "image/webp") return false;
+    if (mime === "image/gif") return false;
+    return ["image/jpeg", "image/jpg", "image/png", "image/bmp", "image/x-icon", "image/vnd.microsoft.icon"].includes(mime);
+}
+
+function renameFileToWebp(name: string): string {
+    const nextName = name.replace(/\.[^.]+$/, "");
+    return `${nextName || "image"}.webp`;
+}
+
+async function convertImageFileToWebp(file: File): Promise<File> {
+    const objectUrl = URL.createObjectURL(file);
+
+    try {
+        const image = await new Promise<HTMLImageElement>((resolve, reject) => {
+            const img = new Image();
+            img.onload = () => resolve(img);
+            img.onerror = () => reject(new Error("图片解码失败，无法转换为 webp"));
+            img.src = objectUrl;
+        });
+
+        const canvas = document.createElement("canvas");
+        canvas.width = image.naturalWidth || image.width;
+        canvas.height = image.naturalHeight || image.height;
+
+        const context = canvas.getContext("2d");
+        if (!context) {
+            throw new Error("浏览器不支持 Canvas，无法转换为 webp");
+        }
+
+        context.drawImage(image, 0, 0, canvas.width, canvas.height);
+
+        const blob = await new Promise<Blob>((resolve, reject) => {
+            canvas.toBlob(
+                (result) => {
+                    if (result) {
+                        resolve(result);
+                        return;
+                    }
+                    reject(new Error("webp 转换失败"));
+                },
+                "image/webp",
+                WEBP_QUALITY,
+            );
+        });
+
+        return new File([blob], renameFileToWebp(file.name), {
+            type: "image/webp",
+            lastModified: Date.now(),
+        });
+    } finally {
+        URL.revokeObjectURL(objectUrl);
+    }
+}
+
 export default function WritePage() {
     const contentId = useId();
+    const imageInputId = useId();
+    const textareaRef = useRef<HTMLTextAreaElement>(null);
+    const imageInputRef = useRef<HTMLInputElement>(null);
     const [status, setStatus] = useState<UiStatus>({ state: "idle" });
+    const [imageUploadStatus, setImageUploadStatus] = useState<ImageUploadStatus>({ state: "idle" });
 
     const [editorMode, setEditorMode] = useState<"edit" | "preview">("edit");
     const [previewHtml, setPreviewHtml] = useState<string>("");
@@ -97,12 +181,10 @@ export default function WritePage() {
     const [author, setAuthor] = useState("");
     const [keywords, setKeywords] = useState("");
     const [content, setContent] = useState("");
-
     const normalizedSlug = normalizeSlug(slug);
     const hasSession = !!sessionUser;
     const isOwnerUser = String(sessionUser?.role || "").toLowerCase() === "owner";
     const sessionAuthorName = getSessionAuthorName(sessionUser);
-
     useEffect(() => {
         if (editorMode !== "preview") return;
 
@@ -225,6 +307,97 @@ export default function WritePage() {
         setDate(todayYmd());
         setKeywords("");
         setContent("");
+    }
+
+    function insertMarkdownIntoContent(markdown: string): void {
+        const textarea = textareaRef.current;
+        const insertion = markdown.trim();
+
+        if (!textarea) {
+            setContent((prev) => `${prev}${prev.trim() ? "\n\n" : ""}${insertion}`);
+            return;
+        }
+
+        const start = textarea.selectionStart ?? textarea.value.length;
+        const end = textarea.selectionEnd ?? textarea.value.length;
+
+        setContent((prev) => {
+            const before = prev.slice(0, start);
+            const after = prev.slice(end);
+            const nextValue = `${before}${getInsertionPaddingLeft(before)}${insertion}${getInsertionPaddingRight(after)}${after}`;
+
+            requestAnimationFrame(() => {
+                const nextCursor = before.length + getInsertionPaddingLeft(before).length + insertion.length;
+                textarea.focus();
+                textarea.setSelectionRange(nextCursor, nextCursor);
+            });
+
+            return nextValue;
+        });
+    }
+
+    async function uploadImageFile(file: File): Promise<void> {
+        if (!file) return;
+
+        setImageUploadStatus({ state: "working", message: `正在处理 ${file.name}...` });
+
+        try {
+            const uploadFile = shouldConvertImageToWebp(file) ? await convertImageFileToWebp(file) : file;
+
+            setImageUploadStatus({
+                state: "working",
+                message: uploadFile === file
+                    ? `正在上传 ${uploadFile.name}...`
+                    : `已转为 webp，正在上传 ${uploadFile.name}...`,
+            });
+
+            const formData = new FormData();
+            formData.append("file", uploadFile);
+            formData.append("permission", "1");
+
+            const headers: Record<string, string> = {
+                Accept: "application/json",
+            };
+
+            const res = await fetch(adminApiUrl("/api/admin/images"), {
+                method: "POST",
+                headers,
+                credentials: adminCredentials(),
+                body: formData,
+            });
+
+            const data = (await res.json().catch(() => ({}))) as any;
+            if (!res.ok || data?.status === false) {
+                const message = typeof data?.message === "string" ? data.message : `上传失败：${res.status}`;
+                setImageUploadStatus({ state: "error", message });
+                return;
+            }
+
+            const links = data?.data?.links || {};
+            const markdown = typeof links.markdown === "string" && links.markdown.trim()
+                ? links.markdown.trim()
+                : (typeof links.url === "string" && links.url.trim() ? `![](${links.url.trim()})` : "");
+
+            if (!markdown) {
+                setImageUploadStatus({ state: "error", message: "上传成功，但接口未返回可插入的 Markdown 链接。" });
+                return;
+            }
+
+            insertMarkdownIntoContent(markdown);
+            setImageUploadStatus({
+                state: "success",
+                message: uploadFile === file
+                    ? "图片已上传，Markdown 链接已插入正文。"
+                    : "图片已自动压缩为 webp 并上传，Markdown 链接已插入正文。",
+            });
+        } catch (error) {
+            const message = error instanceof Error ? error.message : "图片上传失败";
+            setImageUploadStatus({ state: "error", message });
+        } finally {
+            if (imageInputRef.current) {
+                imageInputRef.current.value = "";
+            }
+        }
     }
 
     async function onLoad(): Promise<void> {
@@ -397,15 +570,59 @@ export default function WritePage() {
                     <CardBody className="flex h-full flex-col gap-6 p-6 md:p-8">
                         {editorMode === "edit" ? (
                             <div className="flex w-full flex-1 min-h-0 flex-col">
-                                <label
-                                    htmlFor={contentId}
-                                    className="text-sm font-medium text-black/70 dark:text-white/70"
-                                >
-                                    正文（Markdown）
-                                </label>
+                                <div className="flex flex-wrap items-center justify-between gap-3">
+                                    <label
+                                        htmlFor={contentId}
+                                        className="text-sm font-medium text-black/70 dark:text-white/70"
+                                    >
+                                        正文（Markdown）
+                                    </label>
+
+                                    <div className="flex flex-wrap items-center gap-2">
+                                        <input
+                                            id={imageInputId}
+                                            ref={imageInputRef}
+                                            type="file"
+                                            accept="image/jpeg,image/jpg,image/png,image/gif,image/bmp,image/ico,image/webp"
+                                            className="hidden"
+                                            onChange={(event) => {
+                                                const file = event.target.files?.[0];
+                                                if (file) {
+                                                    void uploadImageFile(file);
+                                                }
+                                            }}
+                                        />
+                                        <Button
+                                            className={BUTTON_OUTLINE}
+                                            isDisabled={isWorking || imageUploadStatus.state === "working"}
+                                            onPress={() => imageInputRef.current?.click()}
+                                        >
+                                            {imageUploadStatus.state === "working" ? "上传中..." : "上传图片"}
+                                        </Button>
+                                    </div>
+                                </div>
+
+                                {imageUploadStatus.state !== "idle" ? (
+                                    <div className={[
+                                        "mt-3 text-sm",
+                                        imageUploadStatus.state === "error"
+                                            ? "text-red-400 dark:text-red-300"
+                                            : imageUploadStatus.state === "success"
+                                                ? "text-emerald-500 dark:text-emerald-300"
+                                                : "text-black/55 dark:text-white/55",
+                                    ].join(" ")}>
+                                        {imageUploadStatus.message}
+                                    </div>
+                                ) : (
+                                    <div className="mt-3 text-xs text-black/50 dark:text-white/50">
+                                        支持 JPEG、PNG、GIF、BMP、ICO、WEBP。静态图片会先自动压成 webp，再上传并插入 Markdown 图片语法。
+                                    </div>
+                                )}
+
                                 <div className="mt-3 flex-1 min-h-0 rounded-[1.5rem] border border-black/10 bg-black/[0.02] px-5 py-4 dark:border-white/10 dark:bg-white/[0.02]">
                                     <textarea
                                         id={contentId}
+                                        ref={textareaRef}
                                         value={content}
                                         onChange={(e) => setContent(e.target.value)}
                                         placeholder="在这里写 Markdown 正文…"
@@ -648,6 +865,23 @@ export default function WritePage() {
                                 <label className="text-sm font-medium text-black/72 dark:text-white/72">关键词（keywords）</label>
                                 <Input aria-label="关键词（keywords）" value={keywords} onValueChange={setKeywords} variant="flat" classNames={inputClassNames} />
                                 <p className="text-xs text-black/52 dark:text-white/52">逗号分隔，例如：notion,blog,writing</p>
+                            </div>
+
+                            <div className="space-y-4 rounded-[1.5rem] border border-black/10 bg-black/[0.02] p-4 dark:border-white/10 dark:bg-white/[0.03]">
+                                <div>
+                                    <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-black/45 dark:text-white/45">
+                                        Image Upload
+                                    </p>
+                                    <h3 className="mt-2 font-serif text-xl font-semibold tracking-tight">7bu 图床</h3>
+                                </div>
+
+                                <div className="rounded-[1.15rem] border border-black/10 bg-black/[0.02] px-4 py-3 text-xs leading-7 text-black/58 dark:border-white/10 dark:bg-white/[0.03] dark:text-white/62">
+                                    上传已改为通过自己的 Cloud Functions 代理到 7bu。若需要登录身份上传，请在服务端环境变量中设置 `IMAGE_HOST_TOKEN`，而不是放在前端公开变量里。
+                                </div>
+
+                                <div className="rounded-[1.15rem] border border-black/10 bg-black/[0.02] px-4 py-3 text-xs leading-7 text-black/58 dark:border-white/10 dark:bg-white/[0.03] dark:text-white/62">
+                                    默认行为：JPEG、PNG、BMP、ICO 会在浏览器里先转换为 webp 再上传。GIF 为避免丢失动画，不做转换；WEBP 也保持原样。
+                                </div>
                             </div>
                         </CardBody>
                     </Card>
