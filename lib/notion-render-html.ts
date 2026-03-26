@@ -36,6 +36,35 @@ function renderRichText(rich: RichTextItem[] | undefined): string {
     return rich.map(renderRichTextItem).join("");
 }
 
+function richTextToPlain(rich: RichTextItem[] | undefined): string {
+    if (!rich || rich.length === 0) return "";
+    return rich.map((item) => ("plain_text" in item ? item.plain_text : "")).join("");
+}
+
+function parseImageReference(text: string): { alt: string; url: string; title: string } | null {
+    const trimmed = String(text || "").trim();
+    const markdownMatch = /^!\[([^\]]*)\]\((https?:\/\/[^\s)]+(?:\?[^\s)]*)?(?:#[^\s)]*)?)(?:\s+"([^"]*)")?\)$/.exec(trimmed);
+    if (markdownMatch) {
+        return {
+            alt: String(markdownMatch[1] || "").trim(),
+            url: String(markdownMatch[2] || "").trim(),
+            title: String(markdownMatch[3] || "").trim(),
+        };
+    }
+
+    const urlMatch = /^(https?:\/\/\S+)$/i.exec(trimmed);
+    if (!urlMatch) return null;
+
+    const url = String(urlMatch[1] || "").trim();
+    if (!/\.(?:png|jpe?g|gif|webp|svg|avif|bmp)(?:[?#].*)?$/i.test(url)) return null;
+
+    return {
+        alt: "",
+        url,
+        title: "",
+    };
+}
+
 function renderChildren(children: NotionBlock[] | undefined): string {
     if (!children || children.length === 0) return "";
     return children.map(renderBlock).join("");
@@ -56,6 +85,13 @@ function renderList(children: NotionBlock[], ordered: boolean): string {
 export function renderBlock(block: NotionBlock): string {
     switch (block.type) {
         case "paragraph": {
+            const plain = richTextToPlain((block as any).paragraph?.rich_text);
+            const image = parseImageReference(plain);
+            if (image) {
+                const captionText = image.alt || image.title;
+                const figcaption = captionText ? `<figcaption>${escapeHtml(captionText)}</figcaption>` : "";
+                return `<figure><img src="${escapeHtml(image.url)}" alt="${escapeHtml(image.alt)}" />${figcaption}</figure>`;
+            }
             const html = renderRichText((block as any).paragraph?.rich_text);
             if (!html.trim()) return "";
             return `<p>${html}</p>`;

@@ -108,14 +108,27 @@ function isActivePage(page) {
     return !Boolean(page?.archived) && !Boolean(page?.in_trash);
 }
 
-function parseMarkdownImage(text) {
-    const match = /^!\[([^\]]*)\]\((https?:\/\/[^\s)]+)(?:\s+"([^"]*)")?\)$/.exec(String(text || "").trim());
-    if (!match) return null;
+function parseImageReference(text) {
+    const trimmed = String(text || "").trim();
+    const markdownMatch = /^!\[([^\]]*)\]\((https?:\/\/[^\s)]+(?:\?[^\s)]*)?(?:#[^\s)]*)?)(?:\s+"([^"]*)")?\)$/.exec(trimmed);
+    if (markdownMatch) {
+        return {
+            alt: String(markdownMatch[1] || "").trim(),
+            url: String(markdownMatch[2] || "").trim(),
+            title: String(markdownMatch[3] || "").trim(),
+        };
+    }
+
+    const urlMatch = /^(https?:\/\/\S+)$/i.exec(trimmed);
+    if (!urlMatch) return null;
+
+    const url = String(urlMatch[1] || "").trim();
+    if (!/\.(?:png|jpe?g|gif|webp|svg|avif|bmp)(?:[?#].*)?$/i.test(url)) return null;
 
     return {
-        alt: String(match[1] || "").trim(),
-        url: String(match[2] || "").trim(),
-        title: String(match[3] || "").trim(),
+        alt: "",
+        url,
+        title: "",
     };
 }
 
@@ -124,7 +137,7 @@ function classifyLine(line) {
     const trimmed = raw.trim();
     if (!trimmed) return { kind: "blank" };
 
-    const image = parseMarkdownImage(trimmed);
+    const image = parseImageReference(trimmed);
     if (image) return { kind: "image", ...image };
 
     const fence = /^```\s*(\S*)\s*$/.exec(trimmed);

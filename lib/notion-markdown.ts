@@ -30,14 +30,27 @@ function blockText(block: any): string {
     return Array.isArray(rich) ? richToPlain(rich) : "";
 }
 
-function parseMarkdownImage(text: string): { alt: string; url: string; title: string } | null {
-    const match = /^!\[([^\]]*)\]\((https?:\/\/[^\s)]+)(?:\s+"([^"]*)")?\)$/.exec((text || "").trim());
-    if (!match) return null;
+function parseImageReference(text: string): { alt: string; url: string; title: string } | null {
+    const trimmed = (text || "").trim();
+    const markdownMatch = /^!\[([^\]]*)\]\((https?:\/\/[^\s)]+(?:\?[^\s)]*)?(?:#[^\s)]*)?)(?:\s+"([^"]*)")?\)$/.exec(trimmed);
+    if (markdownMatch) {
+        return {
+            alt: String(markdownMatch[1] || "").trim(),
+            url: String(markdownMatch[2] || "").trim(),
+            title: String(markdownMatch[3] || "").trim(),
+        };
+    }
+
+    const urlMatch = /^(https?:\/\/\S+)$/i.exec(trimmed);
+    if (!urlMatch) return null;
+
+    const url = String(urlMatch[1] || "").trim();
+    if (!/\.(?:png|jpe?g|gif|webp|svg|avif|bmp)(?:[?#].*)?$/i.test(url)) return null;
 
     return {
-        alt: String(match[1] || "").trim(),
-        url: String(match[2] || "").trim(),
-        title: String(match[3] || "").trim(),
+        alt: "",
+        url,
+        title: "",
     };
 }
 
@@ -164,7 +177,7 @@ function classifyLine(line: string): MarkdownLine {
     const trimmed = raw.trim();
     if (!trimmed) return { kind: "blank" };
 
-    const image = parseMarkdownImage(trimmed);
+    const image = parseImageReference(trimmed);
     if (image) return { kind: "image", ...image };
 
     const fence = /^```\s*(\S*)\s*$/.exec(trimmed);
