@@ -111,24 +111,12 @@ function isActivePage(page) {
 function parseImageReference(text) {
     const trimmed = String(text || "").trim();
     const markdownMatch = /^!\[([^\]]*)\]\((https?:\/\/[^\s)]+(?:\?[^\s)]*)?(?:#[^\s)]*)?)(?:\s+"([^"]*)")?\)$/.exec(trimmed);
-    if (markdownMatch) {
-        return {
-            alt: String(markdownMatch[1] || "").trim(),
-            url: String(markdownMatch[2] || "").trim(),
-            title: String(markdownMatch[3] || "").trim(),
-        };
-    }
-
-    const urlMatch = /^(https?:\/\/\S+)$/i.exec(trimmed);
-    if (!urlMatch) return null;
-
-    const url = String(urlMatch[1] || "").trim();
-    if (!/\.(?:png|jpe?g|gif|webp|svg|avif|bmp)(?:[?#].*)?$/i.test(url)) return null;
+    if (!markdownMatch) return null;
 
     return {
-        alt: "",
-        url,
-        title: "",
+        alt: String(markdownMatch[1] || "").trim(),
+        url: String(markdownMatch[2] || "").trim(),
+        title: String(markdownMatch[3] || "").trim(),
     };
 }
 

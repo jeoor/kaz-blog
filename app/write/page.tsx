@@ -336,6 +336,11 @@ export default function WritePage() {
         });
     }
 
+    function buildUploadedImageMarkdown(fileName: string, url: string): string {
+        const alt = fileName.replace(/\.[^.]+$/, "").trim();
+        return `![${alt}](${url.trim()})`;
+    }
+
     async function uploadImageFile(file: File): Promise<void> {
         if (!file) return;
 
@@ -374,9 +379,9 @@ export default function WritePage() {
             }
 
             const links = data?.data?.links || {};
-            const markdown = typeof links.markdown === "string" && links.markdown.trim()
-                ? links.markdown.trim()
-                : (typeof links.url === "string" && links.url.trim() ? `![](${links.url.trim()})` : "");
+            const markdown = typeof links.url === "string" && links.url.trim()
+                ? buildUploadedImageMarkdown(uploadFile.name, links.url)
+                : "";
 
             if (!markdown) {
                 setImageUploadStatus({ state: "error", message: "上传成功，但接口未返回可插入的 Markdown 链接。" });
