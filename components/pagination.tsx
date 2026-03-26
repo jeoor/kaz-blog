@@ -56,7 +56,7 @@ export default function Pagination({ currentPage, totalPages, getPageHref, ariaL
     const buttonEnabled = "border-black/10 text-black/62 hover:border-black/16 dark:border-white/[0.08] dark:text-white/62 dark:hover:border-white/[0.12]";
 
     const pageBase = "inline-flex h-10 min-w-10 items-center justify-center rounded-full border px-3 transition";
-    const pageActive = "border-black/14 bg-black/[0.04] text-black dark:border-white/[0.08] dark:bg-white/[0.05] dark:text-white/94";
+    const pageActive = "border-black/14 bg-black/[0.04] text-white dark:border-white/[0.08] dark:bg-white/[0.05] dark:text-white/94";
     const pageIdle = "border-black/8 text-black/54 hover:border-black/14 dark:border-white/[0.05] dark:text-white/54 dark:hover:border-white/[0.1]";
 
     const items = getItems(currentPage, totalPages);
