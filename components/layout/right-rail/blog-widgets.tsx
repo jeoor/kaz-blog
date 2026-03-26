@@ -68,7 +68,7 @@ export function getBlogRailWidgets({ posts, title = "站点概览", note, curren
                                     "rounded-full border px-3 py-1.5 text-xs transition",
                                     currentTag && normalizeTag(currentTag) === normalizeTag(tag)
                                         ? "border-black/14 bg-black/[0.05] text-black dark:border-white/[0.12] dark:bg-white/[0.06] dark:text-white/94"
-                                        : "border-black/8 bg-white/78 text-black/62 hover:border-black/14 hover:text-black dark:border-white/[0.05] dark:bg-white/[0.02] dark:text-white/62 dark:hover:border-white/[0.1] dark:hover:text-white",
+                                        : "border-black/8 bg-white/78 text-black/62 hover:border-black/14 dark:border-white/[0.05] dark:bg-white/[0.02] dark:text-white/62 dark:hover:border-white/[0.1]",
                                 ].join(" ")}
                             >
                                 #{tag} {count}
@@ -87,7 +87,7 @@ export function getBlogRailWidgets({ posts, title = "站点概览", note, curren
                 <ul className="mt-4 space-y-3">
                     {recentPosts.map((post) => (
                         <li key={post.id} className="border-t border-black/8 pt-3 first:border-t-0 first:pt-0 dark:border-white/[0.05]">
-                            <Link href={`/posts/${post.id}`} className="text-sm leading-7 text-black/72 hover:text-black dark:text-white/72 dark:hover:text-white">
+                            <Link href={`/posts/${post.id}`} className="text-sm leading-7 text-black/72 dark:text-white/72">
                                 {post.title}
                             </Link>
                         </li>

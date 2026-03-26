@@ -11,7 +11,7 @@ import remarkHtml from "remark-html";
 const CONTROL_RADIUS = "rounded-[14px]";
 const CONTROL_HEIGHT = "h-11 min-h-11";
 const PANEL_RADIUS = "rounded-[2rem] overflow-hidden";
-const BUTTON_OUTLINE = `${CONTROL_HEIGHT} ${CONTROL_RADIUS} border border-black/10 bg-black/[0.02] !text-black/78 transition-colors duration-150 hover:border-black/14 hover:bg-black/[0.04] hover:!text-black/90 disabled:opacity-50 dark:border-white/[0.08] dark:bg-white/[0.02] dark:!text-white/84 dark:hover:border-white/[0.12] dark:hover:bg-white/[0.06] dark:hover:!text-white/92`;
+const BUTTON_OUTLINE = `${CONTROL_HEIGHT} ${CONTROL_RADIUS} border border-black/10 bg-black/[0.02] !text-black/78 transition-colors duration-150 hover:border-black/14 hover:bg-black/[0.04] disabled:opacity-50 dark:border-white/[0.08] dark:bg-white/[0.02] dark:!text-white/84 dark:hover:border-white/[0.12] dark:hover:bg-white/[0.06]`;
 const BUTTON_PRIMARY = `${CONTROL_HEIGHT} ${CONTROL_RADIUS} border border-[#8d674052] bg-[#8d67401c] !text-black/92 transition-colors duration-150 hover:bg-[#8d674029] disabled:opacity-50 dark:border-[#c59a6950] dark:bg-[#c59a6922] dark:!text-white/96 dark:hover:bg-[#c59a6930]`;
 const BUTTON_DANGER = `${CONTROL_HEIGHT} ${CONTROL_RADIUS} border border-red-500/35 bg-red-500/12 !text-red-700 transition-colors duration-150 hover:bg-red-500/18 disabled:opacity-50 dark:border-red-300/32 dark:bg-red-500/14 dark:!text-red-200 dark:hover:bg-red-500/22`;
 const IMAGE_HOST_API_BASE = "https://7bu.top/api/v1";
@@ -613,11 +613,7 @@ export default function WritePage() {
                                     ].join(" ")}>
                                         {imageUploadStatus.message}
                                     </div>
-                                ) : (
-                                    <div className="mt-3 text-xs text-black/50 dark:text-white/50">
-                                        支持 JPEG、PNG、GIF、BMP、ICO、WEBP。静态图片会先自动压成 webp，再上传并插入 Markdown 图片语法。
-                                    </div>
-                                )}
+                                ) : null}
 
                                 <div className="mt-3 flex-1 min-h-0 rounded-[1.5rem] border border-black/10 bg-black/[0.02] px-5 py-4 dark:border-white/10 dark:bg-white/[0.02]">
                                     <textarea
@@ -867,22 +863,6 @@ export default function WritePage() {
                                 <p className="text-xs text-black/52 dark:text-white/52">逗号分隔，例如：notion,blog,writing</p>
                             </div>
 
-                            <div className="space-y-4 rounded-[1.5rem] border border-black/10 bg-black/[0.02] p-4 dark:border-white/10 dark:bg-white/[0.03]">
-                                <div>
-                                    <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-black/45 dark:text-white/45">
-                                        Image Upload
-                                    </p>
-                                    <h3 className="mt-2 font-serif text-xl font-semibold tracking-tight">7bu 图床</h3>
-                                </div>
-
-                                <div className="rounded-[1.15rem] border border-black/10 bg-black/[0.02] px-4 py-3 text-xs leading-7 text-black/58 dark:border-white/10 dark:bg-white/[0.03] dark:text-white/62">
-                                    上传已改为通过自己的 Cloud Functions 代理到 7bu。若需要登录身份上传，请在服务端环境变量中设置 `IMAGE_HOST_TOKEN`，而不是放在前端公开变量里。
-                                </div>
-
-                                <div className="rounded-[1.15rem] border border-black/10 bg-black/[0.02] px-4 py-3 text-xs leading-7 text-black/58 dark:border-white/10 dark:bg-white/[0.03] dark:text-white/62">
-                                    默认行为：JPEG、PNG、BMP、ICO 会在浏览器里先转换为 webp 再上传。GIF 为避免丢失动画，不做转换；WEBP 也保持原样。
-                                </div>
-                            </div>
                         </CardBody>
                     </Card>
                 </aside>

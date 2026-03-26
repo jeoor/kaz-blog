@@ -10,7 +10,7 @@ const CONTROL_RADIUS = "rounded-[14px]";
 const CONTROL_HEIGHT = "h-11 min-h-11";
 const TAB_BUTTON_BASE = `${CONTROL_HEIGHT} ${CONTROL_RADIUS} border text-sm font-medium transition-colors duration-150`;
 const TAB_BUTTON_ACTIVE = "border-[#8d67404d] bg-[#8d67401a] !text-black/86 hover:bg-[#8d674026] dark:border-[#c59a6948] dark:bg-[#c59a691f] dark:!text-white/94 dark:hover:bg-[#c59a6928]";
-const TAB_BUTTON_IDLE = "border-black/10 bg-black/[0.02] text-black/68 hover:border-black/14 hover:bg-black/[0.04] hover:text-black/84 dark:border-white/[0.08] dark:bg-white/[0.02] dark:text-white/70 dark:hover:border-white/[0.12] dark:hover:bg-white/[0.06] dark:hover:text-white/90";
+const TAB_BUTTON_IDLE = "border-black/10 bg-black/[0.02] text-black/68 hover:border-black/14 hover:bg-black/[0.04] dark:border-white/[0.08] dark:bg-white/[0.02] dark:text-white/70 dark:hover:border-white/[0.12] dark:hover:bg-white/[0.06]";
 const PRIMARY_BUTTON = `${CONTROL_HEIGHT} ${CONTROL_RADIUS} border border-[#8d674052] bg-[#8d67401c] !text-black/92 transition-colors duration-150 hover:bg-[#8d674029] disabled:opacity-50 dark:border-[#c59a6950] dark:bg-[#c59a6922] dark:!text-white/96 dark:hover:bg-[#c59a6930]`;
 
 const inputClassNames = {

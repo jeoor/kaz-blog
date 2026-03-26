@@ -83,7 +83,7 @@ export default async function Post({ params }: { params: Promise<{ postId: strin
                   <Link
                     key={keyword}
                     href={getTagHref(keyword)}
-                    className="rounded-full border border-black/8 bg-black/[0.02] px-2.5 py-1 transition hover:border-black/14 hover:text-black dark:border-white/[0.05] dark:bg-white/[0.02] dark:hover:border-white/[0.1] dark:hover:text-white"
+                    className="rounded-full border border-black/8 bg-black/[0.02] px-2.5 py-1 transition hover:border-black/14 dark:border-white/[0.05] dark:bg-white/[0.02] dark:hover:border-white/[0.1]"
                   >
                     #{keyword}
                   </Link>

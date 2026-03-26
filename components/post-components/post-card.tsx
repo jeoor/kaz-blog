@@ -40,7 +40,7 @@ export default function PostCard({ post }: Props) {
               <Link
                 key={keyword}
                 href={getTagHref(keyword)}
-                className="rounded-full border border-black/8 bg-white/72 px-2.5 py-1 text-black/48 transition hover:border-black/14 hover:text-black dark:border-white/[0.05] dark:bg-white/[0.02] dark:text-white/48 dark:hover:border-white/[0.1] dark:hover:text-white"
+                className="rounded-full border border-black/8 bg-white/72 px-2.5 py-1 text-black/48 transition hover:border-black/14 dark:border-white/[0.05] dark:bg-white/[0.02] dark:text-white/48 dark:hover:border-white/[0.1]"
               >
                 #{keyword}
               </Link>

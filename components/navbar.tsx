@@ -64,7 +64,7 @@ const NavbarComponent = () => {
               <li key={item.href}>
                 <Link
                   href={item.href}
-                  className="px-2 py-2 text-sm font-medium text-black/64 transition-all hover:text-black dark:text-white/64 dark:hover:text-white"
+                  className="px-2 py-2 text-sm font-medium text-black/64 transition-all dark:text-white/64"
                 >
                   {item.label}
                 </Link>

@@ -20,13 +20,13 @@ export default function SiteFooter({ centered = false, className = "" }: Props) 
                         <div>© {year} {footer.copyrightName}</div>
                         <div>
                             Powered by{" "}
-                            <a href={footer.poweredBy.href} target="_blank" rel="noreferrer" className="text-black/62 hover:text-current dark:text-white/62">
+                            <a href={footer.poweredBy.href} target="_blank" rel="noreferrer" className="text-black/62 dark:text-white/62">
                                 {footer.poweredBy.label}
                             </a>
                         </div>
                         {filings.map((item) =>
                             item.href ? (
-                                <Link key={item.label} href={item.href} className="text-black/62 hover:text-current dark:text-white/62">
+                                <Link key={item.label} href={item.href} className="text-black/62 dark:text-white/62">
                                     {item.label}
                                 </Link>
                             ) : (
@@ -48,13 +48,13 @@ export default function SiteFooter({ centered = false, className = "" }: Props) 
                         <div>© {year} {footer.copyrightName}</div>
                         <div>
                             Powered by{" "}
-                            <a href={footer.poweredBy.href} target="_blank" rel="noreferrer" className="text-black/62 hover:text-current dark:text-white/62">
+                            <a href={footer.poweredBy.href} target="_blank" rel="noreferrer" className="text-black/62 dark:text-white/62">
                                 {footer.poweredBy.label}
                             </a>
                         </div>
                         {filings.map((item) =>
                             item.href ? (
-                                <Link key={item.label} href={item.href} className="text-black/62 hover:text-current dark:text-white/62">
+                                <Link key={item.label} href={item.href} className="text-black/62 dark:text-white/62">
                                     {item.label}
                                 </Link>
                             ) : (

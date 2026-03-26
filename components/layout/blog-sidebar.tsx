@@ -57,7 +57,7 @@ export default function BlogSidebar({ active }: Props) {
                                         "flex items-center gap-3 rounded-[1rem] px-3 py-2.5 text-sm transition",
                                         isActive
                                             ? "bg-black/[0.06] text-black dark:bg-white/[0.05] dark:text-white"
-                                            : "text-black/60 hover:bg-black/[0.03] hover:text-black dark:text-white/60 dark:hover:bg-white/[0.03] dark:hover:text-white",
+                                            : "text-black/60 hover:bg-black/[0.03] dark:text-white/60 dark:hover:bg-white/[0.03]",
                                     ].join(" ")}
                                 >
                                     <span className={[
