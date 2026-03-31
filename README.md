@@ -1,8 +1,10 @@
-﻿# Kaz-Blog
+﻿<p align="center">
+<a href="https://kaz-blog.kayro.cn/"><img src="./.github/assest/kaz-blog.svg" width="300" alt="kaz-blog"></a>
+</p>
 
-Kaz-Blog 是一套以写作为中心的个人博客实现。
+---
 
-内容主源是 Notion Database，前端使用 Next.js App Router 渲染；如果本地没有配置 Notion 环境变量，则自动回退到 `posts` 里的 Markdown 文章，保证本地开发和演示都能直接启动。
+基于 Next.js 和 Notion 的 **简约** **静态** **个人/多用户** 博客系统
 
 ## 设计取向
 

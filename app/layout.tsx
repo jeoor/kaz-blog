@@ -16,6 +16,11 @@ export const metadata: Metadata = {
   description: SITE.description,
   metadataBase: new URL(SITE_URL),
   applicationName: SITE.title,
+  icons: {
+    icon: "/favicon.svg",
+    shortcut: "/favicon.svg",
+    apple: "/favicon.svg",
+  },
 };
 
 export default function RootLayout({
