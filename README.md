@@ -1,5 +1,5 @@
 ﻿<p align="center">
-<a href="https://kaz-blog.kayro.cn/"><img src="./.github/assest/kaz-blog.svg" width="300" alt="kaz-blog"></a>
+<a href="https://kaz-blog.kayro.cn/"><img src="./.github/assest/kaz-blog.svg" width="500" alt="kaz-blog"></a>
 </p>
 
 ---
