@@ -167,8 +167,9 @@ async function photoPageToItem(
 
 /**
  * Load photos from the Notion database (one database page per photo, Type="photo").
- * Returns null when Notion is not configured or no published photo pages exist,
- * so the caller falls back to local photos.config.ts.
+ * Returns [] when Notion is configured but no published photo pages exist.
+ * Returns null only when Notion is not configured or request fails,
+ * so the caller can decide whether to fall back to local photos.config.ts.
  */
 export async function getPhotosFromNotion(): Promise<PhotoItem[] | null> {
     if (!isNotionEnabled()) return null;
@@ -194,14 +195,14 @@ export async function getPhotosFromNotion(): Promise<PhotoItem[] | null> {
             return isPhotoPage(page, env);
         });
 
-        if (photoPages.length === 0) return null;
+        if (photoPages.length === 0) return [];
 
         const items = await Promise.all(
             photoPages.map((page) => photoPageToItem(client, page)),
         );
         const photos = items.filter((item): item is PhotoItem => item !== null);
 
-        return photos.length > 0 ? photos : null;
+        return photos;
     } catch {
         return null;
     }

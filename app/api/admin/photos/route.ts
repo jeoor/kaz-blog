@@ -6,31 +6,50 @@ import { createPhotoInNotion } from "@/lib/photos-notion";
  * endpoint (EdgeOne cloud function). Returns true if authenticated.
  */
 async function verifySession(request: NextRequest): Promise<boolean> {
+    const rawCookie = request.headers.get("cookie") || "";
     const sessionToken = request.cookies.get("eo_admin_session")?.value?.trim();
-    if (!sessionToken) return false;
+    if (!sessionToken || !rawCookie) return false;
 
     const adminBase = (process.env.NEXT_PUBLIC_ADMIN_API_BASE || "").trim().replace(/\/+$/, "");
     const requestOrigin = request.nextUrl.origin.replace(/\/+$/, "");
 
-    // Build absolute session URL.
-    const relPath = adminBase || "/cfapi";
-    const sessionUrl = relPath.startsWith("http")
-        ? `${relPath}/api/admin/session`
-        : `${requestOrigin}${relPath}/api/admin/session`;
+    const sessionUrls = (() => {
+        const urls: string[] = [];
+        const pushUrl = (url: string) => {
+            if (!urls.includes(url)) urls.push(url);
+        };
 
-    try {
-        const res = await fetch(sessionUrl, {
-            headers: {
-                cookie: `eo_admin_session=${encodeURIComponent(sessionToken)}`,
-            },
-            cache: "no-store",
-        });
-        if (!res.ok) return false;
-        const data: Record<string, unknown> = await res.json().catch(() => ({}));
-        return Boolean(data?.authenticated);
-    } catch {
-        return false;
+        if (adminBase) {
+            pushUrl(
+                adminBase.startsWith("http")
+                    ? `${adminBase}/api/admin/session`
+                    : `${requestOrigin}${adminBase}/api/admin/session`,
+            );
+        } else {
+            // Backward compatibility: some deployments expose /api directly,
+            // while others expose Cloud Functions under /cfapi.
+            pushUrl(`${requestOrigin}/api/admin/session`);
+            pushUrl(`${requestOrigin}/cfapi/api/admin/session`);
+        }
+
+        return urls;
+    })();
+
+    for (const sessionUrl of sessionUrls) {
+        try {
+            const res = await fetch(sessionUrl, {
+                headers: { cookie: rawCookie },
+                cache: "no-store",
+            });
+            if (!res.ok) continue;
+            const data: Record<string, unknown> = await res.json().catch(() => ({}));
+            if (Boolean(data?.authenticated)) return true;
+        } catch {
+            // Try the next candidate URL.
+        }
     }
+
+    return false;
 }
 
 export async function POST(request: NextRequest) {

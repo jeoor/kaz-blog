@@ -54,6 +54,10 @@ export default function PhotoAddButton() {
             const data: Record<string, unknown> = await res.json().catch(() => ({}));
 
             if (!res.ok) {
+                if (res.status === 401) {
+                    setError("登录已失效，请重新登录后再试");
+                    return;
+                }
                 setError(String(data.error || "添加失败，请重试"));
                 return;
             }
