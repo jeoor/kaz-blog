@@ -9,6 +9,7 @@ export const SITE = {
   },
   nav: [
     { href: "/archive", label: "归档" },
+    { href: "/shuoshuo", label: "说说" },
     { href: "/links", label: "友链" },
     { href: "/about", label: "关于" },
     { href: "/write", label: "写作台" },

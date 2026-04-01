@@ -67,7 +67,34 @@ function getNotionEnv(context) {
         propAuthor: envValue("NOTION_PROP_AUTHOR", context).trim() || "Author",
         propKeywords: envValue("NOTION_PROP_KEYWORDS", context).trim() || "Keywords",
         propTitle: envValue("NOTION_PROP_TITLE", context).trim(),
+        propType: envValue("NOTION_PROP_TYPE", context).trim() || "Type",
+        propCategory: envValue("NOTION_PROP_CATEGORY", context).trim() || "Category",
     };
+}
+
+function firstNonEmptyLine(text) {
+    const lines = String(text || "").replace(/\r\n/g, "\n").split("\n");
+    for (const line of lines) {
+        const trimmed = line.trim();
+        if (trimmed) return trimmed;
+    }
+    return "";
+}
+
+function buildMomentSlug() {
+    const random = Math.random().toString(36).slice(2, 8);
+    return `moment-${Date.now().toString(36)}-${random}`;
+}
+
+function propertyPayloadForSingleValue(def, value) {
+    const text = String(value || "").trim();
+    if (!def || !text) return null;
+    if (def.type === "rich_text") return { rich_text: richText(text) };
+    if (def.type === "title") return { title: richText(text) };
+    if (def.type === "select") return { select: { name: text } };
+    if (def.type === "status") return { status: { name: text } };
+    if (def.type === "multi_select") return { multi_select: [{ name: text }] };
+    return null;
 }
 
 function richText(text) {
@@ -377,9 +404,9 @@ function titlePropertyName(page, env) {
     return null;
 }
 
-function buildCreatePropertiesFromPayload(frontmatter, env, titleProp) {
+function buildCreatePropertiesFromPayload(frontmatter, env, titleProp, databaseProperties, contentType) {
     const keywords = Array.isArray(frontmatter.keywords) ? frontmatter.keywords : [];
-    return {
+    const properties = {
         [titleProp]: { title: richText(frontmatter.title) },
         [env.propSlug]: { rich_text: richText(frontmatter.slug) },
         [env.propDate]: { date: { start: frontmatter.date } },
@@ -388,6 +415,20 @@ function buildCreatePropertiesFromPayload(frontmatter, env, titleProp) {
         [env.propKeywords]: { multi_select: keywords.map((name) => ({ name: String(name) })) },
         [env.propPublished]: { checkbox: true },
     };
+
+    const typeDef = databaseProperties?.[env.propType];
+    const typePayload = propertyPayloadForSingleValue(typeDef, contentType);
+    if (typePayload) {
+        properties[env.propType] = typePayload;
+    }
+
+    const categoryDef = databaseProperties?.[env.propCategory];
+    const categoryPayload = propertyPayloadForSingleValue(categoryDef, frontmatter.category || "");
+    if (categoryPayload) {
+        properties[env.propCategory] = categoryPayload;
+    }
+
+    return properties;
 }
 
 function statusFromError(err) {
@@ -422,16 +463,20 @@ export async function onRequestGet(context) {
         const blocks = await listBlocksRecursively(notion, page.id);
         const body = notionBlocksToMarkdown(blocks);
         const titleKey = titlePropertyName(page, env);
+        const postTypeRaw = readTextProperty(page.properties?.[env.propType]).trim().toLowerCase();
+        const inferredType = postTypeRaw || (slug.startsWith("moment-") || slug.startsWith("m-") ? "moment" : "article");
 
         return json({
             slug,
             pageId: page.id,
             frontmatter: {
+                type: inferredType,
                 title: titleKey ? readTextProperty(page.properties?.[titleKey]) : "",
                 date: readTextProperty(page.properties?.[env.propDate]),
                 description: readTextProperty(page.properties?.[env.propDescription]),
                 author: readTextProperty(page.properties?.[env.propAuthor]),
                 keywords: readKeywordsProperty(page.properties?.[env.propKeywords]),
+                category: readTextProperty(page.properties?.[env.propCategory]),
             },
             body,
         });
@@ -447,19 +492,39 @@ export async function onRequestPost(context) {
         const auth = await authenticateRequest(context, request);
 
         const payload = await request.json();
-        const slug = normalizeSlug(payload?.slug || "");
+        const contentType = String(payload?.type || "article").trim().toLowerCase() === "moment" ? "moment" : "article";
+        let slug = normalizeSlug(payload?.slug || "");
+        if (!slug && contentType === "moment") {
+            slug = buildMomentSlug();
+        }
         if (!slug) return json({ message: "Missing slug" }, 400);
 
         const fm = payload?.frontmatter || {};
         const author = resolveAuthorForPublish(auth, fm.author);
+        const body = String(payload?.body || "");
+        const bodySummary = firstNonEmptyLine(body).slice(0, 140);
         const frontmatter = {
             slug,
             title: String(fm.title || "").trim(),
             date: String(fm.date || "").trim(),
             description: String(fm.description || "").trim(),
             author,
-            keywords: Array.isArray(fm.keywords) ? fm.keywords.map((x) => String(x).trim()).filter(Boolean) : [],
+            category: String(fm.category || "").trim(),
+            keywords: Array.isArray(fm.tags)
+                ? fm.tags.map((x) => String(x).trim()).filter(Boolean)
+                : Array.isArray(fm.keywords)
+                    ? fm.keywords.map((x) => String(x).trim()).filter(Boolean)
+                    : [],
         };
+
+        if (contentType === "moment") {
+            if (!frontmatter.title) {
+                frontmatter.title = bodySummary || `说说 ${frontmatter.date || ""}`.trim();
+            }
+            if (!frontmatter.description) {
+                frontmatter.description = bodySummary || frontmatter.title;
+            }
+        }
 
         if (!frontmatter.title || !frontmatter.date || !frontmatter.description || !frontmatter.author) {
             return json({ message: "Missing frontmatter fields" }, 400);
@@ -487,11 +552,11 @@ export async function onRequestPost(context) {
 
         const page = await notion.pages.create({
             parent: { database_id: env.databaseId },
-            properties: buildCreatePropertiesFromPayload(frontmatter, env, titleKey),
-            children: markdownToNotionBlocks(String(payload?.body || "")),
+            properties: buildCreatePropertiesFromPayload(frontmatter, env, titleKey, db?.properties || {}, contentType),
+            children: markdownToNotionBlocks(body),
         });
 
-        return json({ ok: true, slug, pageId: page.id });
+        return json({ ok: true, slug, type: contentType, pageId: page.id });
     } catch (err) {
         const message = String(err?.message || "Error");
         return json({ message }, statusFromError(err));

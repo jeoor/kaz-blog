@@ -54,9 +54,45 @@ function loadScript(src: string): Promise<void> {
 type Props = {
     title?: string;
     className?: string;
+    draftStorageKey?: string;
 };
 
-export default function TwikooComments({ title = "评论", className = "" }: Props) {
+function applyDraftToTextarea(containerId: string, draft: string) {
+    const container = document.getElementById(containerId);
+    const textarea = container?.querySelector("textarea") as HTMLTextAreaElement | null;
+    if (!textarea) {
+        return false;
+    }
+
+    textarea.focus();
+    textarea.value = draft;
+    textarea.dispatchEvent(new Event("input", { bubbles: true }));
+    textarea.dispatchEvent(new Event("change", { bubbles: true }));
+    return true;
+}
+
+function applyDraftFromStorage(containerId: string, draftStorageKey: string) {
+    const draft = window.localStorage.getItem(draftStorageKey);
+    if (!draft) return () => undefined;
+
+    let attempts = 0;
+    const timer = window.setInterval(() => {
+        attempts += 1;
+        const applied = applyDraftToTextarea(containerId, draft);
+        if (!applied && attempts < 12) {
+            return;
+        }
+
+        window.clearInterval(timer);
+        if (applied) {
+            window.localStorage.removeItem(draftStorageKey);
+        }
+    }, 150);
+
+    return () => window.clearInterval(timer);
+}
+
+export default function TwikooComments({ title = "评论", className = "", draftStorageKey }: Props) {
     const enabled = Boolean(SITE.comments?.twikoo?.enabled);
     const envId = SITE.comments?.twikoo?.envId;
     const region = SITE.comments?.twikoo?.region;
@@ -93,6 +129,21 @@ export default function TwikooComments({ title = "评论", className = "" }: Pro
 
         void run();
     }, [containerId, enabled, envId, region]);
+
+    useEffect(() => {
+        if (typeof window === "undefined") return;
+        if (!draftStorageKey) return;
+        if (state !== "ready") return;
+
+        const onQuote = () => applyDraftFromStorage(containerId, draftStorageKey);
+        const cleanupInitial = applyDraftFromStorage(containerId, draftStorageKey);
+        window.addEventListener("shuoshuo:quote", onQuote);
+
+        return () => {
+            cleanupInitial();
+            window.removeEventListener("shuoshuo:quote", onQuote);
+        };
+    }, [containerId, draftStorageKey, state]);
 
     if (!enabled || !envId) return null;
 

@@ -2,16 +2,114 @@
 <a href="https://kaz-blog.kayro.cn/"><img src="./.github/assest/kaz-blog.svg" width="500" alt="kaz-blog"></a>
 </p>
 
+<p align="center">
+  <strong>基于 Next.js + Notion 的极简个人/多用户博客系统</strong>
+</p>
+
 ---
 
-基于 Next.js 和 Notion 的 **简约** **静态** **个人/多用户** 博客系统
+[![License](https://img.shields.io/github/license/kaz-blog/kaz-blog)](LICENSE)
+[![Build Status](https://img.shields.io/badge/build-passing-brightgreen)](https://github.com)
+[![Stars](https://img.shields.io/github/stars/kaz-blog/kaz-blog?style=social)](https://github.com)
 
-## 设计取向
+## 特性
 
-- 阅读优先，而不是功能堆叠
-- 后台最小化，只保留必要的写作入口
-- 前台强调结构、留白和信息层级
-- 不保留脚手架默认命名、默认文案和样例内容
+<details>
+<summary>点击查看
+</summary>
+
+- 阅读优先、干净布局、信息层级明确
+- 支持 Notion 文章同步 + 本地 Markdown 回退
+- 多作者登录与写作（`/login`、`/write`）
+- 自动生成 Atom RSS、Sitemap、Robots
+- 支持归档、友链、标签、搜索、评论（Twikoo）
+- Cloud Functions 管理接口：`/cfapi/api/admin/*`
+- 轻量、可部署到 EdgeOne / Vercel / 其它平台
+
+</details>
+
+## [Demo演示](https://kaz-blog.kayro.cn/)
+
+
+## 快速开始
+
+```sh
+npm install
+cp .env.example .env.local
+# 填写 NOTION_TOKEN/NOTION_DATABASE_ID
+npm run dev
+```
+
+- Windows PowerShell 环境不稳定时，使用 `npm run clean && npm run dev:stable`
+
+## 配置（环境变量）
+
+最低要求：
+
+- `NOTION_TOKEN`
+- `NOTION_DATABASE_ID`
+
+多作者/会话：
+
+- `AUTH_KV_BINDING`（默认 `AUTH_KV`）
+- `AUTH_SESSION_DAYS`（默认 `30`）
+- `REGISTER_INVITE_CODE`（可选）
+- `AUTH_ALLOW_OPEN_REGISTRATION`（可选，`true` 公开注册）
+
+静态宿主/独立管理 API：
+
+- `NEXT_PUBLIC_ADMIN_API_BASE`（默认 `${origin}/cfapi` 或 `/api`）
+- `IMAGE_HOST_TOKEN`（7bu 图床代理必要）
+- `IMAGE_HOST_API_BASE`（默认 `https://7bu.top/api/v1`）
+
+## Twikoo 评论配置
+
+在 `app/site-config.ts` 添加：
+
+```ts
+comments: {
+  twikoo: {
+    enabled: true,
+    envId: '你的 twikoo envId',
+    region: '',
+  },
+},
+```
+
+## 目录说明
+
+- `app/`：Next.js App Router 页面、路由、元信息
+- `components/`：复用组件、UI 片段
+- `lib/`：内容加载、Notion/Markdown 适配、工具函数
+- `cloud-functions/cfapi/`：管理员 API 与 session/post 逻辑
+- `posts/`：本地 Markdown 回退文章
+- `public/`：静态资源
+
+## 构建与排查
+
+- 开发：`npm run dev`
+- 编译：`npm run build`
+- 代码检查：`npm run lint`
+
+遇到 `/_next/static/... 404`，请：
+
+1. 停止服务，`npm run clean`
+2. 重新 `npm run dev:stable`
+3. 浏览器强刷 `Ctrl+F5`
+
+## 事项提示
+
+- Notion 为主内容源，Markdown 为回退。生产建议 Notion 稳定期优先。
+- `cloud-functions` 需要部署在支持 KV 的 EdgeOne 环境，否则可能出现 `545`。
+- Favicon 主题切换可用两套图标（`/favicon-light.svg` + `/favicon-dark.svg`），或动态替换 `<link rel="icon">`。
+
+## 贡献
+
+欢迎 Fork、PR、Issue。贡献时请保持内容结构简洁、阅读体验优先。
+
+## 许可证
+
+MIT
 
 ## 当前能力
 

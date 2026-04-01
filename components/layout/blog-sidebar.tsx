@@ -4,7 +4,7 @@ import Image from "next/image";
 import { SITE } from "@/app/site-config";
 import { ThemeSwitcher } from "@/components/ThemeSwitcher";
 
-type SidebarKey = "home" | "archive" | "links" | "about" | "write";
+type SidebarKey = "home" | "archive" | "shuoshuo" | "links" | "about" | "write";
 
 type Props = {
     active?: SidebarKey;
@@ -13,6 +13,7 @@ type Props = {
 const NAV_ITEMS: Array<{ key: SidebarKey; href: string; label: string }> = [
     { key: "home", href: "/", label: "文章" },
     { key: "archive", href: "/archive", label: "归档" },
+    { key: "shuoshuo", href: "/shuoshuo", label: "说说" },
     { key: "links", href: "/links", label: "友链" },
     { key: "about", href: "/about", label: "关于" },
     { key: "write", href: "/write", label: "写作台" },
