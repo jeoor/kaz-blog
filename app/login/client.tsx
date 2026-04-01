@@ -25,7 +25,7 @@ export default function LoginClient() {
     const router = useRouter();
     const searchParams = useSearchParams();
     const next = searchParams.get("next") || "/write";
-        const { refresh } = useAuth();
+    const { refresh } = useAuth();
 
     const [mode, setMode] = useState<"login" | "register">("login");
 
@@ -97,8 +97,8 @@ export default function LoginClient() {
                 return;
             }
 
-                await refresh();
-                router.replace(next);
+            await refresh();
+            router.replace(next);
         } catch (e) {
             setError(e instanceof Error ? e.message : "登录失败");
         } finally {
