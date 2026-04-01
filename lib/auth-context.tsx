@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { createContext, useCallback, useContext, useEffect, useState } from "react";
 import { adminApiUrl, adminCredentials } from "./admin-api";
@@ -10,6 +10,7 @@ type AuthState = {
     isLoggedIn: boolean;
     user: AuthUser | null;
     logout: () => Promise<void>;
+    refresh: () => Promise<void>;
 };
 
 const AuthContext = createContext<AuthState>({
@@ -17,6 +18,7 @@ const AuthContext = createContext<AuthState>({
     isLoggedIn: false,
     user: null,
     logout: async () => { },
+    refresh: async () => { },
 });
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
@@ -24,37 +26,34 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const [isLoggedIn, setIsLoggedIn] = useState(false);
     const [user, setUser] = useState<AuthUser | null>(null);
 
-    useEffect(() => {
-        let cancelled = false;
-
-        fetch(adminApiUrl("/api/admin/session"), {
-            credentials: adminCredentials(),
-        })
-            .then((res) => res.json() as Promise<Record<string, unknown>>)
-            .then((data) => {
-                if (cancelled) return;
-                if (data?.authenticated) {
-                    setIsLoggedIn(true);
-                    setUser((data.user as AuthUser) ?? null);
-                } else {
-                    setIsLoggedIn(false);
-                    setUser(null);
-                }
-            })
-            .catch(() => {
-                if (!cancelled) {
-                    setIsLoggedIn(false);
-                    setUser(null);
-                }
-            })
-            .finally(() => {
-                if (!cancelled) setLoading(false);
+    const checkSession = useCallback(async (showLoading = false) => {
+        if (showLoading) setLoading(true);
+        try {
+            const res = await fetch(adminApiUrl("/api/admin/session"), {
+                credentials: adminCredentials(),
             });
-
-        return () => {
-            cancelled = true;
-        };
+            const data = (await res.json()) as Record<string, unknown>;
+            if (data?.authenticated) {
+                setIsLoggedIn(true);
+                setUser((data.user as AuthUser) ?? null);
+            } else {
+                setIsLoggedIn(false);
+                setUser(null);
+            }
+        } catch {
+            setIsLoggedIn(false);
+            setUser(null);
+        } finally {
+            setLoading(false);
+        }
     }, []);
+
+    useEffect(() => {
+        void checkSession(true);
+    }, [checkSession]);
+
+    // Exposed so callers (e.g. login form) can trigger a re-check without remounting.
+    const refresh = useCallback(() => checkSession(false), [checkSession]);
 
     const logout = useCallback(async () => {
         await fetch(adminApiUrl("/api/admin/session"), {
@@ -66,7 +65,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }, []);
 
     return (
-        <AuthContext.Provider value={{ loading, isLoggedIn, user, logout }}>
+        <AuthContext.Provider value={{ loading, isLoggedIn, user, logout, refresh }}>
             {children}
         </AuthContext.Provider>
     );

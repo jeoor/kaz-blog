@@ -6,22 +6,23 @@ import { createPhotoInNotion } from "@/lib/photos-notion";
  * endpoint (EdgeOne cloud function). Returns true if authenticated.
  */
 async function verifySession(request: NextRequest): Promise<boolean> {
-    const cookie = request.headers.get("cookie") || "";
-    // Quick check: the session cookie must be present.
-    if (!cookie.includes("eo_admin_session")) return false;
+    const sessionToken = request.cookies.get("eo_admin_session")?.value?.trim();
+    if (!sessionToken) return false;
 
     const adminBase = (process.env.NEXT_PUBLIC_ADMIN_API_BASE || "").trim().replace(/\/+$/, "");
-    const siteBase = (process.env.NEXT_PUBLIC_URL || "http://localhost:3000").replace(/\/+$/, "");
+    const requestOrigin = request.nextUrl.origin.replace(/\/+$/, "");
 
     // Build absolute session URL.
     const relPath = adminBase || "/cfapi";
     const sessionUrl = relPath.startsWith("http")
         ? `${relPath}/api/admin/session`
-        : `${siteBase}${relPath}/api/admin/session`;
+        : `${requestOrigin}${relPath}/api/admin/session`;
 
     try {
         const res = await fetch(sessionUrl, {
-            headers: { cookie },
+            headers: {
+                cookie: `eo_admin_session=${encodeURIComponent(sessionToken)}`,
+            },
             cache: "no-store",
         });
         if (!res.ok) return false;

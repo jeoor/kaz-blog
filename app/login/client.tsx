@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { Button, Card, CardBody, Input, Spinner } from "@heroui/react";
 import { SITE } from "@/app/site-config";
 import { adminApiUrl, adminCredentials } from "@/lib/admin-api";
+import { useAuth } from "@/lib/auth-context";
 
 const CONTROL_RADIUS = "rounded-[14px]";
 const CONTROL_HEIGHT = "h-11 min-h-11";
@@ -24,6 +25,7 @@ export default function LoginClient() {
     const router = useRouter();
     const searchParams = useSearchParams();
     const next = searchParams.get("next") || "/write";
+        const { refresh } = useAuth();
 
     const [mode, setMode] = useState<"login" | "register">("login");
 
@@ -95,7 +97,8 @@ export default function LoginClient() {
                 return;
             }
 
-            router.replace(next);
+                await refresh();
+                router.replace(next);
         } catch (e) {
             setError(e instanceof Error ? e.message : "登录失败");
         } finally {
