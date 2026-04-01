@@ -286,6 +286,7 @@ export function isNotionEnabled(): boolean {
 // In `next build` (SSG) React's `cache()` doesn't reliably share results across page generations.
 // Use a small process-level memo to avoid hammering Notion and spamming logs.
 const NOTION_READY_TTL_MS = 20_000;
+const METAS_HOT_CACHE_TTL_MS = 45_000;
 
 export async function isNotionReady(): Promise<boolean> {
     const env = getNotionEnv();
@@ -503,6 +504,11 @@ export const getAllPostMetas = cache(async (): Promise<NotionPostMeta[]> => {
     const state = getNotionGlobalState();
     const key = getEnvCacheKey(env);
 
+    const memo = state.metasMemo;
+    if (memo && memo.key === key && Date.now() - memo.at < METAS_HOT_CACHE_TTL_MS) {
+        return memo.value;
+    }
+
     const client = getClient();
 
     let pages: NotionPage[] = [];
@@ -555,6 +561,8 @@ export const findPageBySlug = cache(async (slug: string): Promise<NotionPage | n
         return null;
     }
 
+    let slugType: string | null = null;
+
     // Avoid Notion validation errors when the database schema doesn't have the slug property.
     try {
         const schema = await getDatabaseSchema();
@@ -563,7 +571,7 @@ export const findPageBySlug = cache(async (slug: string): Promise<NotionPage | n
             const props = listDatabasePropertyNames(db);
             if (!props.includes(env.propSlug)) return null;
 
-            const slugType = getDatabasePropertyType(db, env.propSlug);
+            slugType = getDatabasePropertyType(db, env.propSlug);
             if (!isSlugQueryableType(slugType)) return null;
         }
     } catch {
@@ -578,7 +586,7 @@ export const findPageBySlug = cache(async (slug: string): Promise<NotionPage | n
             client.databases.query({
                 database_id: env.databaseId,
                 filter,
-                page_size: 10,
+                page_size: 3,
             })
         );
         const firstActive = res.results.find((result) => result && typeof result === "object" && "properties" in (result as any) && isActivePage(result as any));
@@ -602,6 +610,34 @@ export const findPageBySlug = cache(async (slug: string): Promise<NotionPage | n
         }
         return null;
     };
+
+    const filterByKind = (kind: "formula" | "rich_text" | "title") => {
+        if (kind === "formula") {
+            return {
+                property: env.propSlug,
+                formula: { string: { equals: slug } },
+            };
+        }
+        if (kind === "rich_text") {
+            return {
+                property: env.propSlug,
+                rich_text: { equals: slug },
+            };
+        }
+        return {
+            property: env.propSlug,
+            title: { equals: slug },
+        };
+    };
+
+    // If schema is known, only run the query shape matching actual property type.
+    if (slugType === "formula" || slugType === "rich_text" || slugType === "title") {
+        try {
+            return await tryQuery(filterByKind(slugType));
+        } catch {
+            return null;
+        }
+    }
 
     try {
         return await tryQuery({
