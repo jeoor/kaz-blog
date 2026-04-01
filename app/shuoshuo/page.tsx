@@ -7,6 +7,8 @@ import ShuoshuoFeed from "@/components/shuoshuo/shuoshuo-feed";
 import { getSortedPostsData } from "@/lib/posts";
 import { getShuoshuoEntriesData } from "@/lib/shuoshuo";
 
+export const revalidate = 60;
+
 export default async function ShuoshuoPage() {
     const posts = await getSortedPostsData();
     const moments = await getShuoshuoEntriesData();
