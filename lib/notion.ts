@@ -143,6 +143,12 @@ const getDatabaseSchema = cache(async (): Promise<{ env: NotionEnv; database: No
     const env = getNotionEnv();
     if (!env) return null;
 
+    // Reject moment/shuoshuo slugs from article detail pages
+    const slugLower = slug.toLowerCase();
+    if (slugLower.startsWith("moment-") || slugLower.startsWith("m-")) {
+        return null;
+    }
+
     const client = getClient();
     const database = await withNotionRetry("databases.retrieve", () => client.databases.retrieve({ database_id: env.databaseId }));
     return { env, database };
@@ -523,8 +529,18 @@ export const getAllPostMetas = cache(async (): Promise<NotionPostMeta[]> => {
         throw err;
     }
 
+    const propType = (process.env.NOTION_PROP_TYPE || "Type").trim();
+
     const metas = pages
         .filter((p) => isActivePage(p))
+        .filter((p) => {
+            // Exclude moment/shuoshuo pages from article list
+            const typeVal = propertyString(p, propType).trim().toLowerCase();
+            if (typeVal === "moment" || typeVal === "说说") return false;
+            const slug = propertyString(p, env.propSlug).trim().toLowerCase();
+            if (slug.startsWith("moment-") || slug.startsWith("m-")) return false;
+            return true;
+        })
         .map((p) => pageToMeta(p, env))
         .filter((m) => Boolean(m.slug))
         .filter((m) => m.published);
@@ -566,10 +582,24 @@ export const findPageBySlug = cache(async (slug: string): Promise<NotionPage | n
             })
         );
         const firstActive = res.results.find((result) => result && typeof result === "object" && "properties" in (result as any) && isActivePage(result as any));
-        if (firstActive) return firstActive as any;
+        if (firstActive) {
+            const page = firstActive as any;
+            // Double-check this isn't a moment page
+            const propType = (process.env.NOTION_PROP_TYPE || "Type").trim();
+            const typeVal = propertyString(page, propType).trim().toLowerCase();
+            if (typeVal === "moment" || typeVal === "说说") return null;
+            return page;
+        }
 
         const first = res.results.find((result) => result && typeof result === "object" && "properties" in (result as any));
-        if (first) return first as any;
+        if (first) {
+            const page = first as any;
+            // Double-check this isn't a moment page
+            const propType = (process.env.NOTION_PROP_TYPE || "Type").trim();
+            const typeVal = propertyString(page, propType).trim().toLowerCase();
+            if (typeVal === "moment" || typeVal === "说说") return null;
+            return page;
+        }
         return null;
     };
 
