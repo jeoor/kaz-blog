@@ -68,7 +68,6 @@ function getNotionEnv(context) {
         propKeywords: envValue("NOTION_PROP_KEYWORDS", context).trim() || "Keywords",
         propTitle: envValue("NOTION_PROP_TITLE", context).trim(),
         propType: envValue("NOTION_PROP_TYPE", context).trim() || "Type",
-        propCategory: envValue("NOTION_PROP_CATEGORY", context).trim() || "Category",
     };
 }
 
@@ -422,12 +421,6 @@ function buildCreatePropertiesFromPayload(frontmatter, env, titleProp, databaseP
         properties[env.propType] = typePayload;
     }
 
-    const categoryDef = databaseProperties?.[env.propCategory];
-    const categoryPayload = propertyPayloadForSingleValue(categoryDef, frontmatter.category || "");
-    if (categoryPayload) {
-        properties[env.propCategory] = categoryPayload;
-    }
-
     return properties;
 }
 
@@ -476,7 +469,6 @@ export async function onRequestGet(context) {
                 description: readTextProperty(page.properties?.[env.propDescription]),
                 author: readTextProperty(page.properties?.[env.propAuthor]),
                 keywords: readKeywordsProperty(page.properties?.[env.propKeywords]),
-                category: readTextProperty(page.properties?.[env.propCategory]),
             },
             body,
         });
@@ -509,7 +501,6 @@ export async function onRequestPost(context) {
             date: String(fm.date || "").trim(),
             description: String(fm.description || "").trim(),
             author,
-            category: String(fm.category || "").trim(),
             keywords: Array.isArray(fm.tags)
                 ? fm.tags.map((x) => String(x).trim()).filter(Boolean)
                 : Array.isArray(fm.keywords)

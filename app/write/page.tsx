@@ -1,6 +1,7 @@
 "use client";
 
-import { useCallback, useEffect, useId, useRef, useState } from "react";
+import { Suspense, useCallback, useEffect, useId, useRef, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import { Button, Card, CardBody, Input, Spinner } from "@heroui/react";
 import { SITE } from "@/app/site-config";
 import ArticleBody from "@/components/post-components/article-body";
@@ -157,10 +158,19 @@ async function convertImageFileToWebp(file: File): Promise<File> {
 }
 
 export default function WritePage() {
+    return (
+        <Suspense fallback={null}>
+            <WritePageContent />
+        </Suspense>
+    );
+}
+
+function WritePageContent() {
     const contentId = useId();
     const imageInputId = useId();
     const textareaRef = useRef<HTMLTextAreaElement>(null);
     const imageInputRef = useRef<HTMLInputElement>(null);
+    const searchParams = useSearchParams();
     const [status, setStatus] = useState<UiStatus>({ state: "idle" });
     const [imageUploadStatus, setImageUploadStatus] = useState<ImageUploadStatus>({ state: "idle" });
 
@@ -174,12 +184,18 @@ export default function WritePage() {
     const [unlockError, setUnlockError] = useState<string | null>(null);
     const [sessionUser, setSessionUser] = useState<SessionUser | null>(null);
 
-    const [slug, setSlug] = useState("");
-    const [publishType, setPublishType] = useState<"article" | "moment">("article");
+    // Capture URL params once at mount time (refs avoid stale closure issues)
+    const initSlugRef = useRef(searchParams.get("slug") || "");
+    const initTypeRef = useRef(searchParams.get("type") || "");
+    const autoLoadFiredRef = useRef(false);
+
+    const [slug, setSlug] = useState(() => initSlugRef.current);
+    const [publishType, setPublishType] = useState<"article" | "moment">(
+        () => (initTypeRef.current === "moment" ? "moment" : "article")
+    );
     const [title, setTitle] = useState("");
     const [date, setDate] = useState("");
     const [description, setDescription] = useState("");
-    const [category, setCategory] = useState("生活随笔");
     const [author, setAuthor] = useState("");
     const [keywords, setKeywords] = useState("");
     const [content, setContent] = useState("");
@@ -287,6 +303,15 @@ export default function WritePage() {
         setAuthor(sessionAuthorName);
     }, [isOwnerUser, sessionAuthorName]);
 
+    // Auto-load when navigated here from an edit button (?slug=xxx&type=moment)
+    useEffect(() => {
+        if (!initSlugRef.current || autoLoadFiredRef.current || !isUnlocked) return;
+        if (normalizedSlug !== normalizeSlug(initSlugRef.current)) return;
+        autoLoadFiredRef.current = true;
+        void onLoad();
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [isUnlocked, normalizedSlug]);
+
     async function onLogout(): Promise<void> {
         try {
             await fetch(adminApiUrl("/api/admin/session"), {
@@ -305,7 +330,6 @@ export default function WritePage() {
     function resetForm(): void {
         setTitle("");
         setDescription("");
-        setCategory("生活随笔");
         setAuthor("");
         setDate(todayYmd());
         setKeywords("");
@@ -410,11 +434,6 @@ export default function WritePage() {
 
     async function onLoad(): Promise<void> {
         setStatus({ state: "idle" });
-        if (publishType === "moment") {
-            setStatus({ state: "error", message: "说说暂不支持按 slug 回填加载，建议在 Notion 中直接编辑。" });
-            return;
-        }
-
         const err = ensureBasics(true);
         if (err) {
             setStatus({ state: "error", message: err });
@@ -448,7 +467,6 @@ export default function WritePage() {
             setTitle(typeof fm.title === "string" ? fm.title : "");
             setDate(typeof fm.date === "string" ? fm.date : todayYmd());
             setDescription(typeof fm.description === "string" ? fm.description : "");
-            setCategory(typeof fm.category === "string" && fm.category.trim() ? fm.category : "生活随笔");
             setAuthor(typeof fm.author === "string" ? fm.author : "");
             setKeywords(Array.isArray(fm.keywords) ? fm.keywords.join(",") : "");
             setContent(typeof data.body === "string" ? data.body : "");
@@ -511,7 +529,6 @@ export default function WritePage() {
                         title: title.trim(),
                         date: date.trim(),
                         description: description.trim(),
-                        category: category.trim(),
                         author: effectiveAuthor,
                         keywords: kwList,
                         tags: kwList,
@@ -534,10 +551,15 @@ export default function WritePage() {
                 return;
             }
 
+            const savedSlug = String(data?.slug || publishSlug || "").trim();
+            if (savedSlug) {
+                setSlug(savedSlug);
+            }
+
             setStatus({
                 state: "success",
                 message: isMoment
-                    ? "说说发布成功（Notion 已更新）。站点可能需要一点时间刷新缓存。"
+                    ? `说说发布成功（ID: ${savedSlug || "未返回"}）。站点可能需要一点时间刷新缓存。`
                     : "发布成功（Notion 已更新）。站点可能需要一点时间刷新缓存。",
                 postUrl: isMoment ? "/shuoshuo" : `/posts/${publishSlug}`,
             });
@@ -791,7 +813,7 @@ export default function WritePage() {
                                 <Button
                                     className={`flex-1 ${BUTTON_OUTLINE}`}
                                     onPress={onLoad}
-                                    isDisabled={isWorking || !isUnlocked || publishType === "moment" || !normalizedSlug}
+                                    isDisabled={isWorking || !isUnlocked || !normalizedSlug}
                                 >
                                     {publishType === "moment" ? "加载说说" : "加载文章"}
                                 </Button>
@@ -847,58 +869,57 @@ export default function WritePage() {
                                 </h2>
                             </div>
 
+                            <div className="space-y-2">
+                                <label className="text-sm font-medium text-black/72 dark:text-white/72">
+                                    {publishType === "moment" ? "说说ID（slug）" : "永久链接（slug）"}
+                                </label>
+                                <Input
+                                    aria-label={publishType === "moment" ? "说说ID（slug）" : "永久链接（slug）"}
+                                    value={slug}
+                                    onValueChange={setSlug}
+                                    variant="flat"
+                                    classNames={inputClassNames}
+                                />
+                                <p className="text-xs text-black/52 dark:text-white/52">
+                                    {publishType === "moment"
+                                        ? (slug ? `实际：${normalizedSlug}` : "新建可留空自动生成；修改或删除需填写已发布 slug")
+                                        : (slug ? `实际：${normalizedSlug}（发布后尽量不要改）` : "例如：my-first-post")}
+                                </p>
+                            </div>
+
+                            <div className="grid grid-cols-3 gap-2">
+                                <Button
+                                    className={BUTTON_OUTLINE}
+                                    onPress={() => {
+                                        setSlug(generateSlug());
+                                        setStatus({ state: "idle" });
+                                    }}
+                                    isDisabled={isWorking || publishType === "moment"}
+                                >
+                                    生成
+                                </Button>
+                                <Button
+                                    className={BUTTON_OUTLINE}
+                                    onPress={() => {
+                                        resetForm();
+                                        setSlug("");
+                                        setStatus({ state: "idle" });
+                                    }}
+                                    isDisabled={isWorking}
+                                >
+                                    清空
+                                </Button>
+                                <Button className={BUTTON_OUTLINE} isDisabled>
+                                    草稿
+                                </Button>
+                            </div>
+
                             {publishType === "article" ? (
-                                <>
-                                    <div className="space-y-2">
-                                        <label className="text-sm font-medium text-black/72 dark:text-white/72">永久链接（slug）</label>
-                                        <Input
-                                            aria-label="永久链接（slug）"
-                                            value={slug}
-                                            onValueChange={setSlug}
-                                            variant="flat"
-                                            classNames={inputClassNames}
-                                        />
-                                        <p className="text-xs text-black/52 dark:text-white/52">
-                                            {slug ? `实际：${normalizedSlug}（发布后尽量不要改）` : "例如：my-first-post"}
-                                        </p>
-                                    </div>
-
-                                    <div className="grid grid-cols-3 gap-2">
-                                        <Button
-                                            className={BUTTON_OUTLINE}
-                                            onPress={() => {
-                                                setSlug(generateSlug());
-                                                setStatus({ state: "idle" });
-                                            }}
-                                            isDisabled={isWorking}
-                                        >
-                                            生成
-                                        </Button>
-                                        <Button
-                                            className={BUTTON_OUTLINE}
-                                            onPress={() => {
-                                                resetForm();
-                                                setStatus({ state: "idle" });
-                                            }}
-                                            isDisabled={isWorking}
-                                        >
-                                            清空
-                                        </Button>
-                                        <Button className={BUTTON_OUTLINE} isDisabled>
-                                            草稿
-                                        </Button>
-                                    </div>
-
-                                    <div className="space-y-2">
-                                        <label className="text-sm font-medium text-black/72 dark:text-white/72">标题（可选）</label>
-                                        <Input aria-label="标题（可选）" value={title} onValueChange={setTitle} variant="flat" classNames={inputClassNames} />
-                                    </div>
-                                </>
-                            ) : (
-                                <div className="rounded-2xl border border-black/12 bg-black/[0.03] px-4 py-3 text-xs leading-6 text-black/62 dark:border-white/12 dark:bg-white/[0.03] dark:text-white/62">
-                                    说说模式已隐藏 slug、标题、简介：发布时自动生成 slug，标题和简介会按正文首行自动补齐。
+                                <div className="space-y-2">
+                                    <label className="text-sm font-medium text-black/72 dark:text-white/72">标题（可选）</label>
+                                    <Input aria-label="标题（可选）" value={title} onValueChange={setTitle} variant="flat" classNames={inputClassNames} />
                                 </div>
-                            )}
+                            ) : null}
                             <div className="space-y-2">
                                 <label className="text-sm font-medium text-black/72 dark:text-white/72">日期（YYYY-MM-DD）</label>
                                 <Input aria-label="日期（YYYY-MM-DD）" value={date} onValueChange={setDate} variant="flat" classNames={inputClassNames} />
@@ -909,10 +930,6 @@ export default function WritePage() {
                                     <Input aria-label="简介（description，可选）" value={description} onValueChange={setDescription} variant="flat" classNames={inputClassNames} />
                                 </div>
                             ) : null}
-                            <div className="space-y-2">
-                                <label className="text-sm font-medium text-black/72 dark:text-white/72">分类（category）</label>
-                                <Input aria-label="分类（category）" value={category} onValueChange={setCategory} variant="flat" classNames={inputClassNames} />
-                            </div>
                             {!hasSession || isOwnerUser ? (
                                 <div className="space-y-2">
                                     <label className="text-sm font-medium text-black/72 dark:text-white/72">作者（author）</label>

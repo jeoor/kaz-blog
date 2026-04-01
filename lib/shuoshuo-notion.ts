@@ -15,7 +15,6 @@ type MomentNotionEnv = {
     propKeywords: string;
     propPublished: string;
     propType: string;
-    propCategory: string;
 };
 
 function getEnv(): MomentNotionEnv | null {
@@ -32,7 +31,6 @@ function getEnv(): MomentNotionEnv | null {
         propKeywords: String(process.env.NOTION_PROP_KEYWORDS || "Keywords").trim(),
         propPublished: String(process.env.NOTION_PROP_PUBLISHED || "Published").trim(),
         propType: String(process.env.NOTION_PROP_TYPE || "Type").trim(),
-        propCategory: String(process.env.NOTION_PROP_CATEGORY || "Category").trim(),
     };
 }
 
@@ -156,6 +154,11 @@ function markdownFromBlocks(blocks: NotionBlock[]): string {
     return lines.join("\n").replace(/\n{3,}/g, "\n\n").trim();
 }
 
+function stripLegacyCategoryMarker(body: string): string {
+    const normalized = String(body || "").replace(/\r\n/g, "\n").trim();
+    return normalized.replace(/^\[\[category:.+?\]\](?:\n\n|\n)?/i, "").trim();
+}
+
 async function listAllPages(client: Client, databaseId: string): Promise<NotionPage[]> {
     const pages: NotionPage[] = [];
     let cursor: string | undefined;
@@ -234,16 +237,14 @@ export async function getShuoshuoEntriesNotion(): Promise<ShuoshuoItem[]> {
             const slug = propertyString(page, env.propSlug).trim();
             const date = propertyString(page, env.propDate).trim() || new Date().toISOString();
             const author = propertyString(page, env.propAuthor).trim();
-            const category = propertyString(page, env.propCategory).trim() || "说说";
             const tags = propertyKeywords(page, env.propKeywords);
             const blocks = await listBlockChildren(client, page.id);
-            const body = markdownFromBlocks(blocks);
+            const body = stripLegacyCategoryMarker(markdownFromBlocks(blocks));
 
             return {
                 id: slug || page.id,
                 date,
                 author,
-                category,
                 tags,
                 body,
             } satisfies ShuoshuoItem;

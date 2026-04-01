@@ -1,8 +1,12 @@
+"use client";
+
 import Link from "next/link";
 import Image from "next/image";
+import { usePathname } from "next/navigation";
 
 import { SITE } from "@/app/site-config";
 import { ThemeSwitcher } from "@/components/ThemeSwitcher";
+import { useAuth } from "@/lib/auth-context";
 
 type SidebarKey = "home" | "archive" | "shuoshuo" | "links" | "about" | "write";
 
@@ -20,8 +24,11 @@ const NAV_ITEMS: Array<{ key: SidebarKey; href: string; label: string }> = [
 ];
 
 export default function BlogSidebar({ active }: Props) {
+    const { isLoggedIn, loading, logout } = useAuth();
+    const pathname = usePathname();
     const avatarSrc = SITE.avatar?.src?.trim();
     const avatarAlt = (SITE.avatar?.alt || SITE.author || SITE.title).trim();
+    const navItems = NAV_ITEMS.filter((item) => item.key !== "write" || isLoggedIn);
 
     return (
         <div className="flex min-h-full flex-col gap-5 pr-2">
@@ -48,7 +55,7 @@ export default function BlogSidebar({ active }: Props) {
                     Navigation
                 </div>
                 <ul className="space-y-1.5">
-                    {NAV_ITEMS.map((item) => {
+                    {navItems.map((item) => {
                         const isActive = active ? item.key === active : false;
                         return (
                             <li key={item.key}>
@@ -73,7 +80,28 @@ export default function BlogSidebar({ active }: Props) {
                 </ul>
             </nav>
 
-            <ThemeSwitcher />
+            <div className="mt-auto flex items-center justify-between gap-3">
+                <ThemeSwitcher className="!mt-0" />
+
+                {!loading ? (
+                    isLoggedIn ? (
+                        <button
+                            type="button"
+                            onClick={() => void logout()}
+                            className="rounded-[1.1rem] border border-black/8 bg-black/[0.02] px-3.5 py-2 text-sm text-black/62 transition hover:bg-black/[0.04] dark:border-white/[0.05] dark:bg-white/[0.02] dark:text-white/60 dark:hover:bg-white/[0.04]"
+                        >
+                            退出
+                        </button>
+                    ) : (
+                        <Link
+                            href={`/login?next=${encodeURIComponent(pathname)}`}
+                            className="rounded-[1.1rem] border border-black/8 bg-black/[0.02] px-3.5 py-2 text-sm text-black/62 transition hover:bg-black/[0.04] dark:border-white/[0.05] dark:bg-white/[0.02] dark:text-white/60 dark:hover:bg-white/[0.04]"
+                        >
+                            登录
+                        </Link>
+                    )
+                ) : null}
+            </div>
         </div>
     );
 }

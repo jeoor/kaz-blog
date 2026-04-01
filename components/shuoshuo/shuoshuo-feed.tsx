@@ -1,11 +1,14 @@
 "use client";
 
 import Image from "next/image";
+import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 
 import { SITE } from "@/app/site-config";
 import type { ShuoshuoItem } from "@/content/shuoshuo";
 import ShuoshuoCommentButton from "@/components/shuoshuo/shuoshuo-comment-button";
+import { useAuth } from "@/lib/auth-context";
+import { adminApiUrl, adminCredentials } from "@/lib/admin-api";
 
 type LightboxItem = {
     src: string;
@@ -78,9 +81,12 @@ function getCommentQuote(paragraphs: string[]) {
 export default function ShuoshuoFeed({ moments }: Props) {
     const [items, setItems] = useState<LightboxItem[]>([]);
     const [activeIndex, setActiveIndex] = useState<number | null>(null);
+    const { isLoggedIn } = useAuth();
+    const [deletingId, setDeletingId] = useState<string | null>(null);
+    const [localMoments, setLocalMoments] = useState(moments);
     const parsedMoments = useMemo(
-        () => moments.map((moment) => ({ ...moment, parsed: parseMomentBody(moment.body) })),
-        [moments]
+        () => localMoments.map((moment) => ({ ...moment, parsed: parseMomentBody(moment.body) })),
+        [localMoments]
     );
 
     useEffect(() => {
@@ -136,6 +142,27 @@ export default function ShuoshuoFeed({ moments }: Props) {
         setActiveIndex(nextIndex);
     }
 
+    async function handleDeleteMoment(slug: string) {
+        if (!confirm(`确认删除这条说说「${slug}」？此操作不可撤销。`)) return;
+        setDeletingId(slug);
+        try {
+            const res = await fetch(adminApiUrl(`/api/admin/posts?slug=${encodeURIComponent(slug)}`), {
+                method: "DELETE",
+                credentials: adminCredentials(),
+            });
+            if (res.ok) {
+                setLocalMoments((prev) => prev.filter((m) => m.id !== slug));
+            } else {
+                const data = (await res.json().catch(() => ({}))) as Record<string, unknown>;
+                alert(String(data?.message || "删除失败"));
+            }
+        } catch {
+            alert("删除请求失败");
+        } finally {
+            setDeletingId(null);
+        }
+    }
+
     return (
         <>
             <div className="relative">
@@ -172,9 +199,6 @@ export default function ShuoshuoFeed({ moments }: Props) {
                                         {authorName ? (
                                             <span className="text-sm text-[var(--text-soft)]">{authorName}</span>
                                         ) : null}
-                                        <span className="rounded-full border border-black/8 bg-black/[0.03] px-2.5 py-1 text-xs tracking-[0.08em] text-[var(--text-soft)] dark:border-white/[0.06] dark:bg-white/[0.03]">
-                                            {item.category}
-                                        </span>
                                     </div>
 
                                     <div className="mt-4 space-y-2 text-[1.03rem] leading-8 text-[color:var(--text-main)]">
@@ -227,10 +251,30 @@ export default function ShuoshuoFeed({ moments }: Props) {
                                                 </span>
                                             ))}
                                         </div>
-                                        <ShuoshuoCommentButton
-                                            quote={getCommentQuote(item.parsed.paragraphs)}
-                                            className="rounded-full border border-black/8 bg-black/[0.03] px-3 py-1.5 text-xs text-[var(--text-soft)] transition hover:opacity-80 dark:border-white/[0.06] dark:bg-white/[0.03]"
-                                        />
+                                        <div className="flex items-center gap-2">
+                                            {isLoggedIn && (
+                                                <>
+                                                    <Link
+                                                        href={`/write?slug=${encodeURIComponent(item.id)}&type=moment`}
+                                                        className="rounded-full border border-black/10 bg-black/[0.03] px-3 py-1 text-xs text-[var(--text-soft)] transition hover:border-black/18 hover:bg-black/[0.06] dark:border-white/[0.08] dark:bg-white/[0.02] dark:hover:border-white/[0.14]"
+                                                    >
+                                                        编辑
+                                                    </Link>
+                                                    <button
+                                                        type="button"
+                                                        disabled={deletingId === item.id}
+                                                        onClick={() => void handleDeleteMoment(item.id)}
+                                                        className="rounded-full border border-red-400/25 bg-red-50/50 px-3 py-1 text-xs text-red-600/75 transition hover:border-red-400/40 disabled:opacity-50 dark:border-red-400/20 dark:bg-red-900/10 dark:text-red-400/70"
+                                                    >
+                                                        {deletingId === item.id ? "删除中…" : "删除"}
+                                                    </button>
+                                                </>
+                                            )}
+                                            <ShuoshuoCommentButton
+                                                quote={getCommentQuote(item.parsed.paragraphs)}
+                                                className="rounded-full border border-black/8 bg-black/[0.03] px-3 py-1.5 text-xs text-[var(--text-soft)] transition hover:opacity-80 dark:border-white/[0.06] dark:bg-white/[0.03]"
+                                            />
+                                        </div>
                                     </footer>
                                 </div>
                             </article>

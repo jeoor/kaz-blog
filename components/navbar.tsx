@@ -1,12 +1,17 @@
 "use client";
 
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { useState } from "react";
 import { ThemeSwitcher } from "./ThemeSwitcher";
 import { SITE } from "@/app/site-config";
+import { useAuth } from "@/lib/auth-context";
 
 const NavbarComponent = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const { isLoggedIn, loading: authLoading, logout } = useAuth();
+  const pathname = usePathname();
+  const navItems = SITE.nav.filter((item) => item.href !== "/write" || isLoggedIn);
 
   return (
     <header className="border-b border-black/10 bg-[var(--page-bg)] backdrop-blur-xl dark:border-white/10 xl:hidden">
@@ -60,7 +65,7 @@ const NavbarComponent = () => {
 
         <nav aria-label="主导航" className="hidden md:block">
           <ul className="flex items-center gap-4">
-            {SITE.nav.map((item) => (
+            {navItems.map((item) => (
               <li key={item.href}>
                 <Link
                   href={item.href}
@@ -70,6 +75,26 @@ const NavbarComponent = () => {
                 </Link>
               </li>
             ))}
+            {!authLoading && (
+              <li>
+                {isLoggedIn ? (
+                  <button
+                    type="button"
+                    onClick={() => void logout()}
+                    className="px-2 py-2 text-sm font-medium text-black/64 transition-all dark:text-white/64"
+                  >
+                    退出
+                  </button>
+                ) : (
+                  <Link
+                    href={`/login?next=${encodeURIComponent(pathname)}`}
+                    className="px-2 py-2 text-sm font-medium text-black/64 transition-all dark:text-white/64"
+                  >
+                    登录
+                  </Link>
+                )}
+              </li>
+            )}
             <li>
               <ThemeSwitcher />
             </li>
@@ -88,7 +113,7 @@ const NavbarComponent = () => {
               Navigation
             </div>
             <ul className="space-y-3">
-              {SITE.nav.map((item) => (
+              {navItems.map((item) => (
                 <li key={item.href}>
                   <Link
                     href={item.href}
@@ -99,6 +124,27 @@ const NavbarComponent = () => {
                   </Link>
                 </li>
               ))}
+              {!authLoading && (
+                <li>
+                  {isLoggedIn ? (
+                    <button
+                      type="button"
+                      onClick={() => { void logout(); setIsMenuOpen(false); }}
+                      className="block w-full rounded-[1.25rem] border border-black/10 bg-white/65 px-4 py-3 text-left text-base font-medium text-current dark:border-white/10 dark:bg-white/[0.04]"
+                    >
+                      退出登录
+                    </button>
+                  ) : (
+                    <Link
+                      href={`/login?next=${encodeURIComponent(pathname)}`}
+                      className="block rounded-[1.25rem] border border-black/10 bg-white/65 px-4 py-3 text-base font-medium text-current dark:border-white/10 dark:bg-white/[0.04]"
+                      onClick={() => setIsMenuOpen(false)}
+                    >
+                      登录
+                    </Link>
+                  )}
+                </li>
+              )}
             </ul>
           </div>
         </nav>

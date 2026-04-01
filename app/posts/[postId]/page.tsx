@@ -6,6 +6,7 @@ import BlogSidebar from "@/components/layout/blog-sidebar";
 import ArticleBody from "@/components/post-components/article-body";
 import ArticleToc from "@/components/post-components/article-toc";
 import PostFooter from "@/components/post-components/post-footer";
+import PostAdminBar from "@/components/post-components/post-admin-bar";
 import TwikooComments from "@/components/comments/twikoo-comments";
 import ScrollToComments from "@/components/scroll-to-comments";
 import { getTagHref } from "@/lib/tags";
@@ -73,6 +74,7 @@ export default async function Post({ params }: { params: Promise<{ postId: strin
               {page.date ? <span>{getFormattedDate(page.date)}</span> : null}
               {page.author ? <span className="opacity-80">·</span> : null}
               {page.author ? <span>作者：{page.author}</span> : null}
+              <PostAdminBar slug={postId} />
             </div>
             <p className="mt-6 max-w-3xl text-[1.02rem] leading-8 text-black/62 dark:text-white/62">
               {description}
