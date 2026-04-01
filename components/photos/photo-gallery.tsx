@@ -5,9 +5,12 @@ import type { PhotoItem } from "@/app/photos.config";
 
 type Props = {
     photos: PhotoItem[];
+    canDelete?: (photo: PhotoItem) => boolean;
+    deletingSlug?: string;
+    onDelete?: (photo: PhotoItem) => void;
 };
 
-export default function PhotoGallery({ photos }: Props) {
+export default function PhotoGallery({ photos, canDelete, deletingSlug, onDelete }: Props) {
     const [activeIndex, setActiveIndex] = useState<number | null>(null);
 
     const close = useCallback(() => setActiveIndex(null), []);
@@ -75,7 +78,7 @@ export default function PhotoGallery({ photos }: Props) {
                 {photos.map((photo, index) => (
                     <div
                         key={photo.src + index}
-                        className="mb-4 break-inside-avoid overflow-hidden rounded-[1.1rem] cursor-zoom-in"
+                        className="group relative mb-4 break-inside-avoid overflow-hidden rounded-[1.1rem] cursor-zoom-in"
                         onClick={() => setActiveIndex(index)}
                     >
                         {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -85,6 +88,19 @@ export default function PhotoGallery({ photos }: Props) {
                             loading="lazy"
                             className="w-full h-auto block transition-transform duration-300 hover:scale-[1.02]"
                         />
+                        {canDelete?.(photo) && onDelete ? (
+                            <button
+                                type="button"
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    onDelete(photo);
+                                }}
+                                disabled={deletingSlug === photo.slug}
+                                className="absolute right-2 top-2 z-10 rounded-full border border-white/20 bg-black/55 px-2.5 py-1 text-xs text-white/90 opacity-0 backdrop-blur-sm transition hover:bg-black/70 disabled:cursor-not-allowed disabled:opacity-70 group-hover:opacity-100"
+                            >
+                                {deletingSlug === photo.slug ? "删除中" : "删除"}
+                            </button>
+                        ) : null}
                     </div>
                 ))}
             </div>

@@ -10,8 +10,77 @@ function todayYmd(): string {
     return new Date().toISOString().slice(0, 10);
 }
 
+const WEBP_QUALITY = 0.86;
+
+function shouldConvertImageToWebp(file: File): boolean {
+    const mime = file.type.toLowerCase();
+    if (!mime) return false;
+    if (mime === "image/webp") return false;
+    if (mime === "image/gif") return false;
+    return ["image/jpeg", "image/jpg", "image/png", "image/bmp", "image/x-icon", "image/vnd.microsoft.icon"].includes(mime);
+}
+
+function renameFileToWebp(name: string): string {
+    const baseName = name.replace(/\.[^.]+$/, "");
+    return `${baseName || "image"}.webp`;
+}
+
+async function convertImageFileToWebp(file: File): Promise<File> {
+    const objectUrl = URL.createObjectURL(file);
+
+    try {
+        const image = await new Promise<HTMLImageElement>((resolve, reject) => {
+            const img = new Image();
+            img.onload = () => resolve(img);
+            img.onerror = () => reject(new Error("图片解码失败，无法转换为 webp"));
+            img.src = objectUrl;
+        });
+
+        const canvas = document.createElement("canvas");
+        canvas.width = image.naturalWidth || image.width;
+        canvas.height = image.naturalHeight || image.height;
+
+        const context = canvas.getContext("2d");
+        if (!context) {
+            throw new Error("浏览器不支持 Canvas，无法转换为 webp");
+        }
+
+        context.drawImage(image, 0, 0, canvas.width, canvas.height);
+
+        const blob = await new Promise<Blob>((resolve, reject) => {
+            canvas.toBlob(
+                (result) => {
+                    if (result) {
+                        resolve(result);
+                        return;
+                    }
+                    reject(new Error("webp 转换失败"));
+                },
+                "image/webp",
+                WEBP_QUALITY,
+            );
+        });
+
+        return new File([blob], renameFileToWebp(file.name), {
+            type: "image/webp",
+            lastModified: Date.now(),
+        });
+    } finally {
+        URL.revokeObjectURL(objectUrl);
+    }
+}
+
 function resolvePublishError(status: number, data: any): string {
     const message = String(data?.message || data?.error || "").trim();
+    if (
+        status === 429
+        || /rate[_\s-]?limit/i.test(message)
+        || /too many requests/i.test(message)
+        || /throttle/i.test(message)
+        || /request_limit_reached/i.test(message)
+    ) {
+        return "上传频繁，稍后再试";
+    }
     if (status === 401) return "登录已失效，请重新登录后再试";
     if (status === 403) return "当前账号没有发布图片的权限";
     if (status === 400 && /notion database has no title property/i.test(message)) {
@@ -42,7 +111,7 @@ type Props = {
 };
 
 export default function PhotoAddButton({ onAdded }: Props) {
-    const { isLoggedIn } = useAuth();
+    const { isLoggedIn, user } = useAuth();
     const router = useRouter();
 
     const [open, setOpen] = useState(false);
@@ -109,6 +178,9 @@ export default function PhotoAddButton({ onAdded }: Props) {
                 src: trimmedSrc,
                 alt: trimmedAlt,
                 caption: trimmedCaption || undefined,
+                slug: String(data?.slug || "").trim() || undefined,
+                author: String(user?.displayName || user?.username || "").trim() || undefined,
+                date: todayYmd(),
             });
             close();
             router.refresh();
@@ -125,8 +197,10 @@ export default function PhotoAddButton({ onAdded }: Props) {
         setError("");
         setUploading(true);
         try {
+            const uploadFile = shouldConvertImageToWebp(file) ? await convertImageFileToWebp(file) : file;
+
             const formData = new FormData();
-            formData.append("file", file);
+            formData.append("file", uploadFile);
             formData.append("permission", "1");
 
             const res = await fetch(adminApiUrl("/api/admin/images"), {
@@ -150,7 +224,7 @@ export default function PhotoAddButton({ onAdded }: Props) {
 
             setSrc(uploadedUrl);
             if (!alt.trim()) {
-                const suggestedAlt = file.name.replace(/\.[^.]+$/, "").trim();
+                const suggestedAlt = uploadFile.name.replace(/\.[^.]+$/, "").trim();
                 if (suggestedAlt) setAlt(suggestedAlt);
             }
         } catch (e) {

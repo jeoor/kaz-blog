@@ -2,6 +2,9 @@ export type PhotoItem = {
     src: string;
     alt: string;
     caption?: string;
+    slug?: string;
+    author?: string;
+    date?: string;
 };
 
 /**

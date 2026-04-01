@@ -10,6 +10,7 @@ type PhotoEnv = {
     databaseId: string;
     propSlug: string;
     propDate: string;
+    propAuthor: string;
     propPublished: string;
     propType: string;
     photoTypeValue: string;
@@ -25,6 +26,7 @@ function getPhotoEnv(): PhotoEnv | null {
         databaseId,
         propSlug: String(process.env.NOTION_PROP_SLUG || "Slug").trim(),
         propDate: String(process.env.NOTION_PROP_DATE || "Date").trim(),
+        propAuthor: String(process.env.NOTION_PROP_AUTHOR || "Author").trim(),
         propPublished: String(process.env.NOTION_PROP_PUBLISHED || "Published").trim(),
         propType: String(process.env.NOTION_PROP_TYPE || "Type").trim(),
         // The value written in the Type column to mark a photo entry.
@@ -86,6 +88,23 @@ function richTextToPlain(rich: any[] | undefined): string {
     return (rich ?? []).map((r: any) => String(r?.plain_text || "")).join("");
 }
 
+function propertyString(page: NotionPage, name: string): string {
+    const prop = page?.properties?.[name];
+    if (!prop) return "";
+
+    if (prop.type === "title") return richTextToPlain(prop.title);
+    if (prop.type === "rich_text") return richTextToPlain(prop.rich_text);
+    if (prop.type === "select") return String(prop.select?.name || "");
+    if (prop.type === "status") return String(prop.status?.name || "");
+    if (prop.type === "date") return String(prop.date?.start || "");
+    if (prop.type === "formula") {
+        if (prop.formula?.type === "string") return String(prop.formula.string || "");
+        if (prop.formula?.type === "date") return String(prop.formula.date?.start || "");
+    }
+
+    return "";
+}
+
 function buildClient(token: string): Client {
     const supportedFetch =
         typeof globalThis.fetch === "function"
@@ -137,9 +156,13 @@ async function listBlockChildren(client: Client, blockId: string): Promise<Notio
 
 /** Extract PhotoItem from a photo page's blocks. */
 async function photoPageToItem(
+    env: PhotoEnv,
     client: Client,
     page: NotionPage,
 ): Promise<PhotoItem | null> {
+    const slug = propertyString(page, env.propSlug).trim();
+    const author = propertyString(page, env.propAuthor).trim();
+    const date = propertyString(page, env.propDate).trim();
     const blocks = await listBlockChildren(client, page.id);
 
     for (const block of blocks) {
@@ -152,14 +175,28 @@ async function photoPageToItem(
                     : img?.file?.url ?? "";
             const captionText = richTextToPlain(img?.caption).trim();
             if (src)
-                return { src, alt: captionText, caption: captionText || undefined };
+                return {
+                    src,
+                    alt: captionText,
+                    caption: captionText || undefined,
+                    slug: slug || undefined,
+                    author: author || undefined,
+                    date: date || undefined,
+                };
         }
         // Paragraph containing markdown image syntax
         if (block?.type === "paragraph") {
             const text = richTextToPlain(block.paragraph?.rich_text).trim();
             const match = MD_IMG_RE.exec(text);
             if (match)
-                return { alt: match[1] || "", src: match[2], caption: match[3] || undefined };
+                return {
+                    alt: match[1] || "",
+                    src: match[2],
+                    caption: match[3] || undefined,
+                    slug: slug || undefined,
+                    author: author || undefined,
+                    date: date || undefined,
+                };
         }
     }
     return null;
@@ -198,11 +235,15 @@ export async function getPhotosFromNotion(): Promise<PhotoItem[] | null> {
         if (photoPages.length === 0) return [];
 
         const items = await Promise.all(
-            photoPages.map((page) => photoPageToItem(client, page)),
+            photoPages.map((page) => photoPageToItem(env, client, page)),
         );
         const photos = items.filter((item): item is PhotoItem => item !== null);
 
-        return photos;
+        return photos.sort((a, b) => {
+            const da = String(a.date || "");
+            const db = String(b.date || "");
+            return da < db ? 1 : -1;
+        });
     } catch {
         return null;
     }
