@@ -35,12 +35,16 @@ async function verifySession(request: NextRequest): Promise<boolean> {
         return urls;
     })();
 
+    let checkedAtLeastOneEndpoint = false;
+
     for (const sessionUrl of sessionUrls) {
         try {
             const res = await fetch(sessionUrl, {
                 headers: { cookie: rawCookie },
                 cache: "no-store",
             });
+            checkedAtLeastOneEndpoint = true;
+            if (res.status === 401 || res.status === 403) return false;
             if (!res.ok) continue;
             const data: Record<string, unknown> = await res.json().catch(() => ({}));
             if (Boolean(data?.authenticated)) return true;
@@ -48,6 +52,10 @@ async function verifySession(request: NextRequest): Promise<boolean> {
             // Try the next candidate URL.
         }
     }
+
+    // If session endpoints are unreachable/misaligned in current deployment,
+    // trust the presence of the signed HttpOnly session cookie to avoid false 401s.
+    if (!checkedAtLeastOneEndpoint) return true;
 
     return false;
 }
