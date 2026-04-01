@@ -499,7 +499,7 @@ function WritePageContent() {
             setStatus({ state: "error", message: "需要填写作者（author）" });
             return;
         }
-        if (!date.trim()) {
+        if (!isMoment && !date.trim()) {
             setStatus({ state: "error", message: "需要填写日期（date）" });
             return;
         }
@@ -507,6 +507,8 @@ function WritePageContent() {
             setStatus({ state: "error", message: "说说正文不能为空" });
             return;
         }
+
+        const effectiveDate = isMoment ? new Date().toISOString() : date.trim();
 
         setStatus({ state: "working", message: "正在提交..." });
         try {
@@ -527,7 +529,7 @@ function WritePageContent() {
                     slug: publishSlug,
                     frontmatter: {
                         title: title.trim(),
-                        date: date.trim(),
+                        date: effectiveDate,
                         description: description.trim(),
                         author: effectiveAuthor,
                         keywords: kwList,
