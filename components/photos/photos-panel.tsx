@@ -4,6 +4,7 @@ import { useState } from "react";
 import type { PhotoItem } from "@/app/photos.config";
 import { adminApiUrl, adminCredentials } from "@/lib/admin-api";
 import { useAuth } from "@/lib/auth-context";
+import { toFriendlyNotionConnectionMessage } from "@/components/photos/notion-error";
 import PhotoAddButton from "@/components/photos/photo-add-button";
 import PhotoGallery from "@/components/photos/photo-gallery";
 
@@ -59,7 +60,8 @@ export default function PhotosPanel({ initialPhotos, title, description }: Props
                     setErrorMessage("仅允许删除自己上传的图片");
                     return;
                 }
-                setErrorMessage(String(data?.message || `删除失败：${res.status}`));
+                const raw = String(data?.message || `删除失败：${res.status}`);
+                setErrorMessage(toFriendlyNotionConnectionMessage(raw));
                 return;
             }
 
@@ -67,7 +69,8 @@ export default function PhotosPanel({ initialPhotos, title, description }: Props
             setSuccessMessage("图片已删除");
             window.setTimeout(() => setSuccessMessage(""), 2500);
         } catch (e) {
-            setErrorMessage(e instanceof Error ? e.message : "删除失败，请稍后再试");
+            const raw = e instanceof Error ? e.message : "删除失败，请稍后再试";
+            setErrorMessage(toFriendlyNotionConnectionMessage(raw));
         } finally {
             setDeletingSlug("");
         }

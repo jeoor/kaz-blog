@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useRef, useState } from "react";
 import type { PhotoItem } from "@/app/photos.config";
+import { toFriendlyNotionConnectionMessage } from "@/components/photos/notion-error";
 import { adminApiUrl, adminCredentials } from "@/lib/admin-api";
 import { useAuth } from "@/lib/auth-context";
 
@@ -72,6 +73,9 @@ async function convertImageFileToWebp(file: File): Promise<File> {
 
 function resolvePublishError(status: number, data: any): string {
     const message = String(data?.message || data?.error || "").trim();
+    if (toFriendlyNotionConnectionMessage(message) !== message) {
+        return "Notion 连接失败，请稍后再试";
+    }
     if (
         status === 429
         || /rate[_\s-]?limit/i.test(message)
@@ -95,7 +99,7 @@ function resolvePublishError(status: number, data: any): string {
     if (/forbidden/i.test(message)) {
         return "当前账号没有发布图片的权限";
     }
-    return message || `发布失败：${status}`;
+    return toFriendlyNotionConnectionMessage(message) || `发布失败：${status}`;
 }
 
 function resolveUploadError(status: number, data: any): string {
