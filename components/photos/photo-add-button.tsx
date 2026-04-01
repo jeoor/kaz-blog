@@ -5,6 +5,10 @@ import { useRef, useState } from "react";
 import { adminApiUrl, adminCredentials } from "@/lib/admin-api";
 import { useAuth } from "@/lib/auth-context";
 
+function todayYmd(): string {
+    return new Date().toISOString().slice(0, 10);
+}
+
 export default function PhotoAddButton() {
     const { isLoggedIn } = useAuth();
     const router = useRouter();
@@ -31,6 +35,8 @@ export default function PhotoAddButton() {
     async function handleSubmit(e: React.FormEvent) {
         e.preventDefault();
         const trimmedSrc = src.trim();
+        const trimmedAlt = alt.trim();
+        const trimmedCaption = caption.trim();
         if (!trimmedSrc) {
             setError("请输入图片地址");
             return;
@@ -40,25 +46,34 @@ export default function PhotoAddButton() {
         setError("");
 
         try {
-            const res = await fetch("/api/admin/photos", {
+            const markdownImage = `![${trimmedAlt}](${trimmedSrc}${trimmedCaption ? ` \"${trimmedCaption}\"` : ""})`;
+
+            const res = await fetch(adminApiUrl("/api/admin/posts"), {
                 method: "POST",
-                credentials: "include",
+                credentials: adminCredentials(),
                 headers: { "content-type": "application/json" },
                 body: JSON.stringify({
-                    src: trimmedSrc,
-                    alt: alt.trim(),
-                    caption: caption.trim(),
+                    type: "photo",
+                    slug: "",
+                    frontmatter: {
+                        title: trimmedAlt || trimmedCaption || "照片",
+                        date: todayYmd(),
+                        description: trimmedCaption || trimmedAlt || "图库图片",
+                        author: "",
+                        keywords: [],
+                    },
+                    body: markdownImage,
                 }),
             });
 
-            const data: Record<string, unknown> = await res.json().catch(() => ({}));
+            const data = (await res.json().catch(() => ({}))) as any;
 
             if (!res.ok) {
                 if (res.status === 401) {
                     setError("登录已失效，请重新登录后再试");
                     return;
                 }
-                setError(String(data.error || "添加失败，请重试"));
+                setError(String(data?.message || data?.error || "添加失败，请重试"));
                 return;
             }
 

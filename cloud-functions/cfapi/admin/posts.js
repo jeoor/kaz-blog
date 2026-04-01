@@ -85,6 +85,11 @@ function buildMomentSlug() {
     return `moment-${Date.now().toString(36)}-${random}`;
 }
 
+function buildPhotoSlug() {
+    const random = Math.random().toString(36).slice(2, 8);
+    return `photo-${Date.now().toString(36)}-${random}`;
+}
+
 function propertyPayloadForSingleValue(def, value) {
     const text = String(value || "").trim();
     if (!def || !text) return null;
@@ -457,7 +462,12 @@ export async function onRequestGet(context) {
         const body = notionBlocksToMarkdown(blocks);
         const titleKey = titlePropertyName(page, env);
         const postTypeRaw = readTextProperty(page.properties?.[env.propType]).trim().toLowerCase();
-        const inferredType = postTypeRaw || (slug.startsWith("moment-") || slug.startsWith("m-") ? "moment" : "article");
+        const inferredType = postTypeRaw
+            || (slug.startsWith("moment-") || slug.startsWith("m-")
+                ? "moment"
+                : slug.startsWith("photo-")
+                    ? "photo"
+                    : "article");
 
         return json({
             slug,
@@ -484,10 +494,18 @@ export async function onRequestPost(context) {
         const auth = await authenticateRequest(context, request);
 
         const payload = await request.json();
-        const contentType = String(payload?.type || "article").trim().toLowerCase() === "moment" ? "moment" : "article";
+        const requestedType = String(payload?.type || "article").trim().toLowerCase();
+        const contentType = requestedType === "moment"
+            ? "moment"
+            : requestedType === "photo"
+                ? "photo"
+                : "article";
         let slug = normalizeSlug(payload?.slug || "");
         if (!slug && contentType === "moment") {
             slug = buildMomentSlug();
+        }
+        if (!slug && contentType === "photo") {
+            slug = buildPhotoSlug();
         }
         if (!slug) return json({ message: "Missing slug" }, 400);
 
@@ -511,6 +529,15 @@ export async function onRequestPost(context) {
         if (contentType === "moment") {
             if (!frontmatter.title) {
                 frontmatter.title = bodySummary || `说说 ${frontmatter.date || ""}`.trim();
+            }
+            if (!frontmatter.description) {
+                frontmatter.description = bodySummary || frontmatter.title;
+            }
+        }
+
+        if (contentType === "photo") {
+            if (!frontmatter.title) {
+                frontmatter.title = bodySummary || `照片 ${frontmatter.date || ""}`.trim();
             }
             if (!frontmatter.description) {
                 frontmatter.description = bodySummary || frontmatter.title;
