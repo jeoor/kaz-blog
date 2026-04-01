@@ -10,10 +10,15 @@ export const SITE = {
   nav: [
     { href: "/archive", label: "归档" },
     { href: "/shuoshuo", label: "说说" },
+    { href: "/photos", label: "相册" },
     { href: "/links", label: "友链" },
     { href: "/about", label: "关于" },
     { href: "/write", label: "写作台" },
   ],
+  photos: {
+    title: "相册",
+    description: "用照片记录走过的地方与时刻。",
+  },
   home: {
     intro: "围绕文章阅读重新整理的信息结构。内容从 Notion 进入，前端保持克制、安静、可长期阅读。",
     pageSize: 6,

@@ -530,15 +530,19 @@ export const getAllPostMetas = cache(async (): Promise<NotionPostMeta[]> => {
     }
 
     const propType = (process.env.NOTION_PROP_TYPE || "Type").trim();
+    const photosSlug = (process.env.NOTION_PHOTOS_SLUG || "photos").trim().toLowerCase();
+    const photoTypeValue = (process.env.NOTION_PHOTO_TYPE || "photo").trim().toLowerCase();
 
     const metas = pages
         .filter((p) => isActivePage(p))
         .filter((p) => {
-            // Exclude moment/shuoshuo pages from article list
+            // Exclude moment/shuoshuo and photo pages from article list
             const typeVal = propertyString(p, propType).trim().toLowerCase();
             if (typeVal === "moment" || typeVal === "说说") return false;
+            if (typeVal === photoTypeValue || typeVal === "照片" || typeVal === "gallery") return false;
             const slug = propertyString(p, env.propSlug).trim().toLowerCase();
             if (slug.startsWith("moment-") || slug.startsWith("m-")) return false;
+            if (slug.startsWith("photo-") || slug === photosSlug) return false;
             return true;
         })
         .map((p) => pageToMeta(p, env))
@@ -555,9 +559,12 @@ export const findPageBySlug = cache(async (slug: string): Promise<NotionPage | n
     const env = getNotionEnv();
     if (!env) return null;
 
-    // Reject moment/shuoshuo slugs from article detail pages
+    // Reject moment/shuoshuo and photo slugs from article detail pages
     const slugLower = slug.toLowerCase();
     if (slugLower.startsWith("moment-") || slugLower.startsWith("m-")) {
+        return null;
+    }
+    if (slugLower.startsWith("photo-")) {
         return null;
     }
 
