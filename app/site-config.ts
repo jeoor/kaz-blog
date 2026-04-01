@@ -4,8 +4,8 @@ export const SITE = {
   tagline: "写作优先，结构克制。",
   author: "Kaz",
   avatar: {
-    src: "/avatar.svg",
-    alt: "Kaz",
+    src: "/avatar.png",
+    alt: "KazZz",
   },
   nav: [
     { href: "/archive", label: "归档" },
