@@ -143,12 +143,6 @@ const getDatabaseSchema = cache(async (): Promise<{ env: NotionEnv; database: No
     const env = getNotionEnv();
     if (!env) return null;
 
-    // Reject moment/shuoshuo slugs from article detail pages
-    const slugLower = slug.toLowerCase();
-    if (slugLower.startsWith("moment-") || slugLower.startsWith("m-")) {
-        return null;
-    }
-
     const client = getClient();
     const database = await withNotionRetry("databases.retrieve", () => client.databases.retrieve({ database_id: env.databaseId }));
     return { env, database };
@@ -554,6 +548,12 @@ export const getAllPostMetas = cache(async (): Promise<NotionPostMeta[]> => {
 export const findPageBySlug = cache(async (slug: string): Promise<NotionPage | null> => {
     const env = getNotionEnv();
     if (!env) return null;
+
+    // Reject moment/shuoshuo slugs from article detail pages
+    const slugLower = slug.toLowerCase();
+    if (slugLower.startsWith("moment-") || slugLower.startsWith("m-")) {
+        return null;
+    }
 
     // Avoid Notion validation errors when the database schema doesn't have the slug property.
     try {
