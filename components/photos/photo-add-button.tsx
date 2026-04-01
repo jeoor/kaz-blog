@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useRef, useState } from "react";
+import type { PhotoItem } from "@/app/photos.config";
 import { adminApiUrl, adminCredentials } from "@/lib/admin-api";
 import { useAuth } from "@/lib/auth-context";
 
@@ -9,7 +10,38 @@ function todayYmd(): string {
     return new Date().toISOString().slice(0, 10);
 }
 
-export default function PhotoAddButton() {
+function resolvePublishError(status: number, data: any): string {
+    const message = String(data?.message || data?.error || "").trim();
+    if (status === 401) return "登录已失效，请重新登录后再试";
+    if (status === 403) return "当前账号没有发布图片的权限";
+    if (status === 400 && /notion database has no title property/i.test(message)) {
+        return "Notion 数据库缺少标题列，无法创建图片记录";
+    }
+    if (status === 400 && /missing frontmatter fields/i.test(message)) {
+        return "图片信息不完整，无法发布到 Notion";
+    }
+    if (/notion is not configured/i.test(message) || /notion 未配置/i.test(message)) {
+        return "Notion 未配置完成，请检查环境变量";
+    }
+    if (/forbidden/i.test(message)) {
+        return "当前账号没有发布图片的权限";
+    }
+    return message || `发布失败：${status}`;
+}
+
+function resolveUploadError(status: number, data: any): string {
+    const message = String(data?.message || data?.error || "").trim();
+    if (status === 401) return "登录已失效，请重新登录后再上传";
+    if (status === 403) return "当前账号没有上传图片的权限";
+    if (/缺少图片文件/.test(message)) return "未选择本地图片文件";
+    return message || `上传失败：${status}`;
+}
+
+type Props = {
+    onAdded?: (photo: PhotoItem) => void;
+};
+
+export default function PhotoAddButton({ onAdded }: Props) {
     const { isLoggedIn } = useAuth();
     const router = useRouter();
 
@@ -69,14 +101,15 @@ export default function PhotoAddButton() {
             const data = (await res.json().catch(() => ({}))) as any;
 
             if (!res.ok) {
-                if (res.status === 401) {
-                    setError("登录已失效，请重新登录后再试");
-                    return;
-                }
-                setError(String(data?.message || data?.error || "添加失败，请重试"));
+                setError(resolvePublishError(res.status, data));
                 return;
             }
 
+            onAdded?.({
+                src: trimmedSrc,
+                alt: trimmedAlt,
+                caption: trimmedCaption || undefined,
+            });
             close();
             router.refresh();
         } catch {
@@ -105,7 +138,7 @@ export default function PhotoAddButton() {
 
             const data = (await res.json().catch(() => ({}))) as any;
             if (!res.ok || data?.status === false) {
-                setError(typeof data?.message === "string" ? data.message : `上传失败：${res.status}`);
+                setError(resolveUploadError(res.status, data));
                 return;
             }
 
