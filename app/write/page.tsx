@@ -265,7 +265,7 @@ function WritePageContent() {
                 } else {
                     let serverMessage = "";
                     try {
-                        const data = (await res.json()) as any;
+                        const data = (await res.json().catch(() => ({}))) as any;
                         serverMessage = typeof data?.message === "string" ? data.message : "";
                     } catch {
                         // ignore
@@ -456,7 +456,7 @@ function WritePageContent() {
                 setStatus({ state: "error", message: "登录已失效，请重新登录" });
                 return;
             }
-            const data = (await res.json()) as any;
+            const data = (await res.json().catch(() => ({}))) as any;
             if (!res.ok) {
                 setStatus({ state: "error", message: data?.message || `加载失败：${res.status}` });
                 return;
@@ -545,7 +545,7 @@ function WritePageContent() {
                 return;
             }
 
-            const data = (await res.json()) as any;
+            const data = (await res.json().catch(() => ({}))) as any;
             if (!res.ok) {
                 setStatus({ state: "error", message: data?.message || `提交失败：${res.status}` });
                 return;
@@ -592,7 +592,7 @@ function WritePageContent() {
                 return;
             }
 
-            const data = (await res.json()) as any;
+            const data = (await res.json().catch(() => ({}))) as any;
             if (!res.ok) {
                 setStatus({ state: "error", message: data?.message || `删除失败：${res.status}` });
                 return;
@@ -790,7 +790,7 @@ function WritePageContent() {
                                             {status.state === "working" ? status.message : "处理中..."}
                                         </span>
                                     ) : (
-                                        publishType === "moment" ? "发布说说" : "发布/更新"
+                                        publishType === "moment" ? "发布/修改说说" : "发布/修改文章"
                                     )}
                                 </Button>
                                 <Button

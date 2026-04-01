@@ -38,7 +38,7 @@ export default function PostAdminBar({ slug }: Props) {
                 href={`/write?slug=${encodeURIComponent(slug)}`}
                 className="rounded-full border border-black/10 bg-black/[0.03] px-3 py-1 text-xs text-black/55 transition hover:border-black/18 hover:bg-black/[0.06] dark:border-white/[0.08] dark:bg-white/[0.02] dark:text-white/55 dark:hover:border-white/[0.14]"
             >
-                编辑
+                修改
             </Link>
             <button
                 type="button"
