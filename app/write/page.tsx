@@ -42,6 +42,27 @@ type ImageUploadStatus =
     | { state: "success"; message: string }
     | { state: "error"; message: string };
 
+function toFriendlyAdminErrorMessage(message: string, fallback: string): string {
+    const text = String(message || "").trim();
+    if (!text) return fallback;
+
+    if (
+        /api\.notion\.com/i.test(text)
+        || /request to\s+https?:\/\/.*notion/i.test(text)
+        || /failed,\s*reason:/i.test(text)
+        || /fetch failed/i.test(text)
+        || /econnreset|enotfound|etimedout|eai_again/i.test(text)
+    ) {
+        return "Notion 连接失败，请稍后再试";
+    }
+
+    if (/429|rate[_\s-]?limit|too many requests|throttl/i.test(text)) {
+        return "请求过于频繁，请稍后再试";
+    }
+
+    return text;
+}
+
 function getSessionAuthorName(user: SessionUser | null): string {
     return String(user?.displayName || user?.username || "").trim();
 }
@@ -274,7 +295,7 @@ function WritePageContent() {
                     } catch {
                         // ignore
                     }
-                    setUnlockError(serverMessage || `解锁失败（${res.status}）`);
+                    setUnlockError(toFriendlyAdminErrorMessage(serverMessage, `解锁失败（${res.status}）`));
                 }
                 return;
             }
@@ -292,7 +313,7 @@ function WritePageContent() {
             setIsUnlocked(false);
             setSessionUser(null);
             const message = e instanceof Error ? e.message : "验证失败";
-            setUnlockError(message);
+            setUnlockError(toFriendlyAdminErrorMessage(message, "验证失败"));
         } finally {
             setIsUnlocking(false);
         }
@@ -506,7 +527,7 @@ function WritePageContent() {
             return;
         }
 
-        setStatus({ state: "working", message: "正在加载文章..." });
+        setStatus({ state: "working", message: "加载中..." });
         try {
             const res = await fetch(adminApiUrl(`/api/admin/posts?slug=${encodeURIComponent(normalizedSlug)}`), {
                 credentials: adminCredentials(),
@@ -524,7 +545,8 @@ function WritePageContent() {
             }
             const data = (await res.json().catch(() => ({}))) as any;
             if (!res.ok) {
-                setStatus({ state: "error", message: data?.message || `加载失败：${res.status}` });
+                const rawMessage = typeof data?.message === "string" ? data.message : "";
+                setStatus({ state: "error", message: toFriendlyAdminErrorMessage(rawMessage, `加载失败：${res.status}`) });
                 return;
             }
 
@@ -541,7 +563,7 @@ function WritePageContent() {
             setStatus({ state: "success", message: "已加载，可直接更新或删除。" });
         } catch (e) {
             const message = e instanceof Error ? e.message : "加载失败";
-            setStatus({ state: "error", message });
+            setStatus({ state: "error", message: toFriendlyAdminErrorMessage(message, "加载失败") });
         }
     }
 
@@ -577,7 +599,7 @@ function WritePageContent() {
 
         const effectiveDate = isMoment ? new Date().toISOString() : date.trim();
 
-        setStatus({ state: "working", message: "正在提交..." });
+        setStatus({ state: "working", message: "提交中..." });
         try {
             const kwList = keywords
                 .split(",")
@@ -617,7 +639,8 @@ function WritePageContent() {
 
             const data = (await res.json().catch(() => ({}))) as any;
             if (!res.ok) {
-                setStatus({ state: "error", message: data?.message || `提交失败：${res.status}` });
+                const rawMessage = typeof data?.message === "string" ? data.message : "";
+                setStatus({ state: "error", message: toFriendlyAdminErrorMessage(rawMessage, `提交失败：${res.status}`) });
                 return;
             }
 
@@ -635,7 +658,7 @@ function WritePageContent() {
             });
         } catch (e) {
             const message = e instanceof Error ? e.message : "发布失败";
-            setStatus({ state: "error", message });
+            setStatus({ state: "error", message: toFriendlyAdminErrorMessage(message, "发布失败") });
         }
     }
 
@@ -855,9 +878,9 @@ function WritePageContent() {
                                     className={`flex-1 ${BUTTON_PRIMARY}`}
                                 >
                                     {isWorking ? (
-                                        <span className="inline-flex items-center gap-2">
+                                        <span className="inline-flex items-center gap-2 whitespace-nowrap">
                                             <Spinner size="sm" />
-                                            {status.state === "working" ? status.message : "处理中..."}
+                                            处理中...
                                         </span>
                                     ) : (
                                         publishType === "moment" ? "发布/修改说说" : "发布/修改文章"

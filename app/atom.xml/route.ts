@@ -2,7 +2,31 @@ import { SITE } from "@/app/site-config";
 import { getSortedPostsData } from "@/lib/posts";
 import { getSiteUrl } from "@/lib/site-url";
 
-export const dynamic = "force-static";
+export const dynamic = "force-dynamic";
+
+function normalizeBaseUrl(value: string): string {
+    return String(value || "").trim().replace(/\/+$/g, "");
+}
+
+function isLocalhostBase(value: string): boolean {
+    return /^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/i.test(value);
+}
+
+function resolveSiteUrlFromRequest(request: Request): string {
+    const configured = normalizeBaseUrl(getSiteUrl());
+    const requestOrigin = normalizeBaseUrl((() => {
+        try {
+            return new URL(request.url).origin;
+        } catch {
+            return "";
+        }
+    })());
+
+    if (configured && !isLocalhostBase(configured)) return configured;
+    if (requestOrigin) return requestOrigin;
+    if (configured) return configured;
+    return "http://localhost:3000";
+}
 
 function escapeXml(value: string): string {
     return value
@@ -21,8 +45,8 @@ function toIsoDate(value: string): string {
     return d.toISOString();
 }
 
-export async function GET() {
-    const siteUrl = getSiteUrl().replace(/\/+$/g, "");
+export async function GET(request: Request) {
+    const siteUrl = resolveSiteUrlFromRequest(request);
     const feedId = siteUrl;
     const feedUrl = `${siteUrl}/atom.xml`;
 

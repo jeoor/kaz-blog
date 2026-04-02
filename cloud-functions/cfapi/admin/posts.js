@@ -116,6 +116,7 @@ function readTextProperty(prop) {
     if (!prop || typeof prop !== "object") return "";
     if (prop.type === "title") return plainFromRich(prop.title);
     if (prop.type === "rich_text") return plainFromRich(prop.rich_text);
+    if (prop.type === "url") return String(prop.url || "");
     if (prop.type === "date") return prop.date?.start || "";
     if (prop.type === "formula") {
         const f = prop.formula;
