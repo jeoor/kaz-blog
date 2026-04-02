@@ -48,7 +48,7 @@ export default function PostCard({ post }: Props) {
         </>
       ) : null}
 
-      <div className={[hasCover ? "md:pr-[17.5rem]" : ""].join(" ")}>
+      <div className={hasCover ? "md:pr-[17.5rem]" : ""}>
         <div className="min-w-0">
           <div className="text-xs text-black/44 dark:text-white/44">
             <div className="flex flex-wrap items-center gap-x-2 gap-y-1 font-medium">
