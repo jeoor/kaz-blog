@@ -23,8 +23,8 @@ async function resolveSiteBase(): Promise<string> {
   const proto = forwardedProto || (host.includes("localhost") || host.startsWith("127.0.0.1") ? "http" : "https");
   const requestBase = host ? normalizeBaseUrl(`${proto}://${host}`) : "";
 
-  if (configured && !isLocalhostBase(configured)) return configured;
   if (requestBase) return requestBase;
+  if (configured && !isLocalhostBase(configured)) return configured;
   if (configured) return configured;
   return "http://localhost:3000";
 }
