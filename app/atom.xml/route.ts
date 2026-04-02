@@ -14,7 +14,7 @@ function isLocalhostBase(value: string): boolean {
 
 function resolveSiteUrlFromRequest(request: Request): string {
     const configured = normalizeBaseUrl(getSiteUrl());
-    
+
     // Get forwarded headers from reverse proxy (Cloudflare, etc.)
     const forwardedProto = String(request.headers.get("x-forwarded-proto") || "").split(",")[0].trim();
     const forwardedHost = String(request.headers.get("x-forwarded-host") || "").split(",")[0].trim();
