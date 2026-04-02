@@ -246,7 +246,7 @@ export default function PhotoAddButton({ onAdded }: Props) {
             <button
                 type="button"
                 onClick={() => setOpen(true)}
-                className="rounded-[1.1rem] border border-black/8 bg-black/[0.02] px-4 py-2 text-sm text-black/62 transition hover:bg-black/[0.04] dark:border-white/[0.05] dark:bg-white/[0.02] dark:text-white/60 dark:hover:bg-white/[0.04]"
+                className="rounded-[1.1rem] border border-black/15 bg-black/[0.05] px-4 py-2 text-sm text-black/78 transition hover:bg-black/[0.08] dark:border-white/[0.08] dark:bg-white/[0.04] dark:text-white/80 dark:hover:bg-white/[0.07]"
             >
                 添加照片
             </button>
@@ -335,7 +335,7 @@ export default function PhotoAddButton({ onAdded }: Props) {
                             <button
                                 type="submit"
                                 disabled={loading || uploading}
-                                className="rounded-[1rem] bg-black/85 px-5 py-2 text-sm font-medium text-white transition hover:bg-black disabled:opacity-50 dark:bg-white/90 dark:text-black dark:hover:bg-white"
+                                className="rounded-[1rem] border border-black/20 bg-black px-5 py-2 text-sm font-medium text-white transition hover:bg-black/90 disabled:cursor-not-allowed disabled:bg-black/40 disabled:text-white/85 dark:border-white/20 dark:bg-white/90 dark:text-black dark:hover:bg-white dark:disabled:bg-white/45 dark:disabled:text-black/70"
                             >
                                 {loading ? "添加中…" : "添加"}
                             </button>

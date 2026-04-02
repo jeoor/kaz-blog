@@ -168,11 +168,14 @@ export default function WritePage() {
 function WritePageContent() {
     const contentId = useId();
     const imageInputId = useId();
+    const coverInputId = useId();
     const textareaRef = useRef<HTMLTextAreaElement>(null);
     const imageInputRef = useRef<HTMLInputElement>(null);
+    const coverInputRef = useRef<HTMLInputElement>(null);
     const searchParams = useSearchParams();
     const [status, setStatus] = useState<UiStatus>({ state: "idle" });
     const [imageUploadStatus, setImageUploadStatus] = useState<ImageUploadStatus>({ state: "idle" });
+    const [coverUploadStatus, setCoverUploadStatus] = useState<ImageUploadStatus>({ state: "idle" });
 
     const [editorMode, setEditorMode] = useState<"edit" | "preview">("edit");
     const [previewHtml, setPreviewHtml] = useState<string>("");
@@ -430,6 +433,67 @@ function WritePageContent() {
         } finally {
             if (imageInputRef.current) {
                 imageInputRef.current.value = "";
+            }
+        }
+    }
+
+    async function uploadCoverFile(file: File): Promise<void> {
+        if (!file) return;
+
+        setCoverUploadStatus({ state: "working", message: `正在处理 ${file.name}...` });
+
+        try {
+            const uploadFile = shouldConvertImageToWebp(file) ? await convertImageFileToWebp(file) : file;
+
+            setCoverUploadStatus({
+                state: "working",
+                message: uploadFile === file
+                    ? `正在上传 ${uploadFile.name}...`
+                    : `已转为 webp，正在上传 ${uploadFile.name}...`,
+            });
+
+            const formData = new FormData();
+            formData.append("file", uploadFile);
+            formData.append("permission", "1");
+
+            const headers: Record<string, string> = {
+                Accept: "application/json",
+            };
+
+            const res = await fetch(adminApiUrl("/api/admin/images"), {
+                method: "POST",
+                headers,
+                credentials: adminCredentials(),
+                body: formData,
+            });
+
+            const data = (await res.json().catch(() => ({}))) as any;
+            if (!res.ok || data?.status === false) {
+                const message = typeof data?.message === "string" ? data.message : `上传失败：${res.status}`;
+                setCoverUploadStatus({ state: "error", message });
+                return;
+            }
+
+            const links = data?.data?.links || {};
+            const coverUrl = typeof links.url === "string" ? links.url.trim() : "";
+            if (!coverUrl) {
+                setCoverUploadStatus({ state: "error", message: "上传成功，但接口未返回图片 URL。" });
+                return;
+            }
+
+            setCover(coverUrl);
+            setCoverUploadStatus({
+                state: "success",
+                message: uploadFile === file
+                    ? "封面已上传，地址已自动填入。"
+                    : "封面已自动压缩为 webp 并上传，地址已自动填入。",
+            });
+        } catch (error) {
+            const message = error instanceof Error ? error.message : "封面上传失败";
+            setCoverUploadStatus({ state: "error", message });
+        } finally {
+            if (coverInputRef.current) {
+                coverInputRef.current.value = "";
             }
         }
     }
@@ -940,6 +1004,40 @@ function WritePageContent() {
                                 <div className="space-y-2">
                                     <label className="text-sm font-medium text-black/72 dark:text-white/72">封面地址（cover，可选）</label>
                                     <Input aria-label="封面地址（cover，可选）" value={cover} onValueChange={setCover} variant="flat" classNames={inputClassNames} />
+                                    <div className="flex items-center gap-2">
+                                        <input
+                                            id={coverInputId}
+                                            ref={coverInputRef}
+                                            type="file"
+                                            accept="image/jpeg,image/jpg,image/png,image/gif,image/bmp,image/ico,image/webp"
+                                            className="hidden"
+                                            onChange={(event) => {
+                                                const file = event.target.files?.[0];
+                                                if (file) {
+                                                    void uploadCoverFile(file);
+                                                }
+                                            }}
+                                        />
+                                        <Button
+                                            className={BUTTON_OUTLINE}
+                                            isDisabled={isWorking || coverUploadStatus.state === "working"}
+                                            onPress={() => coverInputRef.current?.click()}
+                                        >
+                                            {coverUploadStatus.state === "working" ? "上传中..." : "上传封面"}
+                                        </Button>
+                                    </div>
+                                    {coverUploadStatus.state !== "idle" ? (
+                                        <p className={[
+                                            "text-xs",
+                                            coverUploadStatus.state === "error"
+                                                ? "text-red-400 dark:text-red-300"
+                                                : coverUploadStatus.state === "success"
+                                                    ? "text-emerald-500 dark:text-emerald-300"
+                                                    : "text-black/55 dark:text-white/55",
+                                        ].join(" ")}>
+                                            {coverUploadStatus.message}
+                                        </p>
+                                    ) : null}
                                 </div>
                             ) : null}
                             {!hasSession || isOwnerUser ? (
