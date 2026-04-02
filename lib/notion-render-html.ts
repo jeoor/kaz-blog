@@ -98,7 +98,7 @@ export function renderBlock(block: NotionBlock): string {
             const lang = String((block as any).code?.language || "");
             const code = renderRichText((block as any).code?.rich_text);
             const cls = lang ? ` class=\"language-${escapeHtml(lang)}\"` : "";
-            // code rich text is already escaped
+            // code 的富文本内容已完成转义
             return `<pre><code${cls}>${code}</code></pre>`;
         }
         case "image": {

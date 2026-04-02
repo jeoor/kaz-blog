@@ -85,7 +85,7 @@ function todayYmd(): string {
 }
 
 function crc16CcittFalse(input: string): number {
-    // CRC-16/CCITT-FALSE
+    // CRC-16/CCITT-FALSE 算法
     // poly=0x1021, init=0xFFFF, xorout=0x0000
     let crc = 0xffff;
     for (let i = 0; i < input.length; i++) {
@@ -99,8 +99,8 @@ function crc16CcittFalse(input: string): number {
 }
 
 function generateSlug(): string {
-    // Use a time+random seed, then compress to 16-bit CRC hex.
-    // Output example: "66c8"
+    // 使用时间+随机种子，再压缩为 16 位 CRC 十六进制。
+    // 输出示例："66c8"
     const seed = `${Date.now()}-${Math.random()}`;
     const crc = crc16CcittFalse(seed);
     return crc.toString(16).padStart(4, "0").toLowerCase();
@@ -208,7 +208,7 @@ function WritePageContent() {
     const [unlockError, setUnlockError] = useState<string | null>(null);
     const [sessionUser, setSessionUser] = useState<SessionUser | null>(null);
 
-    // Capture URL params once at mount time (refs avoid stale closure issues)
+    // 组件挂载时只捕获一次 URL 参数（用 ref 避免闭包过期问题）
     const initSlugRef = useRef(searchParams.get("slug") || "");
     const initTypeRef = useRef(searchParams.get("type") || "");
     const autoLoadFiredRef = useRef(false);
@@ -293,7 +293,7 @@ function WritePageContent() {
                         const data = (await res.json().catch(() => ({}))) as any;
                         serverMessage = typeof data?.message === "string" ? data.message : "";
                     } catch {
-                        // ignore
+                        // 忽略
                     }
                     setUnlockError(toFriendlyAdminErrorMessage(serverMessage, `解锁失败（${res.status}）`));
                 }
@@ -328,7 +328,7 @@ function WritePageContent() {
         setAuthor(sessionAuthorName);
     }, [isOwnerUser, sessionAuthorName]);
 
-    // Auto-load when navigated here from an edit button (?slug=xxx&type=moment)
+    // 从编辑按钮跳转到此页时自动加载（?slug=xxx&type=moment）
     useEffect(() => {
         if (!initSlugRef.current || autoLoadFiredRef.current || !isUnlocked) return;
         if (normalizedSlug !== normalizeSlug(initSlugRef.current)) return;
@@ -344,7 +344,7 @@ function WritePageContent() {
                 credentials: adminCredentials(),
             });
         } catch {
-            // Ignore logout request failure and clear local state anyway.
+            // 即使退出请求失败，也继续清理本地状态。
         }
         setSessionUser(null);
         setIsUnlocked(false);

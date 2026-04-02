@@ -172,7 +172,7 @@ async function kvPutText(kv, key, value, ttlSeconds = 0) {
             await kv.put(key, text, { expirationTtl: ttlSeconds });
             return;
         } catch {
-            // Some runtimes don't support put options.
+            // 某些运行时不支持 put 的 options 参数。
         }
     }
     await kv.put(key, text);

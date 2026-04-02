@@ -15,7 +15,7 @@ function logPostsSourceOnce(source: "notion" | "local"): void {
     const g = globalThis as any;
     if (g.__kazBlogPostsSourceLogged) return;
     g.__kazBlogPostsSourceLogged = true;
-    // Keep it short; this is a diagnostic signal.
+    // 保持简短；这是诊断信号。
     console.log(`[posts] source=${source}`);
 }
 
@@ -35,7 +35,7 @@ export async function getSortedPostsData(): Promise<BlogPost[]> {
             logPostsSourceOnce("notion");
             return notionPosts;
         } catch (error) {
-            // Build can generate pages in parallel; avoid noisy logs unless explicitly debugging.
+            // 构建会并行生成页面；除非显式调试，否则避免噪声日志。
             if (!isBuildLifecycle() || isNotionDebugEnabled()) {
                 console.error("[posts] Failed to fetch posts from Notion; falling back to local posts.", error);
             } else {

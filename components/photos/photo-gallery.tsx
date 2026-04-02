@@ -29,7 +29,7 @@ export default function PhotoGallery({ photos, canDelete, deletingSlug, onDelete
         });
     }, [photos.length]);
 
-    // keyboard navigation
+    // 键盘导航
     useEffect(() => {
         if (activeIndex === null) return;
 
@@ -43,7 +43,7 @@ export default function PhotoGallery({ photos, canDelete, deletingSlug, onDelete
         return () => window.removeEventListener("keydown", onKey);
     }, [activeIndex, close, prev, next]);
 
-    // lock scroll when lightbox open
+    // lightbox 打开时锁定页面滚动
     useEffect(() => {
         document.body.style.overflow = activeIndex !== null ? "hidden" : "";
         return () => { document.body.style.overflow = ""; };
@@ -61,7 +61,7 @@ export default function PhotoGallery({ photos, canDelete, deletingSlug, onDelete
 
     return (
         <>
-            {/* Masonry grid using CSS columns */}
+            {/* 使用 CSS columns 实现瀑布流网格 */}
             <div
                 className="pt-10"
                 style={{
@@ -105,7 +105,7 @@ export default function PhotoGallery({ photos, canDelete, deletingSlug, onDelete
                 ))}
             </div>
 
-            {/* Lightbox */}
+            {/* 灯箱 */}
             {active !== null && activeIndex !== null && (
                 <div
                     className="fixed inset-0 z-50 flex items-center justify-center"

@@ -126,7 +126,7 @@ export default function ArticleBody({ contentHtml }: Props) {
                 await navigator.clipboard.writeText(text);
                 return;
             } catch {
-                // Fall back to the legacy copy path when permissions or focus state block Async Clipboard.
+                // 当权限或焦点状态阻止 Async Clipboard 时，回退到旧版复制路径。
             }
         }
 

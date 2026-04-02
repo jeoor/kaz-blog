@@ -9,8 +9,8 @@ export type PhotoItem = {
 
 /**
  * 相册图片列表。
- * src 可以是相对路径（放在 public/ 下）或完整外链。
- * caption 用于 lightbox 底部说明文字，可不填。
+ * src 可以是相对路径（放在静态目录 public/ 下）或完整外链。
+ * caption 用于灯箱底部说明文字，可不填。
  */
 export const PHOTOS: PhotoItem[] = [
     {

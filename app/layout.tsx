@@ -5,8 +5,9 @@ import NavbarComponent from "@/components/navbar";
 import ScrollToTop from "@/components/scroll-to-top";
 import SiteFooter from "@/components/site-footer";
 import { SITE } from "@/app/site-config";
+import { getSiteUrl } from "@/lib/site-url";
 
-const SITE_URL = process.env.NEXT_PUBLIC_URL || "http://localhost:3000";
+const SITE_URL = getSiteUrl();
 
 export const metadata: Metadata = {
   title: {

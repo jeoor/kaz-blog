@@ -20,21 +20,21 @@ const config: Config = {
   darkMode: "class",
   plugins: [
     heroui({
-      prefix: "heroui", // prefix for themes variables
-      addCommonColors: false, // override common colors (e.g. "blue", "green", "pink").
-      defaultTheme: "light", // default theme from the themes object
-      defaultExtendTheme: "light", // default theme to extend on custom themes
-      layout: {}, // common layout tokens (applied to all themes)
+      prefix: "heroui", // 主题变量前缀
+      addCommonColors: false, // 是否覆盖通用颜色（如 "blue"、"green"、"pink"）
+      defaultTheme: "light", // themes 对象中的默认主题
+      defaultExtendTheme: "light", // 自定义主题扩展所基于的默认主题
+      layout: {}, // 通用布局令牌（应用于所有主题）
       themes: {
         light: {
-          layout: {}, // light theme layout tokens
-          colors: {}, // light theme colors
+          layout: {}, // 浅色主题布局令牌
+          colors: {}, // 浅色主题颜色
         },
         dark: {
-          layout: {}, // dark theme layout tokens
-          colors: {}, // dark theme colors
+          layout: {}, // 深色主题布局令牌
+          colors: {}, // 深色主题颜色
         },
-        // ... custom themes
+        // ... 自定义主题
       },
     }),
   ],

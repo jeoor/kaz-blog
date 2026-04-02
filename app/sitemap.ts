@@ -42,9 +42,7 @@ function pickBestBase(candidates: string[]): string {
 }
 
 async function resolveSiteBase(): Promise<string> {
-  const configured = normalizeBaseUrl(
-    process.env.SITE_URL || process.env.NEXT_PUBLIC_SITE_URL || getSiteUrl(),
-  );
+  const configured = normalizeBaseUrl(getSiteUrl());
 
   const h = await headers();
   const forwardedProto = splitHeaderValues(h.get("x-forwarded-proto"))[0] || "";

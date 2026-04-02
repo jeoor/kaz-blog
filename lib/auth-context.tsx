@@ -52,7 +52,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         void checkSession(true);
     }, [checkSession]);
 
-    // Exposed so callers (e.g. login form) can trigger a re-check without remounting.
+    // 对外暴露，便于调用方（如登录表单）在不重挂载的情况下主动重新校验。
     const refresh = useCallback(() => checkSession(false), [checkSession]);
 
     const logout = useCallback(async () => {

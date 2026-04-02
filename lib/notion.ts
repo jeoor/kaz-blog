@@ -50,7 +50,7 @@ function isNpmBuildLifecycle(): boolean {
 }
 
 function isSlugQueryableType(t: string | null): boolean {
-    // Types we can safely filter with equals in `findPageBySlug`.
+    // 在 `findPageBySlug` 中可安全使用 equals 过滤的类型。
     return t === "rich_text" || t === "title" || t === "formula";
 }
 
@@ -59,17 +59,17 @@ function isTextLikeType(t: string | null): boolean {
 }
 
 function isKeywordsType(t: string | null): boolean {
-    // We can read keywords from multi_select; also allow comma text via rich_text/formula.
+    // 关键词可从 multi_select 读取；也允许 rich_text/formula 的逗号分隔文本。
     return t === "multi_select" || t === "rich_text" || t === "formula";
 }
 
 function isPublishedReadableType(t: string | null): boolean {
-    // We can read published from checkbox or formula(boolean).
+    // published 可从 checkbox 或 formula(boolean) 读取。
     return t === "checkbox" || t === "formula";
 }
 
 function isPublishedWritableType(t: string | null): boolean {
-    // Formula is computed and not writable.
+    // Formula 为计算字段，不可写。
     return t === "checkbox";
 }
 
@@ -86,7 +86,7 @@ function classifyRetry(err: any, attempt: number): RetryDecision {
     const status = Number(err?.status || 0);
     const message = String(err?.message || "");
 
-    // Rate limit
+    // 限流
     if (status === 429) {
         const retryAfter = getHeader(err, "retry-after");
         const retryAfterSec = retryAfter ? Number.parseFloat(retryAfter) : NaN;
@@ -96,13 +96,13 @@ function classifyRetry(err: any, attempt: number): RetryDecision {
         return { retry: true, delayMs, reason: "rate_limited" };
     }
 
-    // 5xx transient
+    // 5xx 临时错误
     if (status >= 500 && status <= 599) {
         const delayMs = Math.min(4000, 400 * Math.pow(2, attempt - 1));
         return { retry: true, delayMs, reason: `http_${status}` };
     }
 
-    // Network / socket resets
+    // 网络或 socket 重置
     if (RETRYABLE_NETWORK_CODES.has(code) || message.includes("ECONNRESET") || message.includes("socket hang up")) {
         const delayMs = Math.min(4000, 400 * Math.pow(2, attempt - 1));
         return { retry: true, delayMs, reason: code || "network" };
@@ -232,7 +232,7 @@ export type NotionEnv = {
 };
 
 function getEnvCacheKey(env: NotionEnv): string {
-    // Keep it deterministic but avoid leaking secrets into logs.
+    // 保持确定性，同时避免在日志中泄露敏感信息。
     return [
         env.databaseId,
         env.propSlug,
@@ -287,8 +287,8 @@ export function isNotionEnabled(): boolean {
     return getNotionEnv() !== null;
 }
 
-// In `next build` (SSG) React's `cache()` doesn't reliably share results across page generations.
-// Use a small process-level memo to avoid hammering Notion and spamming logs.
+// 在 `next build`（SSG）期间，React 的 `cache()` 不能稳定在页面生成之间共享结果。
+// 使用进程级小缓存，避免频繁请求 Notion 并刷屏日志。
 const NOTION_READY_TTL_MS = 20_000;
 const METAS_HOT_CACHE_TTL_MS = 45_000;
 
@@ -310,7 +310,7 @@ export async function isNotionReady(): Promise<boolean> {
         }
 
         const props = listDatabasePropertyNames(db);
-        // Minimal requirement: slug property must exist and be queryable.
+        // 最低要求：slug 字段必须存在且可查询。
         if (!props.includes(env.propSlug)) {
             state.notionReadyMemo = { key, value: false, at: Date.now() };
             return false;
@@ -327,8 +327,8 @@ export async function isNotionReady(): Promise<boolean> {
         state.notionReadyMemo = { key, value: ready, at: Date.now() };
         return ready;
     } catch (err) {
-        // `next build` uses multiple parallel workers; logging here can explode output.
-        // Keep it silent by default during build; opt-in via NOTION_DEBUG=1.
+        // `next build` 会并行启动多个 worker；此处打印日志会迅速膨胀。
+        // 构建期间默认静默，可通过 NOTION_DEBUG=1 显式开启。
         if (!isNpmBuildLifecycle() && shouldLog(`notion.schema.verify:${key}`, 30_000)) {
             const info = summarizeNotionError(err);
             if (isNotionDebugEnabled()) {
@@ -350,9 +350,9 @@ function getClient(): Client {
         throw new Error("Notion is not configured: set NOTION_TOKEN and NOTION_DATABASE_ID");
     }
 
-    // Prefer Node 18+ built-in fetch (undici) over node-fetch to:
-    // - avoid DEP0169 url.parse() deprecation warnings
-    // - improve connection stability in some environments
+    // 优先使用 Node 18+ 内置 fetch（undici）而不是 node-fetch：
+    // - 避免 DEP0169 url.parse() 弃用告警
+    // - 在部分环境下提升连接稳定性
     const supportedFetch = typeof globalThis.fetch === "function" ? globalThis.fetch.bind(globalThis) : undefined;
 
     return new Client({
@@ -521,8 +521,8 @@ export const getAllPostMetas = cache(async (): Promise<NotionPostMeta[]> => {
     try {
         pages = await queryAllDatabasePages({ client, databaseId: env.databaseId });
     } catch (err) {
-        // Transient network errors are common in some environments.
-        // If we have a recent successful snapshot, serve it instead of throwing (avoids falling back to local).
+        // 某些环境中临时网络错误较常见。
+        // 若近期有成功快照，则优先返回缓存，避免直接抛错触发本地回退。
         const memo = state.metasMemo;
         const maxAgeMs = 5 * 60_000;
         if (memo && memo.key === key && Date.now() - memo.at < maxAgeMs) {
@@ -542,7 +542,7 @@ export const getAllPostMetas = cache(async (): Promise<NotionPostMeta[]> => {
     const metas = pages
         .filter((p) => isActivePage(p))
         .filter((p) => {
-            // Exclude moment/shuoshuo and photo pages from article list
+            // 从文章列表中排除 moment/shuoshuo 与 photo 页面
             const typeVal = propertyString(p, propType).trim().toLowerCase();
             if (typeVal === "moment" || typeVal === "说说") return false;
             if (typeVal === photoTypeValue || typeVal === "照片" || typeVal === "gallery") return false;
@@ -565,7 +565,7 @@ export const findPageBySlug = cache(async (slug: string): Promise<NotionPage | n
     const env = getNotionEnv();
     if (!env) return null;
 
-    // Reject moment/shuoshuo and photo slugs from article detail pages
+    // 在文章详情查询中排除 moment/shuoshuo 与 photo 的 slug
     const slugLower = slug.toLowerCase();
     if (slugLower.startsWith("moment-") || slugLower.startsWith("m-")) {
         return null;
@@ -576,7 +576,7 @@ export const findPageBySlug = cache(async (slug: string): Promise<NotionPage | n
 
     let slugType: string | null = null;
 
-    // Avoid Notion validation errors when the database schema doesn't have the slug property.
+    // 当数据库 schema 不含 slug 字段时，避免触发 Notion validation_error。
     try {
         const schema = await getDatabaseSchema();
         const db = schema?.database;
@@ -588,8 +588,8 @@ export const findPageBySlug = cache(async (slug: string): Promise<NotionPage | n
             if (!isSlugQueryableType(slugType)) return null;
         }
     } catch {
-        // If we can't read schema (e.g. transient ECONNRESET), still try querying.
-        // We'll swallow validation_error in the query attempts below.
+        // 若无法读取 schema（如临时 ECONNRESET），仍继续尝试查询。
+        // 下方查询分支会吞掉 validation_error。
     }
 
     const client = getClient();
@@ -605,7 +605,7 @@ export const findPageBySlug = cache(async (slug: string): Promise<NotionPage | n
         const firstActive = res.results.find((result) => result && typeof result === "object" && "properties" in (result as any) && isActivePage(result as any));
         if (firstActive) {
             const page = firstActive as any;
-            // Double-check this isn't a moment page
+            // 二次确认这不是 moment 页面
             const propType = (process.env.NOTION_PROP_TYPE || "Type").trim();
             const typeVal = propertyString(page, propType).trim().toLowerCase();
             if (typeVal === "moment" || typeVal === "说说") return null;
@@ -615,7 +615,7 @@ export const findPageBySlug = cache(async (slug: string): Promise<NotionPage | n
         const first = res.results.find((result) => result && typeof result === "object" && "properties" in (result as any));
         if (first) {
             const page = first as any;
-            // Double-check this isn't a moment page
+            // 二次确认这不是 moment 页面
             const propType = (process.env.NOTION_PROP_TYPE || "Type").trim();
             const typeVal = propertyString(page, propType).trim().toLowerCase();
             if (typeVal === "moment" || typeVal === "说说") return null;
@@ -643,7 +643,7 @@ export const findPageBySlug = cache(async (slug: string): Promise<NotionPage | n
         };
     };
 
-    // If schema is known, only run the query shape matching actual property type.
+    // 若已知 schema，则仅执行与真实字段类型匹配的查询形态。
     if (slugType === "formula" || slugType === "rich_text" || slugType === "title") {
         try {
             return await tryQuery(filterByKind(slugType));
@@ -658,7 +658,7 @@ export const findPageBySlug = cache(async (slug: string): Promise<NotionPage | n
             formula: { string: { equals: slug } },
         });
     } catch {
-        // ignore
+        // 忽略
     }
 
     try {
@@ -667,7 +667,7 @@ export const findPageBySlug = cache(async (slug: string): Promise<NotionPage | n
             rich_text: { equals: slug },
         });
     } catch {
-        // ignore
+        // 忽略
     }
 
     try {
@@ -676,7 +676,7 @@ export const findPageBySlug = cache(async (slug: string): Promise<NotionPage | n
             title: { equals: slug },
         });
     } catch {
-        // ignore
+        // 忽略
     }
 
     return null;
@@ -824,14 +824,14 @@ export function buildPageProperties(params: {
             rich_text: splitRichText((params.keywords || []).join(", ")),
         };
     } else {
-        // default: multi_select
+        // 默认：multi_select
         properties[env.propKeywords] = {
             multi_select: (params.keywords || []).map((k) => ({ name: k })),
         };
     }
 
     if (env.propPublished) {
-        // Formula is computed and not writable; only write if it's a checkbox.
+        // Formula 为计算字段不可写；仅在 checkbox 类型时写入。
         if (params.publishedType !== "formula") {
             properties[env.propPublished] = {
                 checkbox: params.published ?? true,
@@ -847,7 +847,7 @@ export function buildPageProperties(params: {
         return properties;
     }
 
-    // Fallback to Notion's default title field name.
+    // 回退到 Notion 默认标题字段名。
     properties.Name = { title: splitRichText(params.title) };
 
     return properties;
@@ -867,12 +867,12 @@ export async function upsertPage(params: {
 
     const client = getClient();
 
-    // Detect the real title property name from database schema to avoid assuming it's "Name".
+    // 从数据库 schema 识别真实标题字段，避免硬编码为 "Name"。
     let schema: { env: NotionEnv; database: NotionDatabase } | null = null;
     try {
         schema = await getDatabaseSchema();
     } catch (err) {
-        // Writing requires schema; without it we can't reliably set properties (and we'd trigger validation errors).
+        // 写入依赖 schema；没有 schema 无法可靠设置属性（且会触发 validation_error）。
         throw new Error(
             "无法读取 Notion 数据库 schema（可能是网络 ECONNRESET/代理/防火墙导致）。写入需要先能成功访问 databases.retrieve。\n\n" +
             "建议：先运行 npm run notion:check 验证连通性；或稍后重试。"
@@ -889,7 +889,7 @@ export async function upsertPage(params: {
     const existingPropNames = db ? listDatabasePropertyNames(db) : [];
     const titlePropName = db ? findDatabaseTitlePropertyName(db) : null;
 
-    // Ensure required properties exist (except title, which we auto-detect).
+    // 确保必需字段存在（标题字段会自动识别）。
     const required = [env.propSlug, env.propDate, env.propDescription, env.propAuthor, env.propKeywords, env.propPublished].filter(Boolean);
     const missing = required.filter((name) => !existingPropNames.includes(name));
     if (missing.length > 0) {
@@ -899,7 +899,7 @@ export async function upsertPage(params: {
     const mismatches: Array<{ name: string; expected: string[]; actual: string | null }> = [];
 
     const slugType = getDatabasePropertyType(db, env.propSlug);
-    // We write slug as rich_text.
+    // slug 以 rich_text 类型写入。
     if (slugType !== "rich_text") mismatches.push({ name: env.propSlug, expected: ["rich_text"], actual: slugType });
 
     const dateType = getDatabasePropertyType(db, env.propDate);
@@ -917,7 +917,7 @@ export async function upsertPage(params: {
     }
 
     const publishedType = getDatabasePropertyType(db, env.propPublished);
-    // Published can be a checkbox (writable) or formula (read-only). We'll only write when it's checkbox.
+    // Published 可能是 checkbox（可写）或 formula（只读）；仅在 checkbox 时写入。
     if (!isPublishedReadableType(publishedType)) mismatches.push({ name: env.propPublished, expected: ["checkbox", "formula"], actual: publishedType });
 
     if (mismatches.length > 0) {
@@ -968,7 +968,7 @@ export async function upsertPage(params: {
         })
     );
 
-    // Clear existing children (archive first-level blocks)
+    // 清空现有子块（归档第一层 blocks）
     const children = await listAllBlockChildren({ client, blockId: existing.id });
     for (const blk of children) {
         await withNotionRetry("blocks.update(archive)", () =>
@@ -979,7 +979,7 @@ export async function upsertPage(params: {
         );
     }
 
-    // Append new children (chunked)
+    // 追加新的子块（分片）
     const chunkSize = 100;
     for (let i = 0; i < params.children.length; i += chunkSize) {
         const slice = params.children.slice(i, i + chunkSize);

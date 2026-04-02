@@ -29,12 +29,12 @@ function getPhotoEnv(): PhotoEnv | null {
         propAuthor: String(process.env.NOTION_PROP_AUTHOR || "Author").trim(),
         propPublished: String(process.env.NOTION_PROP_PUBLISHED || "Published").trim(),
         propType: String(process.env.NOTION_PROP_TYPE || "Type").trim(),
-        // The value written in the Type column to mark a photo entry.
+        // 在 Type 列中用于标记照片条目的值。
         photoTypeValue: String(process.env.NOTION_PHOTO_TYPE || "photo").trim(),
     };
 }
 
-/** Returns true if this database page is a photo gallery entry */
+/** 判断该数据库页面是否为相册条目 */
 export function isPhotoPage(
     page: NotionPage,
     env: { propType: string; propSlug: string; photoTypeValue: string },
@@ -81,7 +81,7 @@ export function isPhotoPage(
     return slug.startsWith("photo-");
 }
 
-// Matches: ![alt](https://url) or ![alt](https://url "caption")
+// 匹配：![alt](https://url) 或 ![alt](https://url "caption")
 const MD_IMG_RE = /^!\[([^\]]*)\]\((https?:\/\/[^\s)]+)(?:\s+"([^"]*)")?\)$/;
 
 function richTextToPlain(rich: any[] | undefined): string {
@@ -154,7 +154,7 @@ async function listBlockChildren(client: Client, blockId: string): Promise<Notio
     return blocks;
 }
 
-/** Extract PhotoItem from a photo page's blocks. */
+/** 从照片页面的 blocks 中提取 PhotoItem。 */
 async function photoPageToItem(
     env: PhotoEnv,
     client: Client,
@@ -166,7 +166,7 @@ async function photoPageToItem(
     const blocks = await listBlockChildren(client, page.id);
 
     for (const block of blocks) {
-        // Native Notion image block
+        // Notion 原生图片 block
         if (block?.type === "image") {
             const img = block.image;
             const src: string =
@@ -184,7 +184,7 @@ async function photoPageToItem(
                     date: date || undefined,
                 };
         }
-        // Paragraph containing markdown image syntax
+        // 包含 Markdown 图片语法的段落
         if (block?.type === "paragraph") {
             const text = richTextToPlain(block.paragraph?.rich_text).trim();
             const match = MD_IMG_RE.exec(text);
@@ -203,10 +203,10 @@ async function photoPageToItem(
 }
 
 /**
- * Load photos from the Notion database (one database page per photo, Type="photo").
- * Returns [] when Notion is configured but no published photo pages exist.
- * Returns null only when Notion is not configured or request fails,
- * so the caller can decide whether to fall back to local photos.config.ts.
+ * 从 Notion 数据库加载照片（每张照片对应一个数据库页面，Type="photo"）。
+ * 当 Notion 已配置但没有已发布照片页面时返回 []。
+ * 仅在 Notion 未配置或请求失败时返回 null，
+ * 以便调用方决定是否回退到本地 photos.config.ts。
  */
 export async function getPhotosFromNotion(): Promise<PhotoItem[] | null> {
     if (!isNotionEnabled()) return null;
@@ -255,9 +255,9 @@ function buildPhotoSlug(): string {
 }
 
 /**
- * Create a new Notion database page for one photo entry.
- * Each photo is a page in the same database with Type="photo".
- * The page body contains `![alt](url "caption")` as a paragraph block.
+ * 为单张照片创建一个新的 Notion 数据库页面。
+ * 每张照片在同一数据库中对应一个 Type="photo" 的页面。
+ * 页面正文包含 `![alt](url "caption")` 的段落 block。
  */
 export async function createPhotoInNotion(params: {
     src: string;
@@ -273,7 +273,7 @@ export async function createPhotoInNotion(params: {
     const captionPart = caption ? ` "${caption}"` : "";
     const markdownText = `![${alt || ""}](${src}${captionPart})`;
 
-    // Find the title property name from database schema
+    // 从数据库 schema 中找出标题字段名
     const db = (await client.databases.retrieve({ database_id: env.databaseId })) as any;
     const titlePropName: string = (() => {
         for (const [name, def] of Object.entries<any>(db?.properties ?? {})) {
@@ -289,7 +289,7 @@ export async function createPhotoInNotion(params: {
         [env.propPublished]: { checkbox: true },
     };
 
-    // Set the Type property if it exists and is a writable type
+    // 若 Type 字段存在且可写，则写入 Type 值
     const typePropDef = db?.properties?.[env.propType];
     if (typePropDef?.type === "select" || typePropDef?.type === "status") {
         properties[env.propType] = { [typePropDef.type]: { name: env.photoTypeValue } };

@@ -11,7 +11,7 @@ function getPostsDirectory(): string {
 }
 
 /**
- * Gets all posts data sorted by date in descending order.
+ * 获取全部文章数据，并按日期降序排序。
  */
 export function getSortedPostsDataLocal(): BlogPost[] {
     const postsDirectory = getPostsDirectory();
@@ -49,8 +49,8 @@ export function getSortedPostsDataLocal(): BlogPost[] {
 }
 
 /**
- * Retrieves the metadata and content for a blog post by ID, converts the content from Markdown to HTML,
- * and returns a BlogPost object enriched with the generated HTML content.
+ * 按 ID 读取单篇文章的元数据与正文，将 Markdown 转为 HTML，
+ * 并返回包含生成后 HTML 内容的 BlogPost 对象。
  */
 export async function getPostDataLocal(id: string): Promise<BlogPost & { contentHtml: string; toc: PostTocItem[] }> {
     const postsDirectory = getPostsDirectory();

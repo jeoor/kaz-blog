@@ -1,5 +1,6 @@
 export const SITE = {
   title: "KazZz",
+  url: "https://kaz-blog.kayro.cn",
   description: "一个以文章为主的简洁博客，记录技术、项目与长期思考。",
   tagline: "写作优先，结构克制。",
   author: "Kaz",

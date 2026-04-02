@@ -11,14 +11,14 @@ export function adminCredentials(): RequestCredentials {
     if (!ADMIN_API_BASE) return "include";
     if (ADMIN_API_BASE.startsWith("/")) return "include";
     try {
-        // If the base is same-origin, cookies (if any) are safe to include.
+        // 若 base 与当前站点同源，可安全携带 cookie（如有）。
         if (typeof window !== "undefined") {
             const baseOrigin = new URL(ADMIN_API_BASE, window.location.origin).origin;
             if (baseOrigin === window.location.origin) return "include";
         }
     } catch {
-        // Ignore parse errors; default to omitting credentials for safety.
+        // 忽略解析错误；默认不携带凭据更安全。
     }
-    // Cross-origin: omit credentials to avoid CORS/3p-cookie issues.
+    // 跨域时不携带凭据，避免 CORS/第三方 cookie 问题。
     return "omit";
 }

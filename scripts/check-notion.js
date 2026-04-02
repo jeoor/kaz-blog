@@ -29,7 +29,7 @@ function loadEnvLocalIfNeeded() {
         const value = stripQuotes(line.slice(idx + 1));
         if (!key) continue;
 
-        // don't override env passed by the shell
+        // 不覆盖 shell 已传入的环境变量
         if (process.env[key] === undefined) process.env[key] = value;
     }
 }
@@ -132,7 +132,7 @@ async function main() {
                 );
             }
 
-            // Type mismatches (common cause of validation_error)
+            // 类型不匹配（validation_error 的常见原因）
             const propTypeByName = new Map(propEntries.map(([name, def]) => [name, def && typeof def === "object" ? def.type : "unknown"]));
             const typeMismatches = [];
             for (const [key, name] of Object.entries(envProps)) {

@@ -16,7 +16,7 @@ export function ThemeSwitcher({ className = "" }: Props) {
     const root = document.documentElement;
     root.classList.add("theme-switching");
 
-    // Force a reflow so the class takes effect before theme mutations.
+    // 强制触发一次重排，确保 class 在主题切换前已生效。
     void root.offsetHeight;
 
     setTheme(isDark ? "light" : "dark");

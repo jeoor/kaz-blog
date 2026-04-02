@@ -18,7 +18,7 @@ function getPrevNext(posts: BlogPost[], currentId: string) {
     const index = posts.findIndex((post) => post.id === currentId);
     if (index < 0) return { prev: null as BlogPost | null, next: null as BlogPost | null };
 
-    // `getSortedPostsData()` is newest -> oldest.
+    // `getSortedPostsData()` 的顺序是从新到旧。
     const newer = index > 0 ? posts[index - 1] : null;
     const older = index < posts.length - 1 ? posts[index + 1] : null;
 

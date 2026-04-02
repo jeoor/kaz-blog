@@ -1,11 +1,11 @@
-// Import necessary modules and components
+// 导入所需模块与组件
 "use client";
 import { HeroUIProvider } from "@heroui/react";
 import { ThemeProvider as NextThemesProvider } from "next-themes";
 import NextTopLoader from "nextjs-toploader";
 import { AuthProvider } from "@/lib/auth-context";
 
-// Define and export the 'Providers' component, which wraps other components with context providers
+// 定义并导出 Providers 组件，为子组件统一包裹上下文提供者
 export function Providers({ children }: { children: React.ReactNode }) {
   return (
     <HeroUIProvider>

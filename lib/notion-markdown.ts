@@ -130,7 +130,7 @@ export function notionBlocksToMarkdown(blocks: NotionBlock[]): string {
                     if (b.children && b.children.length > 0) walk(b.children, indent + "  ");
                     break;
                 default:
-                    // ignore unsupported block types for now
+                    // 暂时忽略不支持的 block 类型
                     break;
             }
         }
@@ -306,12 +306,12 @@ export function markdownToNotionBlocks(markdown: string): any[] {
             continue;
         }
 
-        // paragraph (may contain multiple lines)
+        // 段落（可能包含多行）
         paragraphBuf.push(c.text || "");
     }
 
     if (inCode) {
-        // Unterminated code fence: still flush
+        // 代码围栏未闭合：仍然输出缓存内容
         inCode = false;
         flushCode();
     }

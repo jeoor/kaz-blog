@@ -41,9 +41,7 @@ function pickBestBase(candidates: string[]): string {
 }
 
 function resolveSiteUrlFromRequest(request: Request): string {
-    const configured = normalizeBaseUrl(
-        process.env.SITE_URL || process.env.NEXT_PUBLIC_SITE_URL || getSiteUrl(),
-    );
+    const configured = normalizeBaseUrl(getSiteUrl());
 
     const forwardedProto = splitHeaderValues(request.headers.get("x-forwarded-proto"))[0] || "";
     const forwardedHosts = splitHeaderValues(request.headers.get("x-forwarded-host"));

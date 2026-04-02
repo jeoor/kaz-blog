@@ -4,7 +4,7 @@ import { isNotionEnabled } from "@/lib/notion";
 import { getPhotosFromNotion } from "@/lib/photos-notion";
 
 /**
- * Unified photo loader: tries Notion first, falls back to local photos.config.ts.
+ * 统一相册加载器：优先尝试 Notion，失败时回退到本地 photos.config.ts。
  */
 export async function getPhotos(): Promise<PhotoItem[]> {
     if (isNotionEnabled()) {
