@@ -12,19 +12,61 @@ function isLocalhostBase(value: string): boolean {
     return /^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/i.test(value);
 }
 
+function isProxyBase(value: string): boolean {
+    const host = String(value || "").replace(/^https?:\/\//i, "").split("/")[0].toLowerCase();
+    return host.endsWith(".qcloudteo.com") || host.endsWith(".pages.dev");
+}
+
+function splitHeaderValues(value: string | null): string[] {
+    return String(value || "")
+        .split(",")
+        .map((part) => part.trim())
+        .filter(Boolean);
+}
+
+function toBaseFromHost(host: string, protoHint: string): string {
+    const proto = protoHint || (host.includes("localhost") || host.startsWith("127.0.0.1") ? "http" : "https");
+    return normalizeBaseUrl(`${proto}://${host}`);
+}
+
+function pickBestBase(candidates: string[]): string {
+    const normalized = candidates.map(normalizeBaseUrl).filter(Boolean);
+    const publicBase = normalized.find((item) => !isLocalhostBase(item) && !isProxyBase(item));
+    if (publicBase) return publicBase;
+
+    const nonLocal = normalized.find((item) => !isLocalhostBase(item));
+    if (nonLocal) return nonLocal;
+
+    return normalized[0] || "";
+}
+
 function resolveSiteUrlFromRequest(request: Request): string {
-    const configured = normalizeBaseUrl(getSiteUrl());
+    const configured = normalizeBaseUrl(
+        process.env.SITE_URL || process.env.NEXT_PUBLIC_SITE_URL || getSiteUrl(),
+    );
 
-    // Get forwarded headers from reverse proxy (Cloudflare, etc.)
-    const forwardedProto = String(request.headers.get("x-forwarded-proto") || "").split(",")[0].trim();
-    const forwardedHost = String(request.headers.get("x-forwarded-host") || "").split(",")[0].trim();
-    const host = forwardedHost || String(request.headers.get("host") || "").trim();
-    const proto = forwardedProto || (host.includes("localhost") || host.startsWith("127.0.0.1") ? "http" : "https");
-    const requestBase = host ? normalizeBaseUrl(`${proto}://${host}`) : "";
+    const forwardedProto = splitHeaderValues(request.headers.get("x-forwarded-proto"))[0] || "";
+    const forwardedHosts = splitHeaderValues(request.headers.get("x-forwarded-host"));
+    const originalHosts = splitHeaderValues(request.headers.get("x-original-host"));
+    const realHosts = splitHeaderValues(request.headers.get("x-real-host"));
+    const host = String(request.headers.get("host") || "").trim();
 
+    let urlHost = "";
+    try {
+        urlHost = new URL(request.url).host;
+    } catch {
+        urlHost = "";
+    }
+
+    const hostCandidates = [...forwardedHosts, ...originalHosts, ...realHosts, host, urlHost].filter(Boolean);
+    const requestBases = hostCandidates.map((h) => toBaseFromHost(h, forwardedProto));
+
+    const requestBase = pickBestBase(requestBases);
+    const configuredBase = pickBestBase([configured]);
+
+    if (configuredBase && !isProxyBase(configuredBase) && !isLocalhostBase(configuredBase)) return configuredBase;
     if (requestBase) return requestBase;
-    if (configured && !isLocalhostBase(configured)) return configured;
-    if (configured) return configured;
+    if (configuredBase) return configuredBase;
     return "http://localhost:3000";
 }
 

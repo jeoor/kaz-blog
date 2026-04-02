@@ -7,15 +7,14 @@ import { getPhotosFromNotion } from "@/lib/photos-notion";
  * Unified photo loader: tries Notion first, falls back to local photos.config.ts.
  */
 export async function getPhotos(): Promise<PhotoItem[]> {
-    const notionEnabled = isNotionEnabled();
-
-    try {
-        const notionPhotos = await getPhotosFromNotion();
-        if (notionPhotos !== null) return notionPhotos;
-    } catch {
-        if (notionEnabled) return [];
+    if (isNotionEnabled()) {
+        try {
+            const notionPhotos = await getPhotosFromNotion();
+            if (notionPhotos !== null) return notionPhotos;
+        } catch (error) {
+            console.error("[photos] Failed to fetch photos from Notion, fallback to local photos.config.ts.", error);
+        }
     }
 
-    if (notionEnabled) return [];
     return PHOTOS;
 }

@@ -1,5 +1,6 @@
 import Link from "next/link";
 
+import { SITE } from "@/app/site-config";
 import { getTagHref, normalizeTag } from "@/lib/tags";
 
 import type { RailWidget } from "./right-rail";
@@ -26,11 +27,25 @@ function buildTopTags(posts: BlogPost[]) {
         .slice(0, 10);
 }
 
+function getSiteRunningDays(startDate: string): number | null {
+    const foundedAt = new Date(startDate);
+    if (Number.isNaN(foundedAt.getTime())) return null;
+
+    const foundedDay = new Date(foundedAt.getFullYear(), foundedAt.getMonth(), foundedAt.getDate());
+    const today = new Date();
+    const currentDay = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+    const diffMs = currentDay.getTime() - foundedDay.getTime();
+
+    if (diffMs < 0) return 0;
+    return Math.floor(diffMs / 86400000) + 1;
+}
+
 export function getBlogRailWidgets({ posts, title = "站点概览", note, currentTag }: Props): RailWidget[] {
     const totalPosts = posts.length;
     const topTags = buildTopTags(posts);
     const recentPosts = posts.slice(0, 4);
     const totalTags = new Set(posts.flatMap((post) => post.keywords)).size;
+    const runningDays = getSiteRunningDays(SITE.foundedAt);
 
     const widgets: RailWidget[] = [
         {
@@ -47,6 +62,12 @@ export function getBlogRailWidgets({ posts, title = "站点概览", note, curren
                             <div className="text-[10px] uppercase tracking-[0.24em] text-black/38 dark:text-white/38">标签</div>
                             <div className="mt-2 font-serif text-2xl font-semibold">{totalTags}</div>
                         </div>
+                        {runningDays !== null ? (
+                            <div className="col-span-2 rounded-[1rem] border border-black/8 bg-white/70 px-3 py-3 dark:border-white/[0.05] dark:bg-white/[0.02]">
+                                <div className="text-[10px] uppercase tracking-[0.24em] text-black/38 dark:text-white/38">运行天数</div>
+                                <div className="mt-2 font-serif text-2xl font-semibold">{runningDays}</div>
+                            </div>
+                        ) : null}
                     </div>
                 </WidgetCard>
             ),
