@@ -27,6 +27,10 @@ export default function PhotosPanel({ initialPhotos, title, description }: Props
 
     function canDeletePhoto(photo: PhotoItem): boolean {
         if (!photo.slug) return false;
+
+        const isOwner = normalizeIdentity(user?.role) === "owner";
+        if (isOwner) return true;
+
         const author = normalizeIdentity(photo.author);
         if (!author) return false;
 

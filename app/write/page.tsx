@@ -196,6 +196,7 @@ function WritePageContent() {
     const [title, setTitle] = useState("");
     const [date, setDate] = useState("");
     const [description, setDescription] = useState("");
+    const [cover, setCover] = useState("");
     const [author, setAuthor] = useState("");
     const [keywords, setKeywords] = useState("");
     const [content, setContent] = useState("");
@@ -330,6 +331,7 @@ function WritePageContent() {
     function resetForm(): void {
         setTitle("");
         setDescription("");
+        setCover("");
         setAuthor("");
         setDate(todayYmd());
         setKeywords("");
@@ -467,6 +469,7 @@ function WritePageContent() {
             setTitle(typeof fm.title === "string" ? fm.title : "");
             setDate(typeof fm.date === "string" ? fm.date : todayYmd());
             setDescription(typeof fm.description === "string" ? fm.description : "");
+            setCover(typeof fm.cover === "string" ? fm.cover : "");
             setAuthor(typeof fm.author === "string" ? fm.author : "");
             setKeywords(Array.isArray(fm.keywords) ? fm.keywords.join(",") : "");
             setContent(typeof data.body === "string" ? data.body : "");
@@ -531,6 +534,7 @@ function WritePageContent() {
                         title: title.trim(),
                         date: effectiveDate,
                         description: description.trim(),
+                        cover: cover.trim(),
                         author: effectiveAuthor,
                         keywords: kwList,
                         tags: kwList,
@@ -918,8 +922,8 @@ function WritePageContent() {
 
                             {publishType === "article" ? (
                                 <div className="space-y-2">
-                                    <label className="text-sm font-medium text-black/72 dark:text-white/72">标题（可选）</label>
-                                    <Input aria-label="标题（可选）" value={title} onValueChange={setTitle} variant="flat" classNames={inputClassNames} />
+                                    <label className="text-sm font-medium text-black/72 dark:text-white/72">标题</label>
+                                    <Input aria-label="标题" value={title} onValueChange={setTitle} variant="flat" classNames={inputClassNames} />
                                 </div>
                             ) : null}
                             <div className="space-y-2">
@@ -930,6 +934,12 @@ function WritePageContent() {
                                 <div className="space-y-2">
                                     <label className="text-sm font-medium text-black/72 dark:text-white/72">简介（description，可选）</label>
                                     <Input aria-label="简介（description，可选）" value={description} onValueChange={setDescription} variant="flat" classNames={inputClassNames} />
+                                </div>
+                            ) : null}
+                            {publishType === "article" ? (
+                                <div className="space-y-2">
+                                    <label className="text-sm font-medium text-black/72 dark:text-white/72">封面地址（cover，可选）</label>
+                                    <Input aria-label="封面地址（cover，可选）" value={cover} onValueChange={setCover} variant="flat" classNames={inputClassNames} />
                                 </div>
                             ) : null}
                             {!hasSession || isOwnerUser ? (

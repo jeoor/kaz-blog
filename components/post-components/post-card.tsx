@@ -9,7 +9,7 @@ type Props = {
 };
 
 export default function PostCard({ post }: Props) {
-  const { id, title, date, description, keywords, author } = post;
+  const { id, title, date, description, keywords, author, cover } = post;
   const formattedDate = getFormattedDate(date);
 
   return (
@@ -23,6 +23,12 @@ export default function PostCard({ post }: Props) {
       </div>
 
       <div className="mt-3">
+        {cover ? (
+          <div className="mb-4 overflow-hidden rounded-[1rem] border border-black/8 bg-black/[0.02] dark:border-white/[0.05] dark:bg-white/[0.02]">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src={cover} alt={title} className="h-auto w-full object-cover" loading="lazy" />
+          </div>
+        ) : null}
         <Link
           href={"/posts/" + id}
           className="block font-serif text-[1.8rem] font-semibold leading-[1.2] tracking-tight underline-offset-4 hover:underline focus-visible:underline md:text-[2.05rem]"

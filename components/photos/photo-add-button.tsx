@@ -120,8 +120,7 @@ export default function PhotoAddButton({ onAdded }: Props) {
 
     const [open, setOpen] = useState(false);
     const [src, setSrc] = useState("");
-    const [alt, setAlt] = useState("");
-    const [caption, setCaption] = useState("");
+    const [altCaption, setAltCaption] = useState("");
     const [loading, setLoading] = useState(false);
     const [uploading, setUploading] = useState(false);
     const [error, setError] = useState("");
@@ -132,16 +131,15 @@ export default function PhotoAddButton({ onAdded }: Props) {
     function close() {
         setOpen(false);
         setSrc("");
-        setAlt("");
-        setCaption("");
+        setAltCaption("");
         setError("");
     }
 
     async function handleSubmit(e: React.FormEvent) {
         e.preventDefault();
         const trimmedSrc = src.trim();
-        const trimmedAlt = alt.trim();
-        const trimmedCaption = caption.trim();
+        const trimmedAlt = altCaption.trim();
+        const trimmedCaption = altCaption.trim();
         if (!trimmedSrc) {
             setError("请输入图片地址");
             return;
@@ -227,9 +225,9 @@ export default function PhotoAddButton({ onAdded }: Props) {
             }
 
             setSrc(uploadedUrl);
-            if (!alt.trim()) {
+            if (!altCaption.trim()) {
                 const suggestedAlt = uploadFile.name.replace(/\.[^.]+$/, "").trim();
-                if (suggestedAlt) setAlt(suggestedAlt);
+                if (suggestedAlt) setAltCaption(suggestedAlt);
             }
         } catch (e) {
             setError(e instanceof Error ? e.message : "图片上传失败");
@@ -311,22 +309,12 @@ export default function PhotoAddButton({ onAdded }: Props) {
                                 </div>
                             </div>
                             <div>
-                                <label className={labelCls}>Alt 描述（可选）</label>
-                                <input
-                                    type="text"
-                                    placeholder="图片的文字描述，用于无障碍阅读"
-                                    value={alt}
-                                    onChange={(e) => setAlt(e.target.value)}
-                                    className={inputCls}
-                                />
-                            </div>
-                            <div>
                                 <label className={labelCls}>说明文字（可选）</label>
                                 <input
                                     type="text"
-                                    placeholder="显示在 lightbox 图片下方"
-                                    value={caption}
-                                    onChange={(e) => setCaption(e.target.value)}
+                                    placeholder="图片描述，同时用于 alt 和 lightbox 说明"
+                                    value={altCaption}
+                                    onChange={(e) => setAltCaption(e.target.value)}
                                     className={inputCls}
                                 />
                             </div>

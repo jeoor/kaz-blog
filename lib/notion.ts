@@ -227,6 +227,7 @@ export type NotionEnv = {
     propDescription: string;
     propAuthor: string;
     propKeywords: string;
+    propCover: string;
     propTitle?: string;
 };
 
@@ -240,6 +241,7 @@ function getEnvCacheKey(env: NotionEnv): string {
         env.propDescription,
         env.propAuthor,
         env.propKeywords,
+        env.propCover,
         env.propTitle || "",
     ].join("|");
 }
@@ -252,6 +254,7 @@ export type NotionPostMeta = {
     description: string;
     author: string;
     keywords: string[];
+    cover?: string;
     published: boolean;
 };
 
@@ -275,6 +278,7 @@ function getNotionEnv(): NotionEnv | null {
         propDescription: (process.env.NOTION_PROP_DESCRIPTION || "Description").trim(),
         propAuthor: (process.env.NOTION_PROP_AUTHOR || "Author").trim(),
         propKeywords: (process.env.NOTION_PROP_KEYWORDS || "Keywords").trim(),
+        propCover: (process.env.NOTION_PROP_COVER || "Cover").trim(),
         propTitle: (process.env.NOTION_PROP_TITLE || "").trim() || undefined,
     };
 }
@@ -451,6 +455,7 @@ export function pageToMeta(page: NotionPage, env: NotionEnv): NotionPostMeta {
     const description = propertyString(page, env.propDescription).trim();
     const author = propertyString(page, env.propAuthor).trim();
     const keywords = propertyKeywords(page, env.propKeywords);
+    const cover = propertyString(page, env.propCover).trim();
 
     const publishedProp = propertyBoolean(page, env.propPublished);
     const published = publishedProp === null ? true : publishedProp;
@@ -463,6 +468,7 @@ export function pageToMeta(page: NotionPage, env: NotionEnv): NotionPostMeta {
         description,
         author,
         keywords,
+        cover: cover || undefined,
         published,
     };
 }

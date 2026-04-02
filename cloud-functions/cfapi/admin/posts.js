@@ -66,6 +66,7 @@ function getNotionEnv(context) {
         propDescription: envValue("NOTION_PROP_DESCRIPTION", context).trim() || "Description",
         propAuthor: envValue("NOTION_PROP_AUTHOR", context).trim() || "Author",
         propKeywords: envValue("NOTION_PROP_KEYWORDS", context).trim() || "Keywords",
+        propCover: envValue("NOTION_PROP_COVER", context).trim() || "Cover",
         propTitle: envValue("NOTION_PROP_TITLE", context).trim(),
         propType: envValue("NOTION_PROP_TYPE", context).trim() || "Type",
     };
@@ -95,6 +96,7 @@ function propertyPayloadForSingleValue(def, value) {
     if (!def || !text) return null;
     if (def.type === "rich_text") return { rich_text: richText(text) };
     if (def.type === "title") return { title: richText(text) };
+    if (def.type === "url") return { url: text };
     if (def.type === "select") return { select: { name: text } };
     if (def.type === "status") return { status: { name: text } };
     if (def.type === "multi_select") return { multi_select: [{ name: text }] };
@@ -426,6 +428,12 @@ function buildCreatePropertiesFromPayload(frontmatter, env, titleProp, databaseP
         properties[env.propType] = typePayload;
     }
 
+    const coverDef = databaseProperties?.[env.propCover];
+    const coverPayload = propertyPayloadForSingleValue(coverDef, frontmatter.cover);
+    if (coverPayload) {
+        properties[env.propCover] = coverPayload;
+    }
+
     return properties;
 }
 
@@ -479,6 +487,7 @@ export async function onRequestGet(context) {
                 description: readTextProperty(page.properties?.[env.propDescription]),
                 author: readTextProperty(page.properties?.[env.propAuthor]),
                 keywords: readKeywordsProperty(page.properties?.[env.propKeywords]),
+                cover: readTextProperty(page.properties?.[env.propCover]),
             },
             body,
         });
@@ -519,6 +528,7 @@ export async function onRequestPost(context) {
             date: String(fm.date || "").trim(),
             description: String(fm.description || "").trim(),
             author,
+            cover: String(fm.cover || "").trim(),
             keywords: Array.isArray(fm.tags)
                 ? fm.tags.map((x) => String(x).trim()).filter(Boolean)
                 : Array.isArray(fm.keywords)

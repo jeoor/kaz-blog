@@ -5,6 +5,7 @@ type BlogPost = {
   description: string;
   author: string;
   keywords: string[];
+  cover?: string;
 };
 
 type PostTocItem = {

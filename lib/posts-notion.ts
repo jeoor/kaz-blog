@@ -13,6 +13,7 @@ export async function getSortedPostsDataNotion(): Promise<BlogPost[]> {
         description: m.description,
         author: m.author,
         keywords: m.keywords,
+        cover: m.cover,
     }));
 }
 
@@ -35,6 +36,7 @@ export async function getPostDataNotion(id: string): Promise<BlogPost & { conten
         propDescription: (process.env.NOTION_PROP_DESCRIPTION || "Description").trim(),
         propAuthor: (process.env.NOTION_PROP_AUTHOR || "Author").trim(),
         propKeywords: (process.env.NOTION_PROP_KEYWORDS || "Keywords").trim(),
+        propCover: (process.env.NOTION_PROP_COVER || "Cover").trim(),
         propTitle: (process.env.NOTION_PROP_TITLE || "").trim() || undefined,
     };
 
@@ -49,6 +51,7 @@ export async function getPostDataNotion(id: string): Promise<BlogPost & { conten
         description: meta.description,
         author: meta.author,
         keywords: meta.keywords,
+        cover: meta.cover,
         contentHtml: enhanced.contentHtml,
         toc: enhanced.toc,
     };

@@ -67,6 +67,12 @@ export default async function Post({ params }: { params: Promise<{ postId: strin
       <article className="min-w-0">
         <div className="min-w-0">
           <header className="border-b border-black/10 pb-10 dark:border-white/10">
+            {page.cover ? (
+              <div className="mb-7 overflow-hidden rounded-[1.25rem] border border-black/8 bg-black/[0.02] dark:border-white/[0.05] dark:bg-white/[0.02]">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={page.cover} alt={title} className="h-auto w-full object-cover" />
+              </div>
+            ) : null}
             <h1 className="max-w-4xl font-serif text-4xl font-semibold leading-[1.08] tracking-tight md:text-5xl xl:text-[3.8rem]">
               {title}
             </h1>

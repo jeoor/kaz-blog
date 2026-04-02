@@ -39,6 +39,7 @@ export function getSortedPostsDataLocal(): BlogPost[] {
             keywords: Array.isArray(matterResult.data.keywords)
                 ? matterResult.data.keywords.map((k: unknown) => String(k))
                 : [],
+            cover: String(matterResult.data.cover || "").trim() || undefined,
         };
 
         return blogPost;
@@ -71,6 +72,7 @@ export async function getPostDataLocal(id: string): Promise<BlogPost & { content
         date: String(matterResult.data.date || ""),
         description: String(matterResult.data.description || ""),
         author: String(matterResult.data.author || ""),
+        cover: String(matterResult.data.cover || "").trim() || undefined,
         contentHtml: enhanced.contentHtml,
         toc: enhanced.toc,
         keywords: Array.isArray(matterResult.data.keywords)
