@@ -17,19 +17,35 @@ export default function PostCard({ post }: Props) {
   return (
     <article className="relative overflow-hidden rounded-[1.25rem] border border-black/8 bg-black/[0.02] p-4 transition-transform duration-200 hover:-translate-y-0.5 dark:border-white/[0.05] dark:bg-white/[0.02] md:p-5">
       {hasCover ? (
-        <Link
-          href={"/posts/" + id}
-          aria-label={`${title} 封面`}
-          className="group absolute inset-y-0 right-0 hidden w-[16.5rem] overflow-hidden md:flex md:items-stretch md:justify-end"
-        >
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src={cover}
-            alt={title}
-            className="h-full w-auto max-w-none"
-            loading="lazy"
-          />
-        </Link>
+        <>
+          <Link
+            href={"/posts/" + id}
+            aria-label={`${title} 封面`}
+            className="group -mx-4 -mt-4 mb-4 block overflow-hidden rounded-t-[1.25rem] md:hidden"
+          >
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={cover}
+              alt={title}
+              className="block h-auto w-full"
+              loading="lazy"
+            />
+          </Link>
+
+          <Link
+            href={"/posts/" + id}
+            aria-label={`${title} 封面`}
+            className="group absolute inset-y-0 right-0 hidden w-[16.5rem] overflow-hidden md:flex md:items-stretch md:justify-end"
+          >
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={cover}
+              alt={title}
+              className="h-full w-auto max-w-none"
+              loading="lazy"
+            />
+          </Link>
+        </>
       ) : null}
 
       <div className={[hasCover ? "md:pr-[17.5rem]" : ""].join(" ")}>
