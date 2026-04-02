@@ -14,16 +14,16 @@ function isLocalhostBase(value: string): boolean {
 
 function resolveSiteUrlFromRequest(request: Request): string {
     const configured = normalizeBaseUrl(getSiteUrl());
-    const requestOrigin = normalizeBaseUrl((() => {
-        try {
-            return new URL(request.url).origin;
-        } catch {
-            return "";
-        }
-    })());
+    
+    // Get forwarded headers from reverse proxy (Cloudflare, etc.)
+    const forwardedProto = String(request.headers.get("x-forwarded-proto") || "").split(",")[0].trim();
+    const forwardedHost = String(request.headers.get("x-forwarded-host") || "").split(",")[0].trim();
+    const host = forwardedHost || String(request.headers.get("host") || "").trim();
+    const proto = forwardedProto || (host.includes("localhost") || host.startsWith("127.0.0.1") ? "http" : "https");
+    const requestBase = host ? normalizeBaseUrl(`${proto}://${host}`) : "";
 
     if (configured && !isLocalhostBase(configured)) return configured;
-    if (requestOrigin) return requestOrigin;
+    if (requestBase) return requestBase;
     if (configured) return configured;
     return "http://localhost:3000";
 }
