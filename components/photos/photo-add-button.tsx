@@ -1,8 +1,8 @@
-"use client";
+﻿"use client";
 
 import { useRouter } from "next/navigation";
 import { useRef, useState } from "react";
-import type { PhotoItem } from "@/app/photos.config";
+import type { PhotoItem } from "@/content/photos.config";
 import { toFriendlyNotionConnectionMessage } from "@/components/photos/notion-error";
 import { adminApiUrl, adminCredentials } from "@/lib/admin-api";
 import { useAuth } from "@/lib/auth-context";
@@ -83,7 +83,7 @@ function resolvePublishError(status: number, data: any): string {
         || /throttle/i.test(message)
         || /request_limit_reached/i.test(message)
     ) {
-        return "上传频繁，稍后再试";
+        return "上传频繁，请稍后再试";
     }
     if (status === 401) return "登录已失效，请重新登录后再试";
     if (status === 403) return "当前账号没有发布图片的权限";
@@ -106,7 +106,7 @@ function resolveUploadError(status: number, data: any): string {
     const message = String(data?.message || data?.error || "").trim();
     if (status === 401) return "登录已失效，请重新登录后再上传";
     if (status === 403) return "当前账号没有上传图片的权限";
-    if (/缺少图片文件/.test(message)) return "未选择本地图片文件";
+    if (/missing image file/i.test(message) || /缺少图片文件/.test(message)) return "未选择本地图片文件";
     return message || `上传失败：${status}`;
 }
 
@@ -288,7 +288,7 @@ export default function PhotoAddButton({ onAdded }: Props) {
                                             onClick={() => fileInputRef.current?.click()}
                                             className="rounded-[0.9rem] border border-black/10 bg-black/[0.02] px-3 py-2 text-xs text-black/65 transition hover:bg-black/[0.04] disabled:cursor-not-allowed disabled:opacity-50 dark:border-white/10 dark:bg-white/[0.03] dark:text-white/65 dark:hover:bg-white/[0.05]"
                                         >
-                                            {uploading ? "上传中…" : "上传本地图片"}
+                                            {uploading ? "上传中..." : "上传本地图片"}
                                         </button>
                                         <span className="text-xs text-black/40 dark:text-white/45">
                                             上传后会自动填入图片地址
@@ -337,7 +337,7 @@ export default function PhotoAddButton({ onAdded }: Props) {
                                 disabled={loading || uploading}
                                 className="rounded-[1rem] border border-black/20 bg-black px-5 py-2 text-sm font-medium text-white transition hover:bg-black/90 disabled:cursor-not-allowed disabled:bg-black/40 disabled:text-white/85 dark:border-white/20 dark:bg-white/90 dark:text-black dark:hover:bg-white dark:disabled:bg-white/45 dark:disabled:text-black/70"
                             >
-                                {loading ? "添加中…" : "添加"}
+                                {loading ? "添加中..." : "添加"}
                             </button>
                         </div>
                     </form>

@@ -1,9 +1,9 @@
-"use client";
+﻿"use client";
 
 import { Suspense, useCallback, useEffect, useId, useRef, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { Button, Card, CardBody, Input, Spinner } from "@heroui/react";
-import { SITE } from "@/app/site-config";
+import { SITE } from "@/site-config";
 import ArticleBody from "@/components/post-components/article-body";
 import { adminApiUrl, adminCredentials } from "@/lib/admin-api";
 import { remark } from "remark";
@@ -53,11 +53,11 @@ function toFriendlyAdminErrorMessage(message: string, fallback: string): string 
         || /fetch failed/i.test(text)
         || /econnreset|enotfound|etimedout|eai_again/i.test(text)
     ) {
-        return "Notion 连接失败，请稍后再试";
+        return "Notion 连接失败，请稍后重试";
     }
 
     if (/429|rate[_\s-]?limit|too many requests|throttl/i.test(text)) {
-        return "请求过于频繁，请稍后再试";
+        return "请求过于频繁，请稍后重试";
     }
 
     return text;
@@ -285,7 +285,7 @@ function WritePageContent() {
                     setUnlockError("未登录，请先去登录页");
                 } else if (res.status === 545) {
                     setUnlockError(
-                        "EdgeOne 返回 545：Cloud Functions 执行异常。请优先检查 /cfapi/api/admin/session 函数是否已部署，以及 AUTH_KV_BINDING/NOTION_TOKEN/NOTION_DATABASE_ID 是否已注入。",
+                        "EdgeOne 返回 545，Cloud Functions 执行异常。请优先检查 /cfapi/api/admin/session 函数是否已部署，以及 AUTH_KV_BINDING/NOTION_TOKEN/NOTION_DATABASE_ID 是否已注入。",
                     );
                 } else {
                     let serverMessage = "";
@@ -295,7 +295,7 @@ function WritePageContent() {
                     } catch {
                         // 忽略
                     }
-                    setUnlockError(toFriendlyAdminErrorMessage(serverMessage, `解锁失败（${res.status}）`));
+                    setUnlockError(toFriendlyAdminErrorMessage(serverMessage, `解锁失败：${res.status}`));
                 }
                 return;
             }
@@ -762,7 +762,7 @@ function WritePageContent() {
                                         ref={textareaRef}
                                         value={content}
                                         onChange={(e) => setContent(e.target.value)}
-                                        placeholder="在这里写 Markdown 正文…"
+                                        placeholder="在这里写 Markdown 正文..."
                                         className="h-full w-full resize-none bg-transparent !text-[15px] leading-8 font-medium text-black/90 outline-none dark:text-white/90"
                                     />
                                 </div>
@@ -964,10 +964,10 @@ function WritePageContent() {
 
                             <div className="space-y-2">
                                 <label className="text-sm font-medium text-black/72 dark:text-white/72">
-                                    {publishType === "moment" ? "说说ID（slug）" : "永久链接（slug）"}
+                                    {publishType === "moment" ? "说说 ID（slug）" : "永久链接（slug）"}
                                 </label>
                                 <Input
-                                    aria-label={publishType === "moment" ? "说说ID（slug）" : "永久链接（slug）"}
+                                    aria-label={publishType === "moment" ? "说说 ID（slug）" : "永久链接（slug）"}
                                     value={slug}
                                     onValueChange={setSlug}
                                     variant="flat"

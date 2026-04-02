@@ -1,5 +1,5 @@
-import type { PhotoItem } from "@/app/photos.config";
-import { PHOTOS } from "@/app/photos.config";
+﻿import type { PhotoItem } from "@/content/photos.config";
+import { PHOTOS } from "@/content/photos.config";
 import { isNotionEnabled } from "@/lib/notion";
 import { getPhotosFromNotion } from "@/lib/photos-notion";
 

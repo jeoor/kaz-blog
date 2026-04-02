@@ -1,8 +1,8 @@
-import BlogRightRail from "@/components/layout/blog-right-rail";
+﻿import BlogRightRail from "@/components/layout/blog-right-rail";
 import BlogShell from "@/components/layout/blog-shell";
 import BlogSidebar from "@/components/layout/blog-sidebar";
 import PhotosPanel from "@/components/photos/photos-panel";
-import { SITE } from "@/app/site-config";
+import { SITE } from "@/site-config";
 import { getPhotos } from "@/lib/photos";
 import { getSortedPostsData } from "@/lib/posts";
 

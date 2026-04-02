@@ -1,7 +1,7 @@
-"use client";
+﻿"use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import { SITE } from "@/app/site-config";
+import { SITE } from "@/site-config";
 
 type TwikooInitOptions = {
     envId: string;
@@ -153,7 +153,7 @@ export default function TwikooComments({ title = "评论", className = "", draft
                 {title}
             </div>
             {state === "loading" ? (
-                <p className="mt-4 text-sm leading-7 text-black/60 dark:text-white/60">加载评论中…</p>
+                <p className="mt-4 text-sm leading-7 text-black/60 dark:text-white/60">加载评论中...</p>
             ) : null}
             {state === "error" ? (
                 <p className="mt-4 text-sm leading-7 text-black/60 dark:text-white/60">评论加载失败，请稍后重试。</p>

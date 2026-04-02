@@ -1,10 +1,10 @@
-import { Suspense } from "react";
+﻿import { Suspense } from "react";
 
 import ArchivePosts from "@/components/archive-posts";
 import BlogRightRail from "@/components/layout/blog-right-rail";
 import BlogShell from "@/components/layout/blog-shell";
 import BlogSidebar from "@/components/layout/blog-sidebar";
-import { SITE } from "@/app/site-config";
+import { SITE } from "@/site-config";
 import { getSortedPostsData } from "@/lib/posts";
 
 export const revalidate = 60;

@@ -1,5 +1,5 @@
 ﻿import { Client } from "@notionhq/client";
-import type { PhotoItem } from "@/app/photos.config";
+import type { PhotoItem } from "@/content/photos.config";
 import { isNotionEnabled } from "@/lib/notion";
 
 type NotionPage = any;

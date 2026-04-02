@@ -1,6 +1,6 @@
 import { getSortedPostsData, getPostData } from "@/lib/posts";
 import { notFound } from "next/navigation";
-import { SITE } from "@/app/site-config";
+import { SITE } from "@/site-config";
 import BlogShell from "@/components/layout/blog-shell";
 import BlogSidebar from "@/components/layout/blog-sidebar";
 import ArticleBody from "@/components/post-components/article-body";

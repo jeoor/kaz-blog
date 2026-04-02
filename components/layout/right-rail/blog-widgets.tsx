@@ -1,6 +1,6 @@
-import Link from "next/link";
+﻿import Link from "next/link";
 
-import { SITE } from "@/app/site-config";
+import { SITE } from "@/site-config";
 import { getTagHref, normalizeTag } from "@/lib/tags";
 
 import type { RailWidget } from "./right-rail";

@@ -1,6 +1,6 @@
-import { Suspense } from "react";
+﻿import { Suspense } from "react";
 
-import { SITE } from "@/app/site-config";
+import { SITE } from "@/site-config";
 import BlogRightRail from "@/components/layout/blog-right-rail";
 import BlogShell from "@/components/layout/blog-shell";
 import BlogSidebar from "@/components/layout/blog-sidebar";

@@ -1,35 +1,41 @@
-"use client";
+﻿"use client";
 
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
 
-import { SITE } from "@/app/site-config";
+import { SITE } from "@/site-config";
 import { ThemeSwitcher } from "@/components/ThemeSwitcher";
 import { useAuth } from "@/lib/auth-context";
 
-type SidebarKey = "home" | "archive" | "shuoshuo" | "photos" | "links" | "about" | "write";
+type SidebarKey = string;
 
 type Props = {
     active?: SidebarKey;
 };
 
-const NAV_ITEMS: Array<{ key: SidebarKey; href: string; label: string }> = [
-    { key: "home", href: "/", label: "文章" },
-    { key: "archive", href: "/archive", label: "归档" },
-    { key: "shuoshuo", href: "/shuoshuo", label: "说说" },
-    { key: "photos", href: "/photos", label: "相册" },
-    { key: "links", href: "/links", label: "友链" },
-    { key: "about", href: "/about", label: "关于" },
-    { key: "write", href: "/write", label: "写作台" },
-];
+const HOME_NAV_ITEM = { key: "home", href: "/", label: "文章" };
+
+function toSidebarKey(href: string): string {
+    const path = String(href || "").trim();
+    if (!path || path === "/") return "home";
+    return path.replace(/^\/+/, "").replace(/\/+$/, "") || "home";
+}
 
 export default function BlogSidebar({ active }: Props) {
     const { isLoggedIn, loading, logout } = useAuth();
     const pathname = usePathname();
     const avatarSrc = SITE.avatar?.src?.trim();
     const avatarAlt = (SITE.avatar?.alt || SITE.author || SITE.title).trim();
-    const navItems = NAV_ITEMS.filter((item) => item.key !== "write" || isLoggedIn);
+    const configNav = Array.isArray(SITE.nav) ? SITE.nav : [];
+    const navItems = [
+        HOME_NAV_ITEM,
+        ...configNav.map((item) => ({
+            key: toSidebarKey(item.href),
+            href: item.href,
+            label: item.label,
+        })),
+    ].filter((item) => item.key !== "write" || isLoggedIn);
 
     return (
         <div className="flex min-h-full flex-col gap-5 pr-2">
@@ -51,7 +57,7 @@ export default function BlogSidebar({ active }: Props) {
                 </p>
             </div>
 
-            <nav aria-label="桌面导航" className="rounded-[1.4rem] border border-black/8 bg-black/[0.02] p-3 dark:border-white/[0.05] dark:bg-white/[0.02]">
+            <nav aria-label="桌面端导航" className="rounded-[1.4rem] border border-black/8 bg-black/[0.02] p-3 dark:border-white/[0.05] dark:bg-white/[0.02]">
                 <div className="px-3 pb-2 pt-1 text-[10px] font-semibold uppercase tracking-[0.34em] text-black/40 dark:text-white/40">
                     Navigation
                 </div>

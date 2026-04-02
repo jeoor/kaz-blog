@@ -1,10 +1,10 @@
-"use client";
+﻿"use client";
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
 import { ThemeSwitcher } from "./ThemeSwitcher";
-import { SITE } from "@/app/site-config";
+import { SITE } from "@/site-config";
 import { useAuth } from "@/lib/auth-context";
 
 const NavbarComponent = () => {

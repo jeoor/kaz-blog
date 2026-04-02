@@ -1,9 +1,9 @@
-"use client";
+﻿"use client";
 
 import { useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Button, Card, CardBody, Input, Spinner } from "@heroui/react";
-import { SITE } from "@/app/site-config";
+import { SITE } from "@/site-config";
 import { adminApiUrl, adminCredentials } from "@/lib/admin-api";
 import { useAuth } from "@/lib/auth-context";
 
@@ -262,7 +262,7 @@ export default function LoginClient() {
                                         variant="flat"
                                         classNames={inputClassNames}
                                     />
-                                    <p className="text-xs text-black/52 dark:text-white/52">请向管理员请求邀请码</p>
+                                    <p className="text-xs text-black/52 dark:text-white/52">请向管理员申请邀请码</p>
                                 </div>
                             ) : null}
                             <div className="space-y-2">

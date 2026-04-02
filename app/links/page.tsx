@@ -1,8 +1,8 @@
-import BlogRightRail from "@/components/layout/blog-right-rail";
+﻿import BlogRightRail from "@/components/layout/blog-right-rail";
 import BlogShell from "@/components/layout/blog-shell";
 import BlogSidebar from "@/components/layout/blog-sidebar";
-import { SITE } from "@/app/site-config";
-import { FRIEND_LINKS } from "@/app/links.config";
+import { SITE } from "@/site-config";
+import { FRIEND_LINKS } from "@/content/links.config";
 import { getSortedPostsData } from "@/lib/posts";
 
 export default async function LinksPage() {
@@ -11,7 +11,7 @@ export default async function LinksPage() {
     return (
         <BlogShell
             sidebar={<BlogSidebar active="links" />}
-            aside={<BlogRightRail posts={posts} title="Links" note="保留长期值得访问的站点和入口。" />}
+            aside={<BlogRightRail posts={posts} title="Links" note="保留长期值得访问的网站和入口。" />}
         >
             <header className="border-b border-black/10 pb-10 dark:border-white/10">
                 <div className="max-w-3xl">

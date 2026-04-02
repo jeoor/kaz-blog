@@ -1,6 +1,6 @@
-import Link from "next/link";
+﻿import Link from "next/link";
 
-import { SITE } from "@/app/site-config";
+import { SITE } from "@/site-config";
 import getFormattedDate from "@/lib/getFormattedDate";
 
 type QrItem = {

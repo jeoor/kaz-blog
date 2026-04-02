@@ -1,4 +1,4 @@
-import { SITE } from "@/app/site-config";
+﻿import { SITE } from "@/site-config";
 
 /**
  * 解析服务端生成（sitemap/feed/metadata）使用的站点基础 URL。

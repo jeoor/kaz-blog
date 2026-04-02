@@ -1,4 +1,4 @@
-import { SITE } from "@/app/site-config";
+﻿import { SITE } from "@/site-config";
 import { getSortedPostsData } from "@/lib/posts";
 import { getSiteUrl } from "@/lib/site-url";
 

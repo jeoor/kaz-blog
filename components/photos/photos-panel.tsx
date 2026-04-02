@@ -1,7 +1,7 @@
-"use client";
+﻿"use client";
 
 import { useState } from "react";
-import type { PhotoItem } from "@/app/photos.config";
+import type { PhotoItem } from "@/content/photos.config";
 import { adminApiUrl, adminCredentials } from "@/lib/admin-api";
 import { useAuth } from "@/lib/auth-context";
 import { toFriendlyNotionConnectionMessage } from "@/components/photos/notion-error";
@@ -83,7 +83,7 @@ export default function PhotosPanel({ initialPhotos, title, description }: Props
     function handlePhotoAdded(photo: PhotoItem) {
         setPhotos((prev) => [photo, ...prev]);
         setErrorMessage("");
-        setSuccessMessage("照片已添加成功，已更新到当前页面。");
+        setSuccessMessage("照片已添加成功，并已更新到当前页面。");
         window.setTimeout(() => {
             setSuccessMessage("");
         }, 3200);

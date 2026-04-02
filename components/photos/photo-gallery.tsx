@@ -1,7 +1,7 @@
-"use client";
+﻿"use client";
 
 import { useCallback, useEffect, useState } from "react";
-import type { PhotoItem } from "@/app/photos.config";
+import type { PhotoItem } from "@/content/photos.config";
 
 type Props = {
     photos: PhotoItem[];

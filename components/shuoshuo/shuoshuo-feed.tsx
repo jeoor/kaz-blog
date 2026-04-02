@@ -1,10 +1,10 @@
-"use client";
+﻿"use client";
 
 import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 
-import { SITE } from "@/app/site-config";
+import { SITE } from "@/site-config";
 import type { ShuoshuoItem } from "@/content/shuoshuo";
 import ShuoshuoCommentButton from "@/components/shuoshuo/shuoshuo-comment-button";
 import { useAuth } from "@/lib/auth-context";
@@ -143,7 +143,7 @@ export default function ShuoshuoFeed({ moments }: Props) {
     }
 
     async function handleDeleteMoment(slug: string) {
-        if (!confirm(`确认删除这条说说「${slug}」？此操作不可撤销。`)) return;
+        if (!confirm(`确认删除这条说说「${slug}」吗？此操作不可撤销。`)) return;
         setDeletingId(slug);
         try {
             const res = await fetch(adminApiUrl(`/api/admin/posts?slug=${encodeURIComponent(slug)}`), {
@@ -266,7 +266,7 @@ export default function ShuoshuoFeed({ moments }: Props) {
                                                         onClick={() => void handleDeleteMoment(item.id)}
                                                         className="rounded-full border border-red-400/25 bg-red-50/50 px-3 py-1 text-xs text-red-600/75 transition hover:border-red-400/40 disabled:opacity-50 dark:border-red-400/20 dark:bg-red-900/10 dark:text-red-400/70"
                                                     >
-                                                        {deletingId === item.id ? "删除中…" : "删除"}
+                                                        {deletingId === item.id ? "删除中..." : "删除"}
                                                     </button>
                                                 </>
                                             )}
