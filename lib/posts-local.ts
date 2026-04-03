@@ -6,8 +6,7 @@ import html from "remark-html";
 import { enhanceArticleHtml } from "@/lib/content-html";
 
 function getPostsDirectory(): string {
-    const dir = process.env.POSTS_DIR || process.env.GITHUB_POSTS_DIR || "content/posts";
-    return path.join(process.cwd(), dir);
+    return path.join(process.cwd(), "content/posts");
 }
 
 /**

@@ -40,7 +40,7 @@ Live demo: [https://kaz-blog.kayro.cn/](https://kaz-blog.kayro.cn/)
 
 ## Quick Start
 
-Production deployment is currently supported on EdgeOne Pages.
+Production deployment is currently supported on EdgeOne Pages, while local development and debugging are fully supported.
 
 ### One-click Deployment
 
