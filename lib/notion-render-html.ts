@@ -144,7 +144,17 @@ export function renderBlock(block: NotionBlock): string {
         case "heading_3":
             return `<h3>${renderRichText((block as any).heading_3?.rich_text)}</h3>`;
         case "quote":
-            return `<blockquote><p>${renderRichText((block as any).quote?.rich_text)}</p></blockquote>`;
+            {
+                const rich = (block as any).quote?.rich_text as RichTextItem[] | undefined;
+                if (hasRichFormatting(rich)) {
+                    return `<blockquote><p>${renderRichText(rich)}</p></blockquote>`;
+                }
+
+                const plain = richTextToPlain(rich).trim();
+                if (!plain) return "";
+
+                return `<blockquote><p>${renderMarkdownInlineToHtml(plain)}</p></blockquote>`;
+            }
         case "divider":
             return `<hr />`;
         case "code": {
