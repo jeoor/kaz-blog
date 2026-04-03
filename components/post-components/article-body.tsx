@@ -266,15 +266,15 @@ export default function ArticleBody({ contentHtml }: Props) {
             {activeIndex !== null && items[activeIndex] ? (
                 <div className="fixed inset-0 z-[120] bg-black/82 px-4 py-6 backdrop-blur-md" onClick={() => setActiveIndex(null)}>
                     <div className="mx-auto flex h-full max-w-6xl flex-col justify-center">
-                        <div className="mb-4 flex items-center justify-end text-sm text-white/72">
-                            {items.length > 1 ? <div>{activeIndex + 1} / {items.length}</div> : null}
-                        </div>
+                        <div className="mb-4 flex items-center justify-between" onClick={(event) => event.stopPropagation()}>
+                            <div className="text-sm text-white/72">
+                                {items.length > 1 ? <div>{activeIndex + 1} / {items.length}</div> : null}
+                            </div>
 
-                        <div className="relative flex items-center justify-center" onClick={(event) => event.stopPropagation()}>
                             <button
                                 type="button"
                                 aria-label="关闭预览"
-                                className="absolute right-0 top-[-3.25rem] z-20 inline-flex h-11 w-11 items-center justify-center rounded-full border border-white/15 bg-black/30 text-white transition hover:bg-black/45"
+                                className="inline-flex h-11 w-11 items-center justify-center rounded-full border border-white/15 bg-black/30 text-white transition hover:bg-black/45"
                                 onClick={() => setActiveIndex(null)}
                             >
                                 <svg aria-hidden="true" viewBox="0 0 20 20" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round">
@@ -282,7 +282,9 @@ export default function ArticleBody({ contentHtml }: Props) {
                                     <path d="M15 5L5 15" />
                                 </svg>
                             </button>
+                        </div>
 
+                        <div className="relative flex items-center justify-center" onClick={(event) => event.stopPropagation()}>
                             {items.length > 1 ? (
                                 <button
                                     type="button"

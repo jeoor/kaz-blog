@@ -26,6 +26,7 @@
 ## 功能特性
 
 - Notion 作为主内容源，支持本地 Markdown 回退
+- Markdown 渲染基于 remark + remark-gfm + remark-html（支持表格、任务列表、删除线、自动链接等 GFM 语法）
 - 支持用户注册、登录、多作者写作与作者管理
 - 支持归档、友链、标签、搜索、说说、相册、关于页、评论（Twikoo）
 - 支持明暗主题切换
@@ -150,6 +151,7 @@ npm run build && npm run start
 ## 当前能力
 
 - [x] Notion 主内容源 + 本地回退
+- [x] 基础 md 渲染
 - [x] 多作者注册/登录
 - [x] 发布、加载、删除文章
 - [x] 归档、标签、搜索

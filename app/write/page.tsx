@@ -6,8 +6,7 @@ import { Button, Card, CardBody, Input, Spinner } from "@heroui/react";
 import { SITE } from "@/site-config";
 import ArticleBody from "@/components/post-components/article-body";
 import { adminApiUrl, adminCredentials } from "@/lib/admin-api";
-import { remark } from "remark";
-import remarkHtml from "remark-html";
+import { renderMarkdownToHtml } from "@/lib/markdown";
 
 const CONTROL_RADIUS = "rounded-[14px]";
 const CONTROL_HEIGHT = "h-11 min-h-11";
@@ -231,31 +230,18 @@ function WritePageContent() {
     useEffect(() => {
         if (editorMode !== "preview") return;
 
-        let cancelled = false;
         setIsPreviewWorking(true);
         setPreviewError(null);
 
-        remark()
-            .use(remarkHtml)
-            .process(content || "")
-            .then((file) => {
-                if (cancelled) return;
-                setPreviewHtml(String(file));
-            })
-            .catch((e) => {
-                if (cancelled) return;
-                const message = e instanceof Error ? e.message : "预览渲染失败";
-                setPreviewError(message);
-                setPreviewHtml("");
-            })
-            .finally(() => {
-                if (cancelled) return;
-                setIsPreviewWorking(false);
-            });
-
-        return () => {
-            cancelled = true;
-        };
+        try {
+            setPreviewHtml(renderMarkdownToHtml(content || ""));
+        } catch (e) {
+            const message = e instanceof Error ? e.message : "预览渲染失败";
+            setPreviewError(message);
+            setPreviewHtml("");
+        } finally {
+            setIsPreviewWorking(false);
+        }
     }, [content, editorMode]);
 
     useEffect(() => {

@@ -152,6 +152,14 @@
         @apply pl-1;
     }
 
+    .markdown .task-list-item-wrap {
+        @apply inline-flex items-start gap-2;
+    }
+
+    .markdown .task-list-item-wrap input[type="checkbox"] {
+        @apply mt-[0.45rem] h-4 w-4 shrink-0 accent-[var(--accent)];
+    }
+
     .markdown blockquote {
         background: linear-gradient(180deg, var(--accent-soft), transparent);
         border-color: var(--accent);
@@ -216,6 +224,10 @@
 
     .markdown table {
         @apply my-8 w-full overflow-hidden rounded-[1.25rem] text-sm;
+    }
+
+    .markdown thead {
+        background: color-mix(in srgb, var(--accent-soft) 62%, transparent);
     }
 
     .markdown th,

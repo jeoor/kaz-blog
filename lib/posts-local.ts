@@ -1,9 +1,8 @@
 import fs from "fs";
 import path from "path";
 import matter from "gray-matter";
-import { remark } from "remark";
-import html from "remark-html";
 import { enhanceArticleHtml } from "@/lib/content-html";
+import { renderMarkdownToHtml } from "@/lib/markdown";
 
 function getPostsDirectory(): string {
     return path.join(process.cwd(), "content/posts");
@@ -62,8 +61,8 @@ export async function getPostDataLocal(id: string): Promise<BlogPost & { content
     const fileContents = fs.readFileSync(fullPath, "utf8");
     const matterResult = matter(fileContents);
 
-    const processedContent = await remark().use(html).process(matterResult.content);
-    const enhanced = enhanceArticleHtml(processedContent.toString());
+    const processedContent = renderMarkdownToHtml(matterResult.content);
+    const enhanced = enhanceArticleHtml(processedContent);
 
     return {
         id,

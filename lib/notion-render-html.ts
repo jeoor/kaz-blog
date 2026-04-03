@@ -1,4 +1,5 @@
 import { type NotionBlock } from "@/lib/notion";
+import { renderMarkdownInlineToHtml, renderMarkdownToHtml } from "@/lib/markdown";
 type RichTextItem = any;
 
 function escapeHtml(value: string): string {
@@ -58,11 +59,56 @@ function renderChildren(children: NotionBlock[] | undefined): string {
     return children.map(renderBlock).join("");
 }
 
+function hasRichFormatting(rich: RichTextItem[] | undefined): boolean {
+    if (!rich || rich.length === 0) return false;
+
+    return rich.some((item) => {
+        const ann = (item as any).annotations;
+        const color = String(ann?.color || "default").toLowerCase();
+        return Boolean(
+            (item as any).href
+            || (item?.type === "text" && item?.text?.link?.url)
+            || ann?.bold
+            || ann?.italic
+            || ann?.code
+            || ann?.strikethrough
+            || ann?.underline
+            || color !== "default"
+        );
+    });
+}
+
+function renderTaskListItem(text: string): string | null {
+    const match = /^\[(x|X| )\]\s+([\s\S]*)$/.exec(String(text || "").trim());
+    if (!match) return null;
+
+    const checked = String(match[1] || "").toLowerCase() === "x";
+    const label = String(match[2] || "").trim();
+    const body = label ? renderMarkdownInlineToHtml(label) : "";
+    const checkedAttr = checked ? " checked" : "";
+
+    return `<span class="task-list-item-wrap"><input type="checkbox" disabled${checkedAttr} /> <span>${body}</span></span>`;
+}
+
+function renderListItemText(li: NotionBlock): string {
+    const rich = (li as any)?.[li.type]?.rich_text as RichTextItem[] | undefined;
+
+    if (hasRichFormatting(rich)) {
+        return renderRichText(rich);
+    }
+
+    const plain = richTextToPlain(rich);
+    const task = renderTaskListItem(plain);
+    if (task) return task;
+
+    return renderMarkdownInlineToHtml(plain);
+}
+
 function renderList(children: NotionBlock[], ordered: boolean): string {
     const tag = ordered ? "ol" : "ul";
     const lis = children
         .map((li) => {
-            const text = renderRichText((li as any)[li.type]?.rich_text);
+            const text = renderListItemText(li);
             const nested = renderChildren(li.children);
             return `<li>${text}${nested ? nested : ""}</li>`;
         })
@@ -73,16 +119,23 @@ function renderList(children: NotionBlock[], ordered: boolean): string {
 export function renderBlock(block: NotionBlock): string {
     switch (block.type) {
         case "paragraph": {
-            const plain = richTextToPlain((block as any).paragraph?.rich_text);
+            const rich = (block as any).paragraph?.rich_text as RichTextItem[] | undefined;
+            const plain = richTextToPlain(rich);
             const image = parseImageReference(plain);
             if (image) {
                 const captionText = image.alt || image.title;
                 const figcaption = captionText ? `<figcaption>${escapeHtml(captionText)}</figcaption>` : "";
                 return `<figure><img src="${escapeHtml(image.url)}" alt="${escapeHtml(image.alt)}" />${figcaption}</figure>`;
             }
-            const html = renderRichText((block as any).paragraph?.rich_text);
-            if (!html.trim()) return "";
-            return `<p>${html}</p>`;
+
+            if (hasRichFormatting(rich)) {
+                const html = renderRichText(rich);
+                if (!html.trim()) return "";
+                return `<p>${html}</p>`;
+            }
+
+            const html = renderMarkdownToHtml(plain).trim();
+            return html;
         }
         case "heading_1":
             return `<h1>${renderRichText((block as any).heading_1?.rich_text)}</h1>`;
@@ -123,12 +176,12 @@ export function renderBlock(block: NotionBlock): string {
             return renderList(kids, true);
         }
         case "bulleted_list_item": {
-            const html = renderRichText((block as any).bulleted_list_item?.rich_text);
+            const html = renderListItemText(block);
             const nested = renderChildren(block.children);
             return `<ul><li>${html}${nested}</li></ul>`;
         }
         case "numbered_list_item": {
-            const html = renderRichText((block as any).numbered_list_item?.rich_text);
+            const html = renderListItemText(block);
             const nested = renderChildren(block.children);
             return `<ol><li>${html}${nested}</li></ol>`;
         }

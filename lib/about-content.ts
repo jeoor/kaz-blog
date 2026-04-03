@@ -3,10 +3,9 @@ import path from "path";
 
 import matter from "gray-matter";
 import { parse, HTMLElement } from "node-html-parser";
-import { remark } from "remark";
-import remarkHtml from "remark-html";
 
 import { enhanceArticleHtml } from "@/lib/content-html";
+import { renderMarkdownToHtml } from "@/lib/markdown";
 
 export type AboutProfile = {
     name: string;
@@ -94,8 +93,7 @@ export async function getAboutContent(): Promise<AboutContent | null> {
     const raw = fs.readFileSync(filePath, "utf8");
     const { data, content } = matter(raw);
 
-    const processed = await remark().use(remarkHtml).process(content);
-    const html = processed.toString();
+    const html = renderMarkdownToHtml(content);
     const enhanced = enhanceArticleHtml(html).contentHtml;
 
     const { introHtml, sections } = splitHtmlByH2(enhanced);
