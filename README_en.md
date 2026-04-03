@@ -177,8 +177,6 @@ See the comments in [.env.example](./.env.example) for full details. The most co
 1. Notion Database
 2. content/posts/*.md local fallback
 
-Note: local fallback content is mainly intended for development and demos, and is not recommended as the long-term primary content source in production.
-
 ## Common Commands
 
 - npm run notion:check: check Notion configuration

@@ -171,8 +171,6 @@ npm run build && npm run start
 1. Notion Database
 2. content/posts/*.md 本地回退
 
-说明：本地回退主要用于开发与演示，不建议长期作为生产主内容源。
-
 ## 常用命令
 
 - npm run notion:check 检查 Notion 配置
