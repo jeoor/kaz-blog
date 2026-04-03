@@ -247,6 +247,13 @@
     }
 
     @media (min-width: 1280px) {
+
+        html:has(.desktop-blog-shell),
+        body:has(.desktop-blog-shell) {
+            height: 100dvh;
+            overflow: hidden;
+        }
+
         .desktop-blog-shell {
             display: grid;
             grid-template-columns: max(1rem, calc((100vw - 92rem) / 2 + 1rem)) 14rem 2.5rem minmax(0, 1fr);
