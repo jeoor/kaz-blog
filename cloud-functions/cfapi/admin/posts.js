@@ -443,6 +443,18 @@ function statusFromError(err) {
     return authStatusFromError(err);
 }
 
+function chunkArray(list, chunkSize) {
+    const source = Array.isArray(list) ? list : [];
+    const size = Math.max(1, Number(chunkSize) || 1);
+    const out = [];
+
+    for (let i = 0; i < source.length; i += size) {
+        out.push(source.slice(i, i + size));
+    }
+
+    return out;
+}
+
 export async function onRequestGet(context) {
     const { request } = context;
     try {
@@ -579,11 +591,22 @@ export async function onRequestPost(context) {
             return json({ message: "Notion database has no title property" }, 400);
         }
 
+        const children = markdownToNotionBlocks(body);
+        const childChunks = chunkArray(children, 100);
+        const firstChunk = childChunks.shift() || [];
+
         const page = await notion.pages.create({
             parent: { database_id: env.databaseId },
             properties: buildCreatePropertiesFromPayload(frontmatter, env, titleKey, db?.properties || {}, contentType),
-            children: markdownToNotionBlocks(body),
+            ...(firstChunk.length > 0 ? { children: firstChunk } : {}),
         });
+
+        for (const chunk of childChunks) {
+            await notion.blocks.children.append({
+                block_id: page.id,
+                children: chunk,
+            });
+        }
 
         return json({ ok: true, slug, type: contentType, pageId: page.id });
     } catch (err) {

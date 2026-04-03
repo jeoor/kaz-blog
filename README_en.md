@@ -26,7 +26,7 @@ Live demo: [https://kaz-blog.kayro.cn/](https://kaz-blog.kayro.cn/)
 ## Features
 
 - Uses Notion as the primary content source, with local Markdown fallback
-- Markdown rendering is powered by remark + remark-gfm + remark-html (supports GFM tables, task lists, strikethrough, and autolinks)
+- Markdown rendering is powered by remark + remark-gfm + remark-html
 - Supports user registration, login, multi-author writing, and author management
 - Includes archive, links, tags, search, moments, photos, about page, and Twikoo comments
 - Supports light and dark theme switching
