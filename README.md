@@ -154,6 +154,10 @@ npm run build && npm run start
 - [x] 发布、加载、删除文章
 - [x] 归档、标签、搜索
 - [x] 说说、相册、文章线上配置
+- [x] 代码高亮与 Lightbox
+- [x] 搜索功能
+- [x] 本地图片上传至图床
+- [x] 文章封面功能
 - [x] Atom Feed、Sitemap、Robots
 - [x] twikoo 评论系统
 - [x] 明暗主题切换

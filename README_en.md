@@ -160,6 +160,10 @@ See the comments in [.env.example](./.env.example) for full details. The most co
 - [x] Publishing, loading, and deleting posts
 - [x] Archive, tags, and search
 - [x] Moments, photos, and online post configuration
+- [x] Code highlighting and Lightbox
+- [x] Search functionality
+- [x] Local image upload to image hosting
+- [x] Post cover image support
 - [x] Atom Feed, Sitemap, and Robots
 - [x] Twikoo comments
 - [x] Light and dark theme switching
